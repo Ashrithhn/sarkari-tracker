@@ -11,6 +11,9 @@
     "seed": "node server/seed.js",
     "start": "concurrently \"npm run server\" \"npm run dev\""
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.7.0",
