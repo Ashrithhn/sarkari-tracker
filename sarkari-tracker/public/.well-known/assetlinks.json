@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "app.vercel.sarkari_tracker_ashy.twa",
+        "sha256_cert_fingerprints": ["56:9B:5E:A2:EB:0F:90:F2:A8:00:E5:23:21:CB:FE:F1:1C:BD:91:2A:BE:00:F7:40:7B:38:03:41:18:1A:53:E6"]
+      }
+    }]
