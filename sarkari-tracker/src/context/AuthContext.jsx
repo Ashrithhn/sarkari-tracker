@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     removeToken();
-    window.location.href = 'http://localhost:3000';
+    window.location.href = import.meta.env.VITE_PUBLIC_PORTAL_URL || 'http://localhost:3000';
   };
 
   const isAuthenticated = !!token && !!user;
