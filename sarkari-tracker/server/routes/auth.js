@@ -23,7 +23,10 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Name, email and password are required' });
     }
 
-    const checkUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+
+    const checkUser = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(cleanEmail);
     if (checkUser) {
       return res.status(400).json({ error: 'An account with this email already exists' });
     }
@@ -32,7 +35,7 @@ router.post('/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const insert = db.prepare('INSERT INTO users (name, email, phone, password) VALUES (?, ?, ?, ?)');
-    const info = insert.run(name, email, phone || '', hashedPassword);
+    const info = insert.run(cleanName, cleanEmail, phone ? String(phone).trim() : '', hashedPassword);
     const userId = info.lastInsertRowid;
 
     // Smart Application Recognition & Onboarding:
@@ -44,12 +47,12 @@ router.post('/register', async (req, res) => {
         .all(...selectedExamIds);
     } else if (autoDetectApplications) {
       // Auto-detect top government exams (SSC, Banking, Railway, etc.)
-      let query = "SELECT * FROM exams WHERE status = 'upcoming'";
+      let query = "SELECT * FROM exams WHERE is_active = 1";
       if (Array.isArray(targetCategories) && targetCategories.length > 0) {
         query += ` AND category IN (${targetCategories.map(() => '?').join(',')})`;
         examsToEnroll = db.prepare(query).all(...targetCategories);
       } else {
-        examsToEnroll = db.prepare('SELECT * FROM exams ORDER BY id ASC LIMIT 3').all();
+        examsToEnroll = db.prepare('SELECT * FROM exams WHERE is_active = 1 ORDER BY id ASC LIMIT 3').all();
       }
     }
 
@@ -100,10 +103,10 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail || !password) return res.status(400).json({ error: 'Email and password are required' });
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const user = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(cleanEmail);
     if (!user) return res.status(400).json({ error: 'Invalid email or password' });
 
     const validPassword = await bcrypt.compare(password, user.password);

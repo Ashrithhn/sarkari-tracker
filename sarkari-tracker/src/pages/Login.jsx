@@ -22,7 +22,7 @@ const Login = () => {
 
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim().toLowerCase(), password);
       navigate('/');
     } catch (err) {
       setError(err.message || 'Failed to login. Please check your credentials.');
