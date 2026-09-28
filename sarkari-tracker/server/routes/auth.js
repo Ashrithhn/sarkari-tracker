@@ -1,8 +1,14 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import db from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_12345';
@@ -45,7 +51,29 @@ router.post('/register', async (req, res) => {
     const info = insert.run(cleanName, cleanEmail, phone ? String(phone).trim() : '', hashedPassword);
     const userId = info.lastInsertRowid;
 
-    // DO NOT CREATE DUMMY APPLICATIONS! New users start clean with 0 applied applications.
+    // Persist to server/data/persisted_users.json so account survives Render free tier container restarts
+    try {
+      const persistedDir = path.join(__dirname, '../data');
+      if (!fs.existsSync(persistedDir)) fs.mkdirSync(persistedDir, { recursive: true });
+      const persistedPath = path.join(persistedDir, 'persisted_users.json');
+      let existingList = [];
+      if (fs.existsSync(persistedPath)) {
+        try { existingList = JSON.parse(fs.readFileSync(persistedPath, 'utf8')) || []; } catch (e) {}
+      }
+      if (!existingList.some(u => u.email.toLowerCase() === cleanEmail)) {
+        existingList.push({
+          name: cleanName,
+          email: cleanEmail,
+          phone: phone ? String(phone).trim() : '',
+          password: hashedPassword,
+          is_admin: 0,
+          created_at: new Date().toISOString()
+        });
+        fs.writeFileSync(persistedPath, JSON.stringify(existingList, null, 2));
+      }
+    } catch (e) {
+      console.warn('Failed to persist user to file backup:', e.message);
+    }
 
     const token = jwt.sign({ id: userId, email: cleanEmail }, JWT_SECRET, { expiresIn: '7d' });
     

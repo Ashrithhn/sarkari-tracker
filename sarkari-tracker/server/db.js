@@ -360,22 +360,40 @@ try {
   console.error('Failed to seed exam_questions:', err.message);
 }
 
-// Auto-seed default admin and student users if table is empty
-const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
-if (userCount === 0) {
-  try {
-    const hashedPasswordAdmin = bcrypt.hashSync('admin123', 10);
-    const hashedPasswordUser = bcrypt.hashSync('student123', 10);
-    const insertUser = db.prepare(`
-      INSERT INTO users (name, email, phone, password, is_admin)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    insertUser.run('Sarkari Admin', 'admin@sarkari.in', '9999999999', hashedPasswordAdmin, 1);
-    insertUser.run('Candidate Aspirant', 'student@sarkari.in', '9888888888', hashedPasswordUser, 0);
-    console.log('✓ Auto-seeded admin and student accounts');
-  } catch (err) {
-    console.error('User auto-seed failed:', err.message);
+// Ensure foundational users and persisted candidate accounts always exist (survives any ephemeral redeployment)
+try {
+  const insertOrIgnore = db.prepare(`
+    INSERT OR IGNORE INTO users (name, email, phone, password, is_admin)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  const hashedPasswordAdmin = bcrypt.hashSync('admin123', 10);
+  const hashedPasswordUser = bcrypt.hashSync('student123', 10);
+
+  insertOrIgnore.run('Sarkari Admin', 'admin@sarkari.in', '9999999999', hashedPasswordAdmin, 1);
+  insertOrIgnore.run('Candidate Aspirant', 'student@sarkari.in', '9888888888', hashedPasswordUser, 0);
+  // Permanent user account for Ashrith H N with verified hash
+  insertOrIgnore.run('Ashrith H N', 'ashrith.sringeri@gmail.com', '9888888888', '$2a$10$CGpoVlTxY7TT99pFE/TwQuEMipf8RTYIOKzXSPx9jxXTyAm5Yfyzu', 1);
+
+  // Load any persisted users from backup json
+  const persistedPath = path.join(__dirname, 'data', 'persisted_users.json');
+  if (fs.existsSync(persistedPath)) {
+    try {
+      const persistedUsers = JSON.parse(fs.readFileSync(persistedPath, 'utf8'));
+      if (Array.isArray(persistedUsers)) {
+        for (const u of persistedUsers) {
+          if (u.email && u.password) {
+            insertOrIgnore.run(u.name || 'Candidate', u.email.toLowerCase().trim(), u.phone || '', u.password, u.is_admin ? 1 : 0);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Could not parse persisted_users.json:', e.message);
+    }
   }
+  console.log('✓ Ensured core accounts and persisted candidate users exist');
+} catch (err) {
+  console.error('User ensure failed:', err.message);
 }
 
 // Registry auto-seeding disabled per user request to avoid misguiding users
