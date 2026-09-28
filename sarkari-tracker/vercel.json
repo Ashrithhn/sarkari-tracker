@@ -4,6 +4,14 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://sarkari-api-5ah7.onrender.com/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://sarkari-api-5ah7.onrender.com/uploads/:path*"
+    },
+    {
       "source": "/((?!assets/|\\.well-known/|.*\\..*).*)",
       "destination": "/index.html"
     }

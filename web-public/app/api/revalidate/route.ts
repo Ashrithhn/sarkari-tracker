@@ -3,6 +3,10 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 
 const REVALIDATE_SECRET = process.env.REVALIDATE_SECRET || 'sarkari-revalidate-secret-token-2026';
 
+export async function GET(request: NextRequest) {
+  return POST(request);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));

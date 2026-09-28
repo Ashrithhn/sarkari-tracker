@@ -56,7 +56,7 @@ export const KARNATAKA_BOARDS = [
   'KPCL (Karnataka Power Corporation Ltd)'
 ];
 
-export const API_BASE = ''; // Proxy handled by vite
+export const API_BASE = (import.meta.env.VITE_API_BASE || 'https://sarkari-api-5ah7.onrender.com').replace(/\/$/, '');
 
 /**
  * Universal date formatter guaranteeing DD/MM/YYYY across all views
