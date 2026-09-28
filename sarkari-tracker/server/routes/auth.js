@@ -13,10 +13,7 @@ router.post('/register', async (req, res) => {
       name, 
       email, 
       phone, 
-      password, 
-      selectedExamIds = [], 
-      autoDetectApplications = true,
-      targetCategories = []
+      password 
     } = req.body;
 
     if (!name || !email || !password) {
@@ -26,9 +23,19 @@ router.post('/register', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = name.trim();
 
+    // Basic email format check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ error: 'Please enter a valid email address (e.g. name@example.com)' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
     const checkUser = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(cleanEmail);
     if (checkUser) {
-      return res.status(400).json({ error: 'An account with this email already exists' });
+      return res.status(400).json({ error: 'An account with this email already exists. Please Sign In.' });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -38,63 +45,13 @@ router.post('/register', async (req, res) => {
     const info = insert.run(cleanName, cleanEmail, phone ? String(phone).trim() : '', hashedPassword);
     const userId = info.lastInsertRowid;
 
-    // Smart Application Recognition & Onboarding:
-    // Automatically recognize applied/target exams and setup instant tracking
-    let examsToEnroll = [];
+    // DO NOT CREATE DUMMY APPLICATIONS! New users start clean with 0 applied applications.
 
-    if (Array.isArray(selectedExamIds) && selectedExamIds.length > 0) {
-      examsToEnroll = db.prepare(`SELECT * FROM exams WHERE id IN (${selectedExamIds.map(() => '?').join(',')})`)
-        .all(...selectedExamIds);
-    } else if (autoDetectApplications) {
-      // Auto-detect top government exams (SSC, Banking, Railway, etc.)
-      let query = "SELECT * FROM exams WHERE is_active = 1";
-      if (Array.isArray(targetCategories) && targetCategories.length > 0) {
-        query += ` AND category IN (${targetCategories.map(() => '?').join(',')})`;
-        examsToEnroll = db.prepare(query).all(...targetCategories);
-      } else {
-        examsToEnroll = db.prepare('SELECT * FROM exams WHERE is_active = 1 ORDER BY id ASC LIMIT 3').all();
-      }
-    }
-
-    const insertApp = db.prepare(`
-      INSERT INTO applications (user_id, exam_id, applied_date, status, notes)
-      VALUES (?, ?, date('now'), 'Applied', 'Candidate registered target exam')
-    `);
-
-    const insertChecklist = db.prepare(`
-      INSERT INTO application_checklist (application_id, item_name, is_checked)
-      VALUES (?, ?, 0)
-    `);
-
-    const insertReminder = db.prepare(`
-      INSERT INTO reminders (user_id, application_id, exam_id, title, reminder_date, type, completed)
-      VALUES (?, ?, ?, ?, ?, ?, 0)
-    `);
-
-    for (const exam of examsToEnroll) {
-      const appInfo = insertApp.run(userId, exam.id);
-      const appId = appInfo.lastInsertRowid;
-
-      for (const item of ['Photo with Date', 'Signature', 'ID Proof (Aadhaar)', 'Degree Certificate', 'Category/Caste Certificate']) {
-        try { insertChecklist.run(appId, item); } catch (e) {}
-      }
-
-      // Link notifications
-      const notifs = db.prepare('SELECT id FROM notifications WHERE exam_id = ?').all(exam.id);
-      for (const n of notifs) {
-        try {
-          db.prepare('INSERT OR IGNORE INTO user_notifications (user_id, notification_id, read) VALUES (?, ?, 0)')
-            .run(userId, n.id);
-        } catch (e) {}
-      }
-    }
-
-    const token = jwt.sign({ id: userId, email }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: userId, email: cleanEmail }, JWT_SECRET, { expiresIn: '7d' });
     
     res.status(201).json({ 
       token, 
-      user: { id: userId, name, email, phone },
-      autoTrackedExamsCount: examsToEnroll.length
+      user: { id: userId, name: cleanName, email: cleanEmail, phone: phone ? String(phone).trim() : '' }
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -105,13 +62,19 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body || {};
     const cleanEmail = (email || '').trim().toLowerCase();
-    if (!cleanEmail || !password) return res.status(400).json({ error: 'Email and password are required' });
+    if (!cleanEmail || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
     const user = db.prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?)').get(cleanEmail);
-    if (!user) return res.status(400).json({ error: 'Invalid email or password' });
+    if (!user) {
+      return res.status(400).json({ error: 'No account found with this email. Please check your spelling or Register.' });
+    }
 
     const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) return res.status(400).json({ error: 'Invalid email or password' });
+    if (!validPassword) {
+      return res.status(400).json({ error: 'Incorrect password. Please verify and try again.' });
+    }
 
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
     

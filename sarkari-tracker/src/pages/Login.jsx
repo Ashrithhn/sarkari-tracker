@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn, AlertCircle } from 'lucide-react';
+import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -15,141 +16,145 @@ const Login = () => {
     e.preventDefault();
     setError('');
     
-    if (!email || !password) {
-      setError('Please fill in all fields');
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password) {
+      setError('Please enter both your email address and password');
       return;
     }
 
     setLoading(true);
     try {
-      await login(email.trim().toLowerCase(), password);
+      await login(cleanEmail, password);
       navigate('/');
     } catch (err) {
-      setError(err.message || 'Failed to login. Please check your credentials.');
+      setError(err.message || 'Failed to sign in. Please verify your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 gradient-navy-light dark:gradient-navy relative overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-saffron-500/20 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-navy-500/20 rounded-full blur-3xl"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 relative">
+      <div className="w-full max-w-md space-y-6">
+        
+        {/* Back Link */}
+        <Link 
+          to="/" 
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft size={16} /> Back to Dashboard
+        </Link>
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-navy-600 to-saffron-500 dark:from-navy-400 dark:to-saffron-400 tracking-tight">
-            SarkariTracker
+        {/* Card Header */}
+        <div className="text-center space-y-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-saffron-50 dark:bg-saffron-950/40 border border-saffron-200 dark:border-saffron-800 text-2xl shadow-sm mb-2">
+            🇮🇳
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Sign In to SarkariTracker
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">Your ultimate government exam companion</p>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            Track your government exam applications, test dates, and reminders
+          </p>
         </div>
 
-        <div className="glass-card rounded-2xl shadow-xl overflow-hidden p-8 animate-fade-in">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Welcome Back</h2>
+        {/* Form Card */}
+        <div className="glass-card rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 bg-white dark:bg-slate-900 shadow-xl space-y-6">
           
           {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 rounded-md flex items-start">
-              <AlertCircle className="text-red-500 mr-3 flex-shrink-0 mt-0.5" size={18} />
-              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+            <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 flex items-start gap-2.5 text-xs text-red-700 dark:text-red-300 animate-fade-in">
+              <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold">{error}</p>
+                {error.includes('No account found') && (
+                  <p>
+                    Don't have an account yet?{' '}
+                    <Link to="/register" className="font-bold underline text-red-800 dark:text-red-200">
+                      Click here to Register
+                    </Link>
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Email Address
+              </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-field pl-10 w-full"
-                  placeholder="you@example.com"
+                  className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white"
+                  placeholder="name@example.com"
                   autoComplete="email"
+                  autoCapitalize="none"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Password
+              </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pl-10 w-full"
+                  className="w-full pl-9 pr-10 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white"
                   placeholder="••••••••"
                   autoComplete="current-password"
                 />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-saffron-600 focus:ring-saffron-500 border-gray-300 rounded cursor-pointer"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-                  Remember me
-                </label>
-              </div>
-              <div className="text-sm">
-                <a href="#" className="font-medium text-navy-600 hover:text-navy-500 dark:text-navy-400 dark:hover:text-navy-300">
-                  Forgot password?
-                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn-primary flex justify-center items-center py-3 text-base"
+              className="w-full btn-primary flex justify-center items-center py-2.5 text-xs sm:text-sm font-bold shadow-md rounded-xl"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <LogIn className="mr-2" size={18} /> Sign In
+                  <LogIn className="mr-1.5" size={16} /> Sign In
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
             Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-saffron-600 hover:text-saffron-500 dark:text-saffron-400 dark:hover:text-saffron-300 transition-colors">
-              Create an account
+            <Link 
+              to="/register" 
+              className="font-bold text-saffron-600 hover:text-saffron-700 dark:text-saffron-400 underline"
+            >
+              Create Account Free
             </Link>
           </div>
-
-          {/* Genuine Trust Sub-Footer */}
-          <div className="mt-8 pt-4 border-t border-slate-200 dark:border-slate-800 text-[11px] text-center text-slate-500 space-y-2">
-            <p>
-              Independent Educational Portal. Not affiliated with UPSC, SSC, KEA, or KPSC.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link to="/disclaimer" className="hover:underline">Legal Disclaimer</Link>
-              <span>•</span>
-              <Link to="/privacy-policy" className="hover:underline">Privacy</Link>
-              <span>•</span>
-              <Link to="/terms-of-service" className="hover:underline">Terms</Link>
-              <span>•</span>
-              <Link to="/contact" className="hover:underline">Contact</Link>
-              <span>•</span>
-              <a href="mailto:techtherapy1818@gmail.com" className="hover:underline font-mono">techtherapy1818@gmail.com</a>
-            </div>
-            <p className="text-[10px] text-slate-400">© 2026 SarkariTracker. All rights reserved.</p>
-          </div>
         </div>
+
+        {/* Minimal Footer */}
+        <p className="text-center text-[11px] text-slate-400">
+          Official Government Exam Tracker • UPSC, SSC, Banking, Railways & Karnataka State
+        </p>
+
       </div>
     </div>
   );

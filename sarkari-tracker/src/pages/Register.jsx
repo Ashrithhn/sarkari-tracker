@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Phone, UserPlus, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, User, Phone, UserPlus, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-
-const CATEGORY_OPTIONS = [
-  { id: 'SSC', label: 'SSC (CGL, CHSL, MTS)' },
-  { id: 'Banking', label: 'Banking (IBPS, SBI, RBI)' },
-  { id: 'Railway', label: 'Railways (RRB NTPC, ALP)' },
-  { id: 'UPSC', label: 'UPSC (CSE, CDS, NDA)' },
-  { id: 'PSU', label: 'PSU (ONGC, BHEL, NTPC)' },
-  { id: 'State', label: 'State PSCs' },
-];
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -20,8 +11,7 @@ const Register = () => {
     password: '',
     confirmPassword: ''
   });
-  const [autoDetect, setAutoDetect] = useState(true);
-  const [selectedCategories, setSelectedCategories] = useState(['SSC', 'Banking', 'Railway']);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -31,20 +21,21 @@ const Register = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const toggleCategory = (catId) => {
-    if (selectedCategories.includes(catId)) {
-      setSelectedCategories(selectedCategories.filter(c => c !== catId));
-    } else {
-      setSelectedCategories([...selectedCategories, catId]);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    const cleanName = formData.name.trim();
+    const cleanEmail = formData.email.trim().toLowerCase();
+    
+    if (!cleanName || !cleanEmail || !formData.password || !formData.confirmPassword) {
       setError('Please fill in all required fields');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanEmail)) {
+      setError('Please enter a valid email address (e.g. name@example.com)');
       return;
     }
     
@@ -61,12 +52,10 @@ const Register = () => {
     setLoading(true);
     try {
       await register({
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
+        name: cleanName,
+        email: cleanEmail,
         phone: formData.phone ? formData.phone.trim() : '',
-        password: formData.password,
-        autoDetectApplications: autoDetect,
-        targetCategories: selectedCategories
+        password: formData.password
       });
       navigate('/');
     } catch (err) {
@@ -77,217 +66,182 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900 gradient-navy-light dark:gradient-navy relative overflow-hidden py-12">
-      {/* Decorative background elements */}
-      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-saffron-500/20 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-navy-500/20 rounded-full blur-3xl"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 relative">
+      <div className="w-full max-w-md space-y-6">
+        
+        {/* Back Link */}
+        <Link 
+          to="/" 
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft size={16} /> Back to Dashboard
+        </Link>
 
-      <div className="w-full max-w-lg relative z-10">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-tr from-saffron-500 to-navy-700 rounded-2xl shadow-xl shadow-saffron-500/20 text-2xl mb-3">
+        {/* Card Header */}
+        <div className="text-center space-y-1">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-saffron-50 dark:bg-saffron-950/40 border border-saffron-200 dark:border-saffron-800 text-2xl shadow-sm mb-2">
             🇮🇳
           </div>
-          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-navy-700 via-saffron-600 to-navy-900 dark:from-navy-200 dark:via-saffron-400 dark:to-white tracking-tight">
-            SarkariTracker
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Create Candidate Account
           </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-            All Government Job Applications, Deadlines, Syllabus & Cutoffs in One Place
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            Track your government exam applications, test dates, and reminders
           </p>
         </div>
 
-        <div className="glass-card rounded-3xl shadow-2xl overflow-hidden p-8 animate-fade-in border border-white/40 dark:border-gray-700/60">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 text-center">Create Candidate Profile</h2>
-          <p className="text-xs text-center text-gray-500 dark:text-gray-400 mb-6">
-            Register with your email ID or mobile to track and sync all your government exam applications.
-          </p>
+        {/* Form Card */}
+        <div className="glass-card rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 bg-white dark:bg-slate-900 shadow-xl space-y-5">
           
           {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 rounded-xl flex items-start">
-              <AlertCircle className="text-red-500 mr-3 flex-shrink-0 mt-0.5" size={18} />
-              <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+            <div className="p-3.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 flex items-start gap-2.5 text-xs text-red-700 dark:text-red-300 animate-fade-in">
+              <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold">{error}</p>
+                {error.includes('already exists') && (
+                  <p>
+                    <Link to="/login" className="font-bold underline text-red-800 dark:text-red-200">
+                      Click here to Sign In
+                    </Link>
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Full Name *</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                Full Name *
+              </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-4 w-4 text-gray-400" />
-                </div>
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
                   name="name"
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  className="input-field pl-10 w-full text-sm"
-                  placeholder="Rahul Sharma"
+                  className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white"
+                  placeholder="e.g. Ashrith"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Email ID *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="input-field pl-10 w-full text-sm"
-                    placeholder="candidate@govmail.in"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Mobile Number</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="input-field pl-10 w-full text-sm"
-                    placeholder="+91 98765 43210"
-                  />
-                </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                Email Address *
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white"
+                  placeholder="name@example.com"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Password *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="password"
-                    name="password"
-                    required
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="input-field pl-10 w-full text-sm"
-                    placeholder="Min 6 characters"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Confirm Password *</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    required
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className="input-field pl-10 w-full text-sm"
-                    placeholder="Re-enter password"
-                  />
-                </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                Mobile Number <span className="normal-case text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white"
+                  placeholder="9876543210"
+                />
               </div>
             </div>
 
-            {/* Smart Application Recognition Card */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-saffron-500/5 to-navy-500/10 border border-saffron-500/30 my-4">
-              <div className="flex items-start gap-2.5 mb-2.5">
-                <Sparkles className="w-5 h-5 text-saffron-500 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-                    Smart Job Portal Recognition
-                    <span className="text-[10px] bg-saffron-500 text-white font-extrabold px-1.5 py-0.5 rounded">NEW</span>
-                  </h4>
-                  <p className="text-xs text-gray-600 dark:text-gray-300">
-                    Automatically recognize your applied government exams, last date alerts, syllabus, PYQs & cutoff trackers.
-                  </p>
-                </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                Password * <span className="normal-case text-slate-400 font-normal">(min 6 chars)</span>
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  required
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full pl-9 pr-10 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white"
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
+            </div>
 
-              <div className="mt-3">
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 block mb-2">
-                  Select your target examination categories:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {CATEGORY_OPTIONS.map((cat) => {
-                    const isSelected = selectedCategories.includes(cat.id);
-                    return (
-                      <button
-                        type="button"
-                        key={cat.id}
-                        onClick={() => toggleCategory(cat.id)}
-                        className={`text-xs px-2.5 py-1.5 rounded-xl font-medium border transition-all ${
-                          isSelected
-                            ? 'bg-saffron-500 text-white border-saffron-600 shadow-sm'
-                            : 'bg-white dark:bg-navy-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700'
-                        }`}
-                      >
-                        {isSelected && '✓ '} {cat.label}
-                      </button>
-                    );
-                  })}
-                </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                Confirm Password *
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  required
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white"
+                  placeholder="Re-enter password"
+                  autoComplete="new-password"
+                />
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full btn-primary flex items-center justify-center py-3 text-base shadow-lg shadow-saffron-500/25"
+              className="w-full btn-primary flex justify-center items-center py-2.5 text-xs sm:text-sm font-bold shadow-md rounded-xl mt-2"
             >
               {loading ? (
-                <div className="flex items-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
-                  Setting up Portal & Syncing Exams...
-                </div>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
-                <div className="flex items-center">
-                  <UserPlus className="mr-2 h-5 w-5" />
-                  Register & Track My Exams
-                </div>
+                <>
+                  <UserPlus className="mr-1.5" size={16} /> Create Account
+                </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="font-semibold text-saffron-600 dark:text-saffron-400 hover:underline">
+            <Link 
+              to="/login" 
+              className="font-bold text-saffron-600 hover:text-saffron-700 dark:text-saffron-400 underline"
+            >
               Sign In
             </Link>
           </div>
-
-          {/* Genuine Trust Sub-Footer */}
-          <div className="mt-8 pt-4 border-t border-slate-200 dark:border-slate-800 text-[11px] text-center text-slate-500 space-y-2">
-            <p>
-              Independent Educational Portal. Not affiliated with UPSC, SSC, KEA, or KPSC.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link to="/disclaimer" className="hover:underline">Legal Disclaimer</Link>
-              <span>•</span>
-              <Link to="/privacy-policy" className="hover:underline">Privacy</Link>
-              <span>•</span>
-              <Link to="/terms-of-service" className="hover:underline">Terms</Link>
-              <span>•</span>
-              <Link to="/contact" className="hover:underline">Contact</Link>
-              <span>•</span>
-              <a href="mailto:techtherapy1818@gmail.com" className="hover:underline font-mono">techtherapy1818@gmail.com</a>
-            </div>
-            <p className="text-[10px] text-slate-400">© 2026 SarkariTracker. All rights reserved.</p>
-          </div>
         </div>
+
+        {/* Minimal Footer */}
+        <p className="text-center text-[11px] text-slate-400">
+          Official Government Exam Tracker • UPSC, SSC, Banking, Railways & Karnataka State
+        </p>
+
       </div>
     </div>
   );
