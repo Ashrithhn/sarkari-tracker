@@ -1,6 +1,6 @@
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sarkaritracker.in';
-export const REACT_APP_URL = process.env.NEXT_PUBLIC_REACT_APP_URL || 'http://localhost:5173';
+export const REACT_APP_URL = (process.env.NEXT_PUBLIC_REACT_APP_URL || 'https://sarkari-tracker-ashy.vercel.app').replace(/\/+$/, '');
 
 export interface DateField {
   value: string | null;
