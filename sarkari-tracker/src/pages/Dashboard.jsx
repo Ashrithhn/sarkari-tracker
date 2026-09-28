@@ -188,41 +188,37 @@ const Dashboard = () => {
 
   return (
     <div className="w-full space-y-4 sm:space-y-8 animate-fade-in">
-      {/* Welcome / Mission Banner */}
-      <div className="glass-card p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl relative overflow-hidden bg-gradient-to-br from-navy-800 via-navy-900 to-saffron-950 text-white shadow-xl">
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
-          <div className="space-y-1.5 sm:space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:py-1 rounded-full bg-white/10 text-white text-[11px] sm:text-xs font-semibold border border-white/15">
-              <ShieldCheck className="w-3.5 h-3.5 text-saffron-400" /> 
-              <span>100% Genuine Commission Data</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
-              {isAuthenticated ? `Welcome back, ${user?.name || 'Aspirant'}! 👋` : 'India\'s Official Exam Tracker 🇮🇳'}
+      {/* Welcome Banner */}
+      <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl relative overflow-hidden bg-gradient-to-br from-navy-800 via-navy-900 to-saffron-950 text-white shadow-lg">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              {isAuthenticated ? `Welcome back, ${user?.name || 'Aspirant'}! 👋` : 'SarkariTracker 🇮🇳'}
             </h1>
-            <p className="text-navy-100/90 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              Track deadlines, official commission notifications, syllabus, cutoffs, and document checklists across UPSC, SSC, Banking, Railways, KEA, and Karnataka State exams.
+            <p className="text-navy-100/80 text-xs sm:text-sm max-w-xl">
+              Track government exam deadlines, syllabus, cutoffs, and your application dates in one place.
             </p>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto shrink-0">
             {isAuthenticated ? (
               <>
-                <Link to="/tracker" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-3 sm:px-4 flex items-center gap-1.5 shadow-lg">
+                <Link to="/tracker" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-4 flex items-center gap-1.5 shadow-md">
                   <Plus size={16} /> Add Application
                 </Link>
                 {Boolean(user?.is_admin) && (
                   <Link to="/admin" className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/15 text-center">
-                    Admin Portal
+                    Admin
                   </Link>
                 )}
               </>
             ) : (
               <>
-                <Link to="/login" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-3 sm:px-4 flex items-center gap-1.5 shadow-lg">
-                  <LogIn size={16} /> Sign In to Track
+                <Link to="/login" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-4 flex items-center gap-1.5 shadow-md">
+                  <LogIn size={16} /> Sign In
                 </Link>
                 <Link to="/register" className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/15 flex-1 sm:flex-initial text-center justify-center flex items-center gap-1.5">
-                  <UserPlus size={16} /> Register Free
+                  <UserPlus size={16} /> Register
                 </Link>
               </>
             )}
@@ -451,16 +447,6 @@ const Dashboard = () => {
               </div>
             )}
           </div>
-
-          {/* Quick Guide & Transparency Card */}
-          <div className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-3">
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" /> SarkariTracker Authenticity Commitment
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              We never fabricate dates, cutoffs, or vacancies. Every field is verified against official state or central commission notices, with direct links to commission portals (cetonline.karnataka.gov.in, ssc.gov.in, upsc.gov.in).
-            </p>
-          </div>
         </div>
 
         {/* Right Column: Deadlines & Notifications */}
@@ -552,24 +538,14 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Quick Support & Grievances */}
-          <div className="p-5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-xs space-y-2">
-            <h4 className="font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
-              <AlertCircle className="w-4 h-4 text-amber-600" /> Candidate Advisory Desk
-            </h4>
-            <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-[11px]">
-              Found a changed date or missed notification? Report immediately to:
-            </p>
-            <a 
-              href="mailto:techtherapy1818@gmail.com" 
-              className="font-mono font-bold text-saffron-600 dark:text-saffron-400 hover:underline block text-[11px]"
-            >
-              techtherapy1818@gmail.com
-            </a>
-          </div>
-
         </div>
       </div>
+
+      {/* Simple Footer / Attribution */}
+      <footer className="pt-6 pb-2 border-t border-slate-200/80 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
+        <p>Verified government exam schedules & commission updates across India & Karnataka.</p>
+        <p className="text-[11px]">Help & Feedback: <a href="mailto:techtherapy1818@gmail.com" className="text-saffron-600 dark:text-saffron-400 hover:underline">techtherapy1818@gmail.com</a></p>
+      </footer>
     </div>
   );
 };
