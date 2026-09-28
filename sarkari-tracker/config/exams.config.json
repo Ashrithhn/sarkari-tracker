@@ -1,0 +1,141 @@
+{
+  "version": "1.0.0",
+  "registry": [
+    {
+      "id": "ibps-rrb-clerk",
+      "slug": "ibps-rrb-clerk",
+      "name": "IBPS RRB Office Assistant (Multipurpose) - Clerk",
+      "short_name": "IBPS RRB Clerk",
+      "conducting_body": "Institute of Banking Personnel Selection (IBPS)",
+      "category": "Banking",
+      "adapter_key": "ibps",
+      "scrape_frequency_minutes": 30,
+      "is_active": true,
+      "current_cycle_year": 2026,
+      "official_urls": {
+        "portal": "https://www.ibps.in",
+        "careers": "https://www.ibps.in/crp-rrb",
+        "notifications": "https://www.ibps.in/common-recruitment-process-regional-rural-banks",
+        "admit_card_portal": "https://ibpsonline.ibps.in",
+        "results_portal": "https://www.ibps.in/results"
+      },
+      "stages": [
+        { "order": 1, "name": "Preliminary Examination", "code": "PRE" },
+        { "order": 2, "name": "Main Examination", "code": "MAINS" }
+      ],
+      "categories": ["UR", "EWS", "OBC", "SC", "ST", "PwBD"],
+      "parsing_hints": {
+        "notice_keywords": ["Office Assistant", "Multipurpose", "CRP RRB", "Detailed Notification", "Corrigendum"],
+        "admit_card_keywords": ["Online Preliminary Exam Call Letter", "Main Exam Call Letter", "CRP RRBs"],
+        "result_keywords": ["Scores of Preliminary Examination", "Scores of Main Examination", "Provisional Allotment"],
+        "cutoff_table_headers": ["State", "Category", "SC", "ST", "OBC", "EWS", "UR", "Total Marks"]
+      }
+    },
+    {
+      "id": "sbi-po",
+      "slug": "sbi-po",
+      "name": "State Bank of India Probationary Officer",
+      "short_name": "SBI PO",
+      "conducting_body": "State Bank of India (SBI)",
+      "category": "Banking",
+      "adapter_key": "sbi",
+      "scrape_frequency_minutes": 60,
+      "is_active": true,
+      "current_cycle_year": 2026,
+      "official_urls": {
+        "portal": "https://sbi.co.in",
+        "careers": "https://sbi.co.in/web/careers",
+        "notifications": "https://sbi.co.in/web/careers/current-openings"
+      },
+      "stages": [
+        { "order": 1, "name": "Prelims", "code": "PRE" },
+        { "order": 2, "name": "Mains", "code": "MAINS" },
+        { "order": 3, "name": "Group Exercise & Interview", "code": "INTV" }
+      ],
+      "categories": ["UR", "EWS", "OBC", "SC", "ST", "PwBD"],
+      "parsing_hints": {
+        "notice_keywords": ["Recruitment of Probationary Officers", "Advt. No. CRPD/PO"],
+        "cutoff_table_headers": ["Category", "Min Qualifying Marks"]
+      }
+    },
+    {
+      "id": "ssc-cgl",
+      "slug": "ssc-cgl",
+      "name": "Staff Selection Commission - Combined Graduate Level Examination",
+      "short_name": "SSC CGL",
+      "conducting_body": "Staff Selection Commission (SSC)",
+      "category": "SSC",
+      "adapter_key": "ssc",
+      "scrape_frequency_minutes": 60,
+      "is_active": true,
+      "current_cycle_year": 2026,
+      "official_urls": {
+        "portal": "https://ssc.gov.in",
+        "careers": "https://ssc.gov.in/notice-board",
+        "notifications": "https://ssc.gov.in/notices"
+      },
+      "stages": [
+        { "order": 1, "name": "Tier-I (Computer Based Examination)", "code": "TIER_1" },
+        { "order": 2, "name": "Tier-II (Paper-I & Paper-II)", "code": "TIER_2" }
+      ],
+      "categories": ["UR", "EWS", "OBC", "SC", "ST", "PwBD", "ESM"],
+      "parsing_hints": {
+        "notice_keywords": ["Notice of Combined Graduate Level Examination", "CGL Examination"],
+        "cutoff_table_headers": ["Post Code", "Category", "Marks"]
+      }
+    },
+    {
+      "id": "upsc-cse",
+      "slug": "upsc-cse",
+      "name": "Union Public Service Commission - Civil Services Examination",
+      "short_name": "UPSC CSE",
+      "conducting_body": "Union Public Service Commission (UPSC)",
+      "category": "UPSC",
+      "adapter_key": "upsc",
+      "scrape_frequency_minutes": 180,
+      "is_active": true,
+      "current_cycle_year": 2026,
+      "official_urls": {
+        "portal": "https://upsc.gov.in",
+        "careers": "https://upsc.gov.in/examinations/active-exams",
+        "notifications": "https://upsc.gov.in/examinations/examination-notifications"
+      },
+      "stages": [
+        { "order": 1, "name": "Civil Services (Preliminary) Examination", "code": "PRE" },
+        { "order": 2, "name": "Civil Services (Main) Examination", "code": "MAINS" },
+        { "order": 3, "name": "Personality Test (Interview)", "code": "INTV" }
+      ],
+      "categories": ["UR", "EWS", "OBC", "SC", "ST", "PwBD-1", "PwBD-2", "PwBD-3", "PwBD-5"],
+      "parsing_hints": {
+        "notice_keywords": ["Examination Notice No.", "Civil Services Examination"],
+        "cutoff_table_headers": ["Stage", "CS (Prelim)", "CS (Main)", "CS (Final)"]
+      }
+    },
+    {
+      "id": "isro-scientist-sc",
+      "slug": "isro-scientist-sc",
+      "name": "ISRO Centralised Recruitment Board - Scientist/Engineer 'SC'",
+      "short_name": "ISRO Scientist 'SC'",
+      "conducting_body": "Indian Space Research Organisation (ISRO)",
+      "category": "PSU",
+      "adapter_key": "isro",
+      "scrape_frequency_minutes": 180,
+      "is_active": true,
+      "current_cycle_year": 2026,
+      "official_urls": {
+        "portal": "https://www.isro.gov.in",
+        "careers": "https://www.isro.gov.in/Careers.html",
+        "notifications": "https://www.isro.gov.in/Recruitment_Notice.html"
+      },
+      "stages": [
+        { "order": 1, "name": "Written Test", "code": "WRITTEN" },
+        { "order": 2, "name": "Interview", "code": "INTV" }
+      ],
+      "categories": ["UR", "EWS", "OBC", "SC", "ST", "PwBD"],
+      "parsing_hints": {
+        "notice_keywords": ["Recruitment of Scientist/Engineer 'SC'", "ICRB"],
+        "cutoff_table_headers": ["Discipline", "Category", "Screen-in Cut-off"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  sarkari-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sarkari_tracker_app
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - JWT_SECRET=sarkari_production_secret_key_2026
+      - ENABLE_EMAIL=false
+      - ENABLE_TELEGRAM=false
+      - ENABLE_WEB_PUSH=false
+    volumes:
+      - ./server/sarkari.db:/app/server/sarkari.db
+      - ./config:/app/config:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

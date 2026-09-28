@@ -1,0 +1,88 @@
+import { Building2, Landmark, Train, FileBadge, Factory, MapPin, Shield, Compass, Sparkles } from 'lucide-react';
+
+export const EXAM_CATEGORIES = [
+  { id: 'Karnataka', name: 'Karnataka (KEA/KPSC)', icon: MapPin, color: 'text-amber-500', badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200' },
+  { id: 'Banking', name: 'Banking & Insurance', icon: Landmark, color: 'text-emerald-500', badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200' },
+  { id: 'SSC', name: 'SSC', icon: Building2, color: 'text-blue-500', badgeClass: 'bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200' },
+  { id: 'UPSC', name: 'UPSC', icon: FileBadge, color: 'text-purple-500', badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-200' },
+  { id: 'Railway', name: 'Railway (RRB)', icon: Train, color: 'text-red-500', badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-200' },
+  { id: 'PSU', name: 'PSUs & GATE', icon: Factory, color: 'text-orange-500', badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-900/60 dark:text-orange-200' },
+  { id: 'Defence', name: 'Defence & Police', icon: Shield, color: 'text-yellow-600', badgeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-200' },
+  { id: 'Science', name: 'Science & Research', icon: Sparkles, color: 'text-cyan-500', badgeClass: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/60 dark:text-cyan-200' },
+  { id: 'Central', name: 'Other Central Govt', icon: Compass, color: 'text-indigo-500', badgeClass: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-200' },
+];
+
+export const APPLICATION_STATUS_FLOW = [
+  'Applied',
+  'Admit Card Downloaded',
+  'Appeared',
+  'Result Awaited',
+  'Selected',
+  'Not Selected'
+];
+
+export const APPLICATION_STATUSES = {
+  'Applied': { label: 'Applied', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-300', icon: 'FileText' },
+  'Admit Card Downloaded': { label: 'Admit Card Ready', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border-purple-300', icon: 'Ticket' },
+  'Appeared': { label: 'Exam Appeared', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-300', icon: 'CheckSquare' },
+  'Result Awaited': { label: 'Result Awaited', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-300', icon: 'Clock' },
+  'Selected': { label: 'Selected / Qualified 🎉', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-400 font-bold', icon: 'Award' },
+  'Not Selected': { label: 'Not Selected', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border-slate-300', icon: 'XCircle' }
+};
+
+export const CANDIDATE_CATEGORIES = [
+  // All-India Central
+  'UR',
+  'EWS',
+  'OBC',
+  'SC',
+  'ST',
+  'PwBD',
+  'ESM'
+];
+
+export const KARNATAKA_CATEGORIES = ['GM', '2A', '2B', '3A', '3B', 'Cat-1', 'SC', 'ST'];
+
+export const KARNATAKA_BOARDS = [
+  'KEA (Karnataka Examinations Authority)',
+  'KPSC (Karnataka Public Service Commission)',
+  'KSP (Karnataka State Police)',
+  'KPTCL / ESCOMs (BESCOM, MESCOM, HESCOM, GESCOM, CESC)',
+  'KSRTC / BMTC / NWKRTC / KKRTC',
+  'Karnataka High Court & District Courts',
+  'Karnataka Revenue Department (VAO/Village Accountant)',
+  'Karnataka Forest Department',
+  'Karnataka PWD & Irrigation Dept',
+  'KPCL (Karnataka Power Corporation Ltd)'
+];
+
+export const API_BASE = ''; // Proxy handled by vite
+
+/**
+ * Universal date formatter guaranteeing DD/MM/YYYY across all views
+ */
+export function formatDate(val) {
+  if (!val) return '';
+  const str = String(val).trim();
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    return `${m[3]}/${m[2]}/${m[1]}`;
+  }
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  return str;
+}
+
+export const NOTIFICATION_TYPES = {
+  date_change: 'Date Change',
+  admit_card: 'Admit Card Released',
+  result: 'Result Declared',
+  new_exam: 'New Exam Added',
+  alert: 'Official Notice Published',
+  general: 'General Announcement'
+};

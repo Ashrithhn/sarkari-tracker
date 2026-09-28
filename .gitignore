@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Production builds
+dist/
+build/
+.next/
+out/
+
+# Database & Runtime Uploads
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+sarkari.db
+server/sarkari.db
+uploads/*
+!uploads/.gitkeep
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs & Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+*.log
+
+# Editor & OS files
+.DS_Store
+*.pem
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Vercel
+.vercel

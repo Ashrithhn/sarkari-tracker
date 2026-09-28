@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+sarkari.db
+server/sarkari.db
+uploads/*
+!uploads/.gitkeep
+*.log
+.DS_Store
+.vercel
