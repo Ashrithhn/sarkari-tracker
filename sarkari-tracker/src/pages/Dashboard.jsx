@@ -161,41 +161,41 @@ const Dashboard = () => {
   }, [exams, searchTerm, selectedCategory]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-fade-in">
+    <div className="w-full space-y-4 sm:space-y-8 animate-fade-in">
       {/* Welcome / Mission Banner */}
-      <div className="glass-card p-6 sm:p-8 rounded-3xl relative overflow-hidden bg-gradient-to-br from-navy-800 via-navy-900 to-saffron-950 text-white shadow-xl">
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white text-xs font-semibold border border-white/15">
+      <div className="glass-card p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl relative overflow-hidden bg-gradient-to-br from-navy-800 via-navy-900 to-saffron-950 text-white shadow-xl">
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6">
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:py-1 rounded-full bg-white/10 text-white text-[11px] sm:text-xs font-semibold border border-white/15">
               <ShieldCheck className="w-3.5 h-3.5 text-saffron-400" /> 
               <span>100% Genuine Commission Data</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
               {isAuthenticated ? `Welcome back, ${user?.name || 'Aspirant'}! 👋` : 'India\'s Official Exam Tracker 🇮🇳'}
             </h1>
-            <p className="text-navy-100 text-xs sm:text-sm max-w-2xl leading-relaxed">
+            <p className="text-navy-100/90 text-xs sm:text-sm max-w-2xl leading-relaxed">
               Track deadlines, official commission notifications, syllabus, cutoffs, and document checklists across UPSC, SSC, Banking, Railways, KEA, and Karnataka State exams.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto shrink-0">
             {isAuthenticated ? (
               <>
-                <Link to="/tracker" className="btn-primary text-xs sm:text-sm flex items-center gap-1.5 shadow-lg">
+                <Link to="/tracker" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-3 sm:px-4 flex items-center gap-1.5 shadow-lg">
                   <Plus size={16} /> Add Application
                 </Link>
                 {Boolean(user?.is_admin) && (
-                  <Link to="/admin" className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/15">
+                  <Link to="/admin" className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/15 text-center">
                     Admin Portal
                   </Link>
                 )}
               </>
             ) : (
               <>
-                <Link to="/login" className="btn-primary text-xs sm:text-sm flex items-center gap-1.5 shadow-lg">
+                <Link to="/login" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-3 sm:px-4 flex items-center gap-1.5 shadow-lg">
                   <LogIn size={16} /> Sign In to Track
                 </Link>
-                <Link to="/register" className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/15 flex items-center gap-1.5">
+                <Link to="/register" className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/15 flex-1 sm:flex-initial text-center justify-center flex items-center gap-1.5">
                   <UserPlus size={16} /> Register Free
                 </Link>
               </>
@@ -205,13 +205,13 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-5">
         <StatCard 
           title="My Applications" 
           value={isAuthenticated ? jobs.length : 0} 
           icon={FileText} 
           color="bg-saffron-100 text-saffron-600 dark:bg-saffron-900/30 dark:text-saffron-400"
-          subtitle={isAuthenticated ? `${jobs.length} active application${jobs.length === 1 ? '' : 's'}` : "Sign in to track your jobs"}
+          subtitle={isAuthenticated ? `${jobs.length} active application${jobs.length === 1 ? '' : 's'}` : "Sign in to track jobs"}
         />
         <StatCard 
           title="Upcoming Test Dates" 
@@ -223,15 +223,15 @@ const Dashboard = () => {
             : upcomingDeadlines.length} 
           icon={Calendar} 
           color="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-          subtitle={isAuthenticated ? "From your tracked applications" : "Scheduled commission tests"}
+          subtitle={isAuthenticated ? "From tracked apps" : "Scheduled commission tests"}
         />
       </div>
 
       {/* Main Grid: Left 2 Cols (Applications / Directory), Right 1 Col (Deadlines & Alerts) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8">
         
         {/* Left 2 Columns */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-5 sm:space-y-8">
           
           {/* If user is logged in: Show personal active applications */}
           {isAuthenticated && (
@@ -270,11 +270,11 @@ const Dashboard = () => {
           )}
 
           {/* Public Exam Directory & Registry */}
-          <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-saffron-500" /> Official Exam Registry
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-saffron-500 shrink-0" /> Official Exam Registry
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">Verified Indian government recruitment schedules.</p>
               </div>
@@ -287,16 +287,16 @@ const Dashboard = () => {
                   placeholder="Search exam or commission..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500"
+                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500"
                 />
               </div>
             </div>
 
             {/* Category Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-2 custom-scrollbar text-xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar text-xs touch-pan-x -mx-1 px-1">
               <button
                 onClick={() => setSelectedCategory('All')}
-                className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition-colors ${
+                className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition-colors whitespace-nowrap ${
                   selectedCategory === 'All'
                     ? 'bg-saffron-500 text-white font-bold'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
@@ -308,7 +308,7 @@ const Dashboard = () => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition-colors whitespace-nowrap ${
                     selectedCategory === cat.id
                       ? 'bg-saffron-500 text-white font-bold'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
@@ -320,14 +320,14 @@ const Dashboard = () => {
             </div>
 
             {/* Exam Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {filteredExams.slice(0, 8).map(exam => (
                 <div 
                   key={exam.id}
-                  className="p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-saffron-400 dark:hover:border-saffron-600 transition-all flex flex-col justify-between space-y-4"
+                  className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-saffron-400 dark:hover:border-saffron-600 transition-all flex flex-col justify-between space-y-3 sm:space-y-4"
                 >
                   <div>
-                    <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-saffron-100 text-saffron-800 dark:bg-saffron-950/60 dark:text-saffron-300">
                         {exam.category || 'Central'}
                       </span>
@@ -336,15 +336,15 @@ const Dashboard = () => {
                       </span>
                     </div>
 
-                    <h3 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-1">
+                    <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
                       {exam.name}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
                       {exam.conducting_body}
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1 text-xs">
+                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1 text-[11px] sm:text-xs">
                     <div className="flex justify-between text-slate-600 dark:text-slate-300">
                       <span>Apply Deadline:</span>
                       <span className="font-semibold text-slate-900 dark:text-white">
@@ -362,7 +362,7 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <Link
                       to={`/exams/${exam.id}`}
-                      className="btn-primary text-xs py-1.5 px-3 flex-1 text-center"
+                      className="btn-primary text-xs py-1.5 px-3 flex-1 text-center justify-center rounded-xl"
                     >
                       View Details & Syllabus
                     </Link>
@@ -371,7 +371,7 @@ const Dashboard = () => {
                         href={exam.official_site}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+                        className="p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors shrink-0"
                         title="Open Official Commission Portal"
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -403,20 +403,20 @@ const Dashboard = () => {
         </div>
 
         {/* Right Column: Deadlines & Notifications */}
-        <div className="space-y-8">
+        <div className="space-y-5 sm:space-y-8">
           
           {/* Upcoming Deadlines (Countdown Timers) */}
-          <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-red-500" /> Upcoming Deadlines
+          <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-red-500 shrink-0" /> Upcoming Deadlines
             </h2>
             
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               {upcomingDeadlines.length > 0 ? (
                 upcomingDeadlines.map(item => (
                   <div 
                     key={item.id} 
-                    className="p-4 rounded-2xl bg-red-50/70 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 space-y-2"
+                    className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-red-50/70 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 space-y-2"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1">{item.title}</h4>
@@ -430,8 +430,8 @@ const Dashboard = () => {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-xs text-slate-500 space-y-2">
-                  <Clock className="w-8 h-8 mx-auto text-slate-400" />
+                <div className="text-center py-6 sm:py-8 text-xs text-slate-500 space-y-2">
+                  <Clock className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-slate-400" />
                   <p className="font-medium text-slate-700 dark:text-slate-300">No Upcoming Deadlines</p>
                   <p className="text-[11px] text-slate-400">
                     {isAuthenticated 
@@ -444,10 +444,10 @@ const Dashboard = () => {
           </div>
 
           {/* Official Commission Notifications & Alerts */}
-          <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Bell className="w-5 h-5 text-saffron-500" /> Important Updates
+          <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div className="flex justify-between items-center mb-3 sm:mb-4">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Bell className="w-5 h-5 text-saffron-500 shrink-0" /> Important Updates
               </h2>
               <Link to="/notifications" className="text-xs font-semibold text-saffron-600 dark:text-saffron-400 hover:underline">
                 View All

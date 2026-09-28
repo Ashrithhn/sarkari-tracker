@@ -9,17 +9,18 @@ const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
   const [profileOpen, setProfileOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-16 z-30 glass-card rounded-none border-b border-white/20 dark:border-navy-700/50 flex items-center justify-between px-4 lg:px-6">
-      <div className="flex items-center gap-4">
+    <nav className="fixed top-0 left-0 right-0 h-14 sm:h-16 z-30 glass-card rounded-none border-b border-white/20 dark:border-navy-700/50 flex items-center justify-between px-3 sm:px-4 lg:px-6">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button 
           onClick={toggleSidebar}
-          className="lg:hidden p-2 rounded-md hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 transition-colors"
+          className="lg:hidden p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 transition-colors shrink-0"
+          aria-label="Open Navigation Menu"
         >
-          <Menu className="w-6 h-6" />
+          <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-saffron-500 via-white to-green-600 drop-shadow-sm">
-            🇮🇳 SarkariTracker
+        <Link to="/" className="flex items-center gap-1.5 min-w-0">
+          <span className="text-base sm:text-xl lg:text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-saffron-500 via-slate-800 to-green-600 dark:via-white drop-shadow-xs truncate">
+            🇮🇳 Sarkari<span className="text-saffron-500">Tracker</span>
           </span>
         </Link>
       </div>
@@ -35,13 +36,13 @@ const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <button 
           onClick={toggleDarkMode}
-          className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 transition-colors"
+          className="p-1.5 sm:p-2 rounded-full hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 transition-colors"
           title="Toggle Dark Mode"
         >
-          {darkMode ? <Sun className="w-5 h-5 text-saffron-400" /> : <Moon className="w-5 h-5 text-navy-600" />}
+          {darkMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-saffron-400" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-navy-600" />}
         </button>
 
         <NotificationBell />
@@ -52,7 +53,7 @@ const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
               onClick={() => setProfileOpen(!profileOpen)}
               className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-saffron-400 to-saffron-600 flex items-center justify-center text-white font-semibold text-xs">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-saffron-400 to-saffron-600 flex items-center justify-center text-white font-semibold text-xs">
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </div>
             </button>
@@ -98,16 +99,16 @@ const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <Link 
               to="/login"
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+              className="text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg sm:rounded-xl bg-saffron-500 hover:bg-saffron-600 text-white transition-colors shadow-xs"
             >
               Sign In
             </Link>
             <Link 
               to="/register"
-              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-saffron-500 hover:bg-saffron-600 text-white transition-colors shadow-xs"
+              className="hidden sm:inline-flex text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
             >
               Register
             </Link>

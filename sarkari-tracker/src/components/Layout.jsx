@@ -25,7 +25,7 @@ const Layout = ({ darkMode, toggleDarkMode }) => {
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
       />
       
-      <div className="flex flex-1 overflow-hidden pt-16">
+      <div className="flex flex-1 overflow-hidden pt-14 sm:pt-16">
         {/* Mobile sidebar backdrop */}
         {sidebarOpen && (
           <div 
@@ -37,7 +37,7 @@ const Layout = ({ darkMode, toggleDarkMode }) => {
         <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
         
         <main ref={mainRef} className="flex-1 overflow-y-auto w-full flex flex-col justify-between">
-          <div className="container mx-auto p-4 md:p-6 lg:p-8 max-w-7xl flex-1">
+          <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex-1">
             <Outlet />
           </div>
           <Footer />
