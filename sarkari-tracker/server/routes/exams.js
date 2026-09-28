@@ -100,8 +100,12 @@ router.get('/', (req, res) => {
     const params = [];
 
     if (category && category !== 'All') {
-      sql += ' AND LOWER(category) = LOWER(?)';
-      params.push(category);
+      if (category.toLowerCase() === 'karnataka') {
+        sql += " AND (LOWER(category) = 'karnataka' OR LOWER(state) = 'karnataka')";
+      } else {
+        sql += ' AND LOWER(category) = LOWER(?)';
+        params.push(category);
+      }
     }
     if (level && level !== 'All') {
       sql += ' AND LOWER(level) = LOWER(?)';
@@ -111,10 +115,13 @@ router.get('/', (req, res) => {
       sql += ' AND LOWER(state) = LOWER(?)';
       params.push(state);
     }
-    if (search) {
-      sql += ' AND (name LIKE ? OR short_name LIKE ? OR conducting_body LIKE ?)';
-      const term = `%${search}%`;
-      params.push(term, term, term);
+    if (search && search.trim()) {
+      const tokens = search.trim().split(/\s+/).filter(Boolean);
+      for (const token of tokens) {
+        sql += ' AND (name LIKE ? OR short_name LIKE ? OR conducting_body LIKE ? OR category LIKE ? OR (state IS NOT NULL AND state LIKE ?))';
+        const term = `%${token}%`;
+        params.push(term, term, term, term, term);
+      }
     }
 
     sql += ' ORDER BY level DESC, state DESC, category ASC, name ASC';

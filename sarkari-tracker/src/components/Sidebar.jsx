@@ -70,13 +70,17 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             {EXAM_CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               return (
-                <button
+                <NavLink
                   key={cat.id}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300"
+                  to={`/?category=${cat.id}`}
+                  onClick={closeMobileSidebar}
+                  className={({ isActive }) =>
+                    `w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 text-left`
+                  }
                 >
-                  <Icon className={`w-4 h-4 ${cat.color}`} />
-                  <span className="text-sm">{cat.name}</span>
-                </button>
+                  <Icon className={`w-4 h-4 ${cat.color} shrink-0`} />
+                  <span className="text-xs font-medium truncate">{cat.name}</span>
+                </NavLink>
               );
             })}
           </div>

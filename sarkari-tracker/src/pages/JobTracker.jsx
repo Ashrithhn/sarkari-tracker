@@ -331,11 +331,12 @@ const JobTracker = () => {
 
   // Filtered & Sorted Jobs
   const filteredJobs = jobs.filter(job => {
-    const examName = job.custom_exam_name || job.name || job.short_name || '';
-    const matchSearch = examName.toLowerCase().includes(search.toLowerCase()) ||
-      (job.post_name && job.post_name.toLowerCase().includes(search.toLowerCase())) ||
-      (job.conducting_body && job.conducting_body.toLowerCase().includes(search.toLowerCase()));
-    const matchCat = filterCategory === 'All' || job.category === filterCategory;
+    const term = search.trim().toLowerCase();
+    const tokens = term ? term.split(/\s+/).filter(Boolean) : [];
+    const searchableText = `${job.custom_exam_name || ''} ${job.name || ''} ${job.short_name || ''} ${job.post_name || ''} ${job.conducting_body || ''} ${job.category || ''}`.toLowerCase();
+    
+    const matchSearch = tokens.length === 0 || tokens.every(t => searchableText.includes(t));
+    const matchCat = filterCategory === 'All' || job.category === filterCategory || (filterCategory === 'Karnataka' && (job.category === 'Karnataka' || job.state === 'Karnataka'));
     const matchStatus = filterStatus === 'All' || job.status === filterStatus;
     return matchSearch && matchCat && matchStatus;
   }).sort((a, b) => {
@@ -558,11 +559,13 @@ const JobTracker = () => {
                   
                   <div className="max-h-48 overflow-y-auto space-y-1.5 border border-slate-100 dark:border-slate-800 rounded-xl p-2 bg-slate-50/50 dark:bg-slate-900/50">
                     {availableExams
-                      .filter(e => 
-                        e.name.toLowerCase().includes(examSearch.toLowerCase()) || 
-                        e.short_name.toLowerCase().includes(examSearch.toLowerCase()) ||
-                        e.conducting_body.toLowerCase().includes(examSearch.toLowerCase())
-                      )
+                      .filter(e => {
+                        const term = examSearch.trim().toLowerCase();
+                        if (!term) return true;
+                        const tokens = term.split(/\s+/).filter(Boolean);
+                        const searchableText = `${e.name || ''} ${e.short_name || ''} ${e.conducting_body || ''} ${e.category || ''} ${e.state || ''}`.toLowerCase();
+                        return tokens.every(token => searchableText.includes(token));
+                      })
                       .map(exam => {
                         const isSelected = selectedRegistryExam?.id === exam.id;
                         return (

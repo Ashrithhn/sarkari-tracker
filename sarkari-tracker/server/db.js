@@ -46,6 +46,7 @@ db.exec(`
     data_status TEXT DEFAULT 'empty',     -- 'empty' | 'pending_review' | 'verified'
     last_verified_at TEXT,
     verified_by TEXT,
+    slug TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -274,40 +275,61 @@ if (userCount === 0) {
   }
 }
 
-// Auto-seed official exams if table is empty
-const examCount = db.prepare('SELECT COUNT(*) as count FROM exams').get().count;
-if (examCount === 0) {
-  try {
-    const registryPath = path.join(__dirname, 'data/examRegistry.json');
-    if (fs.existsSync(registryPath)) {
-      const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
-      const insertExam = db.prepare(`
-        INSERT INTO exams (
-          name, short_name, conducting_body, level, state, category,
-          official_site, careers_url, notification_url, results_url,
-          admit_card_url, syllabus_source_url, frequency, scrape_frequency,
-          adapter_type, is_active, data_status, slug
-        ) VALUES (
-          @name, @short_name, @conducting_body, @level, @state, @category,
-          @official_site, @careers_url, @notification_url, @results_url,
-          @admit_card_url, @syllabus_source_url, @frequency, @scrape_frequency,
-          @adapter_type, @active, 'empty', @slug
-        )
-      `);
-      const insertAllExams = db.transaction((exams) => {
-        for (const e of exams) {
+// Auto-seed and sync official exams from registry
+try {
+  const registryPath = path.join(__dirname, 'data/examRegistry.json');
+  if (fs.existsSync(registryPath)) {
+    const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+    const existingExams = db.prepare('SELECT id, short_name, name FROM exams').all();
+    const existingSet = new Set(existingExams.map(e => (e.short_name || e.name).toLowerCase().trim()));
+
+    const insertExam = db.prepare(`
+      INSERT INTO exams (
+        name, short_name, conducting_body, level, state, category,
+        official_site, careers_url, notification_url, results_url,
+        admit_card_url, syllabus_source_url, frequency, scrape_frequency,
+        adapter_type, is_active, data_status, slug
+      ) VALUES (
+        @name, @short_name, @conducting_body, @level, @state, @category,
+        @official_site, @careers_url, @notification_url, @results_url,
+        @admit_card_url, @syllabus_source_url, @frequency, @scrape_frequency,
+        @adapter_type, @active, 'empty', @slug
+      )
+    `);
+
+    const missing = registry.filter(e => !existingSet.has((e.short_name || e.name).toLowerCase().trim()));
+    if (missing.length > 0) {
+      const insertMissing = db.transaction((examsToInsert) => {
+        for (const e of examsToInsert) {
+          const shortName = e.short_name || e.name || 'Exam';
+          const slug = slugify(shortName);
           insertExam.run({
-            ...e,
-            slug: slugify(e.short_name || e.name)
+            name: e.name || '',
+            short_name: shortName,
+            conducting_body: e.conducting_body || '',
+            level: e.level || 'central',
+            state: e.state || null,
+            category: e.category || 'Central',
+            official_site: e.official_site || '',
+            careers_url: e.careers_url || null,
+            notification_url: e.notification_url || null,
+            results_url: e.results_url || null,
+            admit_card_url: e.admit_card_url || null,
+            syllabus_source_url: e.syllabus_source_url || null,
+            frequency: e.frequency || 'annual',
+            scrape_frequency: e.scrape_frequency || 360,
+            adapter_type: e.adapter_type || 'generic',
+            active: e.active !== undefined ? e.active : (e.is_active !== undefined ? e.is_active : 1),
+            slug: slug
           });
         }
       });
-      insertAllExams(registry);
-      console.log(`✓ Auto-seeded ${registry.length} official exams into new database`);
+      insertMissing(missing);
+      console.log(`✓ Synchronized ${missing.length} new exams into SQLite (Total now: ${existingExams.length + missing.length})`);
     }
-  } catch (err) {
-    console.error('Exam auto-seed failed:', err.message);
   }
+} catch (err) {
+  console.error('Exam sync failed:', err.message);
 }
 
 // Backfill missing slugs for all exams

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Sun, Moon, Menu, User, LogOut, Settings } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [navSearch, setNavSearch] = useState('');
 
   return (
     <nav className="fixed top-0 left-0 right-0 h-14 sm:h-16 z-30 glass-card rounded-none border-b border-white/20 dark:border-navy-700/50 flex items-center justify-between px-3 sm:px-4 lg:px-6">
@@ -25,16 +27,26 @@ const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
         </Link>
       </div>
 
-      <div className="flex-1 max-w-xl px-4 hidden md:block">
+      <form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (navSearch.trim()) {
+            navigate(`/?search=${encodeURIComponent(navSearch.trim())}`);
+          }
+        }}
+        className="flex-1 max-w-xl px-4 hidden md:block"
+      >
         <div className="relative group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-saffron-500 transition-colors" />
           <input 
             type="text" 
-            placeholder="Search exams, updates, notifications..." 
-            className="input-field pl-10 py-2 rounded-full w-full bg-slate-100/50 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700"
+            placeholder="Search all exams (UPSC, KEA, Police, Banking, Railway, etc.)..." 
+            value={navSearch}
+            onChange={(e) => setNavSearch(e.target.value)}
+            className="input-field pl-10 py-2 rounded-full w-full bg-slate-100/50 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 text-xs"
           />
         </div>
-      </div>
+      </form>
 
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <button 

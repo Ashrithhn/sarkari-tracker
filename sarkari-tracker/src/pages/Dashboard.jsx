@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   FileText, Calendar, Bell, Plus, Award, CheckCircle, 
   Clock, ShieldCheck, ExternalLink, ArrowRight, Search,
@@ -17,6 +16,7 @@ import JobCard from '../components/JobCard';
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
+  const [searchParams] = useSearchParams();
   const [stats, setStats] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -24,8 +24,20 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   // Exam Search & Filter on Dashboard
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'All');
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  useEffect(() => {
+    const qSearch = searchParams.get('search');
+    if (qSearch !== null) setSearchTerm(qSearch);
+    const qCat = searchParams.get('category');
+    if (qCat !== null) setSelectedCategory(qCat);
+  }, [searchParams]);
+
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [searchTerm, selectedCategory]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -144,17 +156,19 @@ const Dashboard = () => {
 
   const pieColors = ['#F97316', '#3B82F6', '#10B981', '#6366F1', '#8B5CF6', '#EF4444'];
 
-  // Filtered public exams
+  // Filtered public exams with intelligent multi-token search
   const filteredExams = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    const tokens = term ? term.split(/\s+/).filter(Boolean) : [];
+
     return exams.filter(ex => {
-      const matchesSearch = !searchTerm || 
-        ex.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ex.short_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ex.conducting_body?.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchableText = `${ex.name || ''} ${ex.short_name || ''} ${ex.conducting_body || ''} ${ex.category || ''} ${ex.state || ''} ${ex.level || ''}`.toLowerCase();
+
+      const matchesSearch = tokens.length === 0 || tokens.every(token => searchableText.includes(token));
       
       const matchesCat = selectedCategory === 'All' || 
         ex.category === selectedCategory ||
-        (selectedCategory === 'Karnataka' && (ex.category === 'Karnataka' || ex.level === 'state'));
+        (selectedCategory === 'Karnataka' && (ex.category === 'Karnataka' || ex.state === 'Karnataka' || ex.level === 'state'));
 
       return matchesSearch && matchesCat;
     });
@@ -304,89 +318,124 @@ const Dashboard = () => {
               >
                 All Exams ({exams.length})
               </button>
-              {EXAM_CATEGORIES.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition-colors whitespace-nowrap ${
-                    selectedCategory === cat.id
-                      ? 'bg-saffron-500 text-white font-bold'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
+              {EXAM_CATEGORIES.map(cat => {
+                const count = exams.filter(e => cat.id === 'Karnataka' ? (e.category === 'Karnataka' || e.state === 'Karnataka' || e.level === 'state') : e.category === cat.id).length;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => { setSelectedCategory(cat.id); setVisibleCount(12); }}
+                    className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+                      selectedCategory === cat.id
+                        ? 'bg-saffron-500 text-white font-bold'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    <span>{cat.name}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      selectedCategory === cat.id ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Exam Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {filteredExams.slice(0, 8).map(exam => (
-                <div 
-                  key={exam.id}
-                  className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-saffron-400 dark:hover:border-saffron-600 transition-all flex flex-col justify-between space-y-3 sm:space-y-4"
-                >
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-saffron-100 text-saffron-800 dark:bg-saffron-950/60 dark:text-saffron-300">
-                        {exam.category || 'Central'}
-                      </span>
-                      <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3" /> Official
-                      </span>
+            {filteredExams.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                {filteredExams.slice(0, visibleCount).map(exam => (
+                  <div 
+                    key={exam.id}
+                    className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-saffron-400 dark:hover:border-saffron-600 transition-all flex flex-col justify-between space-y-3 sm:space-y-4"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-saffron-100 text-saffron-800 dark:bg-saffron-950/60 dark:text-saffron-300">
+                          {exam.category || 'Central'}
+                        </span>
+                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3" /> Official
+                        </span>
+                      </div>
+
+                      <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
+                        {exam.name}
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                        {exam.conducting_body} {exam.state ? `• ${exam.state}` : ''}
+                      </p>
                     </div>
 
-                    <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
-                      {exam.name}
-                    </h3>
-                    <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-                      {exam.conducting_body}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1 text-[11px] sm:text-xs">
-                    <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                      <span>Apply Deadline:</span>
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {exam.dates?.apply_end || exam.apply_end || 'Notice Awaited'}
-                      </span>
+                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1 text-[11px] sm:text-xs">
+                      <div className="flex justify-between text-slate-600 dark:text-slate-300">
+                        <span>Apply Deadline:</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {exam.dates?.apply_end || exam.apply_end || 'Notice Awaited'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-600 dark:text-slate-300">
+                        <span>Exam Date:</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          {exam.dates?.exam_date || exam.exam_date || 'Will be updated soon'}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                      <span>Exam Date:</span>
-                      <span className="font-semibold text-slate-900 dark:text-white">
-                        {exam.dates?.exam_date || exam.exam_date || 'Will be updated soon'}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center justify-between gap-2 pt-1">
-                    <Link
-                      to={`/exams/${exam.id}`}
-                      className="btn-primary text-xs py-1.5 px-3 flex-1 text-center justify-center rounded-xl"
-                    >
-                      View Details & Syllabus
-                    </Link>
-                    {exam.official_site && (
-                      <a
-                        href={exam.official_site}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors shrink-0"
-                        title="Open Official Commission Portal"
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <Link
+                        to={`/exams/${exam.id}`}
+                        className="btn-primary text-xs py-1.5 px-3 flex-1 text-center justify-center rounded-xl font-semibold"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    )}
+                        View Details & Syllabus
+                      </Link>
+                      {exam.official_site && (
+                        <a
+                          href={exam.official_site}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors shrink-0"
+                          title="Open Official Commission Portal"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 px-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+                <Search className="w-8 h-8 text-slate-400 mx-auto" />
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {searchTerm ? `No exams found for "${searchTerm}"` : 'No exams found in this category'}
+                </h4>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  Try searching for keywords like "KPSC", "KEA", "Police", "Railway", "Clerk", "FDA", "High Court", or "UPSC".
+                </p>
+                <button 
+                  onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
+                  className="mt-1 text-xs font-semibold px-4 py-2 rounded-xl bg-saffron-500 text-white hover:bg-saffron-600 transition-colors"
+                >
+                  View All Exams ({exams.length})
+                </button>
+              </div>
+            )}
 
-            {filteredExams.length > 8 && (
-              <div className="text-center pt-2">
-                <Link to="/resources" className="text-xs font-bold text-saffron-600 dark:text-saffron-400 hover:underline">
-                  Explore full syllabus, PYQs, and details for all {filteredExams.length} exams →
-                </Link>
+            {filteredExams.length > visibleCount && (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-4">
+                <button 
+                  onClick={() => setVisibleCount(prev => prev + 12)}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-xs"
+                >
+                  Load More (+12 Exams)
+                </button>
+                <button 
+                  onClick={() => setVisibleCount(filteredExams.length)}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-saffron-50 dark:bg-saffron-950/40 text-saffron-700 dark:text-saffron-300 hover:bg-saffron-100 border border-saffron-200 dark:border-saffron-800 text-xs font-bold transition-all"
+                >
+                  Show All ({filteredExams.length} Exams)
+                </button>
               </div>
             )}
           </div>
