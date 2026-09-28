@@ -48,18 +48,33 @@ app.use('/uploads', express.static(uploadsPath));
 
 // Serve static frontend assets if built
 const distPath = path.join(__dirname, '../dist');
-app.use(express.static(distPath));
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+}
+
+// Single Page Application (SPA) fallback or API landing
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+  const indexPath = path.join(distPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  res.json({
+    status: 'ok',
+    message: '🇮🇳 SarkariTracker API is live and healthy',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: '/api/health',
+      exams: '/api/public/exams',
+      blogs: '/api/public/blogs'
+    }
+  });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: err.message || 'Something went wrong!' });
-});
-
-// Single Page Application (SPA) fallback
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
-  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
