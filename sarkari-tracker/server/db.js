@@ -1,5 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
+import bcrypt from 'bcryptjs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -252,6 +254,60 @@ export function slugify(text) {
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+// Auto-seed default admin and student users if table is empty
+const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
+if (userCount === 0) {
+  try {
+    const hashedPasswordAdmin = bcrypt.hashSync('admin123', 10);
+    const hashedPasswordUser = bcrypt.hashSync('student123', 10);
+    const insertUser = db.prepare(`
+      INSERT INTO users (name, email, phone, password, is_admin)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    insertUser.run('Sarkari Admin', 'admin@sarkari.in', '9999999999', hashedPasswordAdmin, 1);
+    insertUser.run('Candidate Aspirant', 'student@sarkari.in', '9888888888', hashedPasswordUser, 0);
+    console.log('✓ Auto-seeded admin and student accounts');
+  } catch (err) {
+    console.error('User auto-seed failed:', err.message);
+  }
+}
+
+// Auto-seed official exams if table is empty
+const examCount = db.prepare('SELECT COUNT(*) as count FROM exams').get().count;
+if (examCount === 0) {
+  try {
+    const registryPath = path.join(__dirname, 'data/examRegistry.json');
+    if (fs.existsSync(registryPath)) {
+      const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
+      const insertExam = db.prepare(`
+        INSERT INTO exams (
+          name, short_name, conducting_body, level, state, category,
+          official_site, careers_url, notification_url, results_url,
+          admit_card_url, syllabus_source_url, frequency, scrape_frequency,
+          adapter_type, is_active, data_status, slug
+        ) VALUES (
+          @name, @short_name, @conducting_body, @level, @state, @category,
+          @official_site, @careers_url, @notification_url, @results_url,
+          @admit_card_url, @syllabus_source_url, @frequency, @scrape_frequency,
+          @adapter_type, @active, 'empty', @slug
+        )
+      `);
+      const insertAllExams = db.transaction((exams) => {
+        for (const e of exams) {
+          insertExam.run({
+            ...e,
+            slug: slugify(e.short_name || e.name)
+          });
+        }
+      });
+      insertAllExams(registry);
+      console.log(`✓ Auto-seeded ${registry.length} official exams into new database`);
+    }
+  } catch (err) {
+    console.error('Exam auto-seed failed:', err.message);
+  }
 }
 
 // Backfill missing slugs for all exams
