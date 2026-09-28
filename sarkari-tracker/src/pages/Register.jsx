@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, User, Phone, UserPlus, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getPublicPortalUrl } from '../utils/constants';
@@ -15,8 +15,17 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { register } = useAuth();
+  const { register, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || '/tracker';
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate, from]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,7 +67,7 @@ const Register = () => {
         phone: formData.phone ? formData.phone.trim() : '',
         password: formData.password
       });
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {

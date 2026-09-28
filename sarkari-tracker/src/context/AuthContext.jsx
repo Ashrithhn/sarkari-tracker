@@ -13,8 +13,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      refreshUser();
+      if (!user) {
+        refreshUser();
+      } else {
+        setLoading(false);
+      }
     } else {
+      setUser(null);
       setLoading(false);
     }
   }, [token]);
@@ -22,10 +27,14 @@ export const AuthProvider = ({ children }) => {
   const refreshUser = async () => {
     try {
       const res = await getMe();
-      setUser(res.user || res);
+      if (res && (res.user || res.id)) {
+        setUser(res.user || res);
+      }
     } catch (error) {
       console.error('Failed to fetch user', error);
-      logout();
+      setToken(null);
+      setUser(null);
+      removeToken();
     } finally {
       setLoading(false);
     }
@@ -33,17 +42,23 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (emailOrCreds, password) => {
     const data = await apiLogin(emailOrCreds, password);
-    setToken(data.token);
-    setLocalToken(data.token);
-    setUser(data.user || data);
+    const authToken = data.token;
+    const authUser = data.user || data;
+    setLocalToken(authToken);
+    setToken(authToken);
+    setUser(authUser);
+    setLoading(false);
     return data;
   };
 
   const register = async (userData) => {
     const data = await apiRegister(userData);
-    setToken(data.token);
-    setLocalToken(data.token);
-    setUser(data.user || data);
+    const authToken = data.token;
+    const authUser = data.user || data;
+    setLocalToken(authToken);
+    setToken(authToken);
+    setUser(authUser);
+    setLoading(false);
     return data;
   };
 

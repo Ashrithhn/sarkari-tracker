@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -20,6 +20,8 @@ import About from './pages/About';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-gray-50 dark:bg-navy-950">
@@ -30,7 +32,7 @@ const ProtectedRoute = ({ children }) => {
       </div>
     );
   }
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />;
   return children;
 };
 

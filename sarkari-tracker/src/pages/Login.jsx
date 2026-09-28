@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getPublicPortalUrl } from '../utils/constants';
@@ -10,8 +10,18 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const from = location.state?.from?.pathname || '/tracker';
+
+  // If already authenticated, redirect to tracker
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate, from]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +36,7 @@ const Login = () => {
     setLoading(true);
     try {
       await login(cleanEmail, password);
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || 'Failed to sign in. Please verify your credentials.');
     } finally {

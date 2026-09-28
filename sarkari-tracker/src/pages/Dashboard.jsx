@@ -25,13 +25,6 @@ const Dashboard = () => {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // If user is not authenticated on the candidate portal, redirect to public website
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      window.location.href = getPublicPortalUrl();
-    }
-  }, [authLoading, isAuthenticated]);
-
   // Exam Search & Filter on Dashboard
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'All');

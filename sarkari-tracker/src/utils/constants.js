@@ -56,7 +56,9 @@ export const KARNATAKA_BOARDS = [
   'KPCL (Karnataka Power Corporation Ltd)'
 ];
 
-export const API_BASE = (import.meta.env.VITE_API_BASE || 'https://sarkari-api-5ah7.onrender.com').replace(/\/$/, '');
+export const API_BASE = import.meta.env.DEV
+  ? ''
+  : (import.meta.env.VITE_API_BASE ?? '').replace(/\/$/, '');
 
 export const getPublicPortalUrl = () => {
   if (typeof window === 'undefined') return 'https://sarkari-tracker-vpmt.vercel.app';
