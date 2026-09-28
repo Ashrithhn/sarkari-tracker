@@ -1,6 +1,34 @@
 import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import db from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const cleanExt = path.extname(file.originalname).toLowerCase();
+    const cleanBase = path.basename(file.originalname, cleanExt).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 30);
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E6)}`;
+    cb(null, `candidate-${cleanBase}-${uniqueSuffix}${cleanExt}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 25 * 1024 * 1024 } // 25 MB max
+});
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -84,6 +112,10 @@ function formatApplication(app) {
     applied_date: app.applied_date,
     fee_paid: Boolean(app.fee_paid),
     fee_receipt_file: app.fee_receipt_file || null,
+    notification_file: app.notification_file || null,
+    syllabus_file: app.syllabus_file || null,
+    admit_card_file: app.admit_card_file || null,
+    application_form_file: app.application_form_file || null,
     status: app.status || 'Applied',
     notes: app.notes || '',
     official_portal_link: app.official_portal_link || app.official_site || null,
@@ -491,6 +523,122 @@ router.post('/:id/checklist', (req, res) => {
     `).run(req.params.id, name);
 
     res.status(201).json({ success: true, id: info.lastInsertRowid, item_title: name, is_completed: 0 });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5b. Candidate Personal Resource Upload (Notification, Syllabus, Admit Card, Application Slip, Fee Receipt)
+router.post('/:id/upload', upload.single('file'), (req, res) => {
+  try {
+    const { doc_type } = req.body;
+    const allowedTypes = ['notification', 'syllabus', 'admit_card', 'application_form', 'fee_receipt'];
+    if (!allowedTypes.includes(doc_type)) {
+      return res.status(400).json({ error: 'Invalid document type. Must be one of: notification, syllabus, admit_card, application_form, fee_receipt' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const app = db.prepare('SELECT * FROM applications WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+    if (!app) {
+      return res.status(404).json({ error: 'Application not found or unauthorized' });
+    }
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    const columnMap = {
+      notification: 'notification_file',
+      syllabus: 'syllabus_file',
+      admit_card: 'admit_card_file',
+      application_form: 'application_form_file',
+      fee_receipt: 'fee_receipt_file'
+    };
+    const targetColumn = columnMap[doc_type];
+
+    if (doc_type === 'fee_receipt') {
+      db.prepare(`UPDATE applications SET ${targetColumn} = ?, fee_paid = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?`)
+        .run(fileUrl, req.params.id, req.user.id);
+    } else {
+      db.prepare(`UPDATE applications SET ${targetColumn} = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?`)
+        .run(fileUrl, req.params.id, req.user.id);
+    }
+
+    const updated = db.prepare(`
+      SELECT a.*, 
+             e.name as exam_name, 
+             e.short_name as exam_short_name, 
+             e.conducting_body, 
+             e.level, 
+             e.official_site
+      FROM applications a
+      LEFT JOIN exams e ON a.exam_id = e.id
+      WHERE a.id = ? AND a.user_id = ?
+    `).get(req.params.id, req.user.id);
+
+    res.json({
+      success: true,
+      message: `${doc_type} uploaded successfully`,
+      file_url: fileUrl,
+      file_name: req.file.originalname,
+      application: formatApplication(updated)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5c. Candidate Personal Resource Delete
+router.delete('/:id/document/:docType', (req, res) => {
+  try {
+    const { docType } = req.params;
+    const allowedTypes = ['notification', 'syllabus', 'admit_card', 'application_form', 'fee_receipt'];
+    if (!allowedTypes.includes(docType)) {
+      return res.status(400).json({ error: 'Invalid document type' });
+    }
+
+    const app = db.prepare('SELECT * FROM applications WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+    if (!app) {
+      return res.status(404).json({ error: 'Application not found or unauthorized' });
+    }
+
+    const columnMap = {
+      notification: 'notification_file',
+      syllabus: 'syllabus_file',
+      admit_card: 'admit_card_file',
+      application_form: 'application_form_file',
+      fee_receipt: 'fee_receipt_file'
+    };
+    const targetColumn = columnMap[docType];
+    const existingFile = app[targetColumn];
+
+    if (existingFile && existingFile.startsWith('/uploads/')) {
+      const fileName = path.basename(existingFile);
+      const filePath = path.join(uploadsDir, fileName);
+      if (fs.existsSync(filePath)) {
+        try { fs.unlinkSync(filePath); } catch (e) {}
+      }
+    }
+
+    db.prepare(`UPDATE applications SET ${targetColumn} = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?`)
+      .run(req.params.id, req.user.id);
+
+    const updated = db.prepare(`
+      SELECT a.*, 
+             e.name as exam_name, 
+             e.short_name as exam_short_name, 
+             e.conducting_body, 
+             e.level, 
+             e.official_site
+      FROM applications a
+      LEFT JOIN exams e ON a.exam_id = e.id
+      WHERE a.id = ? AND a.user_id = ?
+    `).get(req.params.id, req.user.id);
+
+    res.json({
+      success: true,
+      message: `${docType} removed successfully`,
+      application: formatApplication(updated)
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

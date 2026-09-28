@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   Building2, Calendar, CheckCircle, Clock, ExternalLink, 
   Trash2, Edit, CheckSquare, Square, ChevronRight, FileCheck, 
-  AlertCircle, ShieldCheck, UserCheck, Sparkles, Globe 
+  AlertCircle, ShieldCheck, UserCheck, Sparkles, Globe, FolderArchive 
 } from 'lucide-react';
 import { APPLICATION_STATUSES, formatDate } from '../utils/constants';
 import CategoryBadge from './CategoryBadge';
@@ -14,6 +14,7 @@ const JobCard = ({
   job, 
   onStatusChange, 
   onOpenChecklist, 
+  onOpenResources,
   onEdit, 
   onDelete,
   onOpenAnalysis,
@@ -193,6 +194,27 @@ const JobCard = ({
             <span className="line-clamp-2"><strong className="font-semibold">Candidate Note:</strong> {app.notes}</span>
           </div>
         )}
+
+        {/* Candidate Personal Exam Resources (Notification, Syllabus, Admit Card, Application Slip, Fee Receipt) */}
+        <button
+          type="button"
+          onClick={() => onOpenResources && onOpenResources(app)}
+          className="w-full p-2.5 rounded-xl bg-gradient-to-r from-blue-50/90 to-indigo-50/90 dark:from-blue-950/40 dark:to-indigo-950/40 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/60 dark:hover:to-indigo-900/60 transition-all border border-blue-200/80 dark:border-blue-800/80 text-xs flex items-center justify-between mb-3 text-blue-950 dark:text-blue-200 shadow-xs group"
+        >
+          <span className="flex items-center gap-1.5 font-bold">
+            <FolderArchive className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
+            <span>My Exam Resources</span>
+          </span>
+          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+            [app.notification_file, app.syllabus_file, app.admit_card_file, app.application_form_file, app.fee_receipt_file].filter(Boolean).length > 0 
+              ? 'bg-blue-200/90 dark:bg-blue-800/90 text-blue-900 dark:text-blue-100' 
+              : 'bg-slate-200/80 dark:bg-slate-700/80 text-slate-700 dark:text-slate-300'
+          }`}>
+            {[app.notification_file, app.syllabus_file, app.admit_card_file, app.application_form_file, app.fee_receipt_file].filter(Boolean).length > 0 
+              ? `${[app.notification_file, app.syllabus_file, app.admit_card_file, app.application_form_file, app.fee_receipt_file].filter(Boolean).length}/5 Docs Saved →` 
+              : '+ Upload Docs →'}
+          </span>
+        </button>
 
         {/* Document Checklist Quick Bar */}
         {totalChecklistCount > 0 && (

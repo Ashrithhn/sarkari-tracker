@@ -4,7 +4,7 @@
     "email": "ashrith.sringeri@gmail.com",
     "phone": "9888888888",
     "password": "$2a$10$CGpoVlTxY7TT99pFE/TwQuEMipf8RTYIOKzXSPx9jxXTyAm5Yfyzu",
-    "is_admin": 1,
+    "is_admin": 0,
     "created_at": "2026-09-28T07:32:00.000Z"
   }
 ]

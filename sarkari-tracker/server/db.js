@@ -280,6 +280,30 @@ try {
 } catch (e) {}
 
 try {
+  db.exec('ALTER TABLE applications ADD COLUMN notification_file TEXT');
+} catch (e) {}
+
+try {
+  db.exec('ALTER TABLE applications ADD COLUMN syllabus_file TEXT');
+} catch (e) {}
+
+try {
+  db.exec('ALTER TABLE applications ADD COLUMN admit_card_file TEXT');
+} catch (e) {}
+
+try {
+  db.exec('ALTER TABLE applications ADD COLUMN application_form_file TEXT');
+} catch (e) {}
+
+try {
+  db.exec('ALTER TABLE applications ADD COLUMN fee_receipt_file TEXT');
+} catch (e) {}
+
+try {
+  db.prepare("UPDATE users SET is_admin = 0 WHERE email = 'ashrith.sringeri@gmail.com'").run();
+} catch (e) {}
+
+try {
   db.exec('ALTER TABLE exams ADD COLUMN slug TEXT');
 } catch (e) {}
 
@@ -373,7 +397,7 @@ try {
   insertOrIgnore.run('Sarkari Admin', 'admin@sarkari.in', '9999999999', hashedPasswordAdmin, 1);
   insertOrIgnore.run('Candidate Aspirant', 'student@sarkari.in', '9888888888', hashedPasswordUser, 0);
   // Permanent user account for Ashrith H N with verified hash
-  insertOrIgnore.run('Ashrith H N', 'ashrith.sringeri@gmail.com', '9888888888', '$2a$10$CGpoVlTxY7TT99pFE/TwQuEMipf8RTYIOKzXSPx9jxXTyAm5Yfyzu', 1);
+  insertOrIgnore.run('Ashrith H N', 'ashrith.sringeri@gmail.com', '9888888888', '$2a$10$CGpoVlTxY7TT99pFE/TwQuEMipf8RTYIOKzXSPx9jxXTyAm5Yfyzu', 0);
 
   // Load any persisted users from backup json
   const persistedPath = path.join(__dirname, 'data', 'persisted_users.json');

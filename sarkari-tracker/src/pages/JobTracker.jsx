@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import JobCard from '../components/JobCard';
 import DailyIntelligenceModal from '../components/DailyIntelligenceModal';
+import CandidateResourcesModal from '../components/CandidateResourcesModal';
 
 const MODAL_EXAM_CATEGORIES = [
   { id: 'All', label: 'All Exams (160+)' },
@@ -93,6 +94,20 @@ const JobTracker = () => {
   const [activeIntelligenceJob, setActiveIntelligenceJob] = useState(null);
   const [isIntelligenceModalOpen, setIsIntelligenceModalOpen] = useState(false);
   const [isRunningDailyChecks, setIsRunningDailyChecks] = useState(false);
+
+  // Candidate Personal Resources Modal State
+  const [activeResourcesJob, setActiveResourcesJob] = useState(null);
+  const [isResourcesModalOpen, setIsResourcesModalOpen] = useState(false);
+
+  const handleOpenResources = (job) => {
+    setActiveResourcesJob(job);
+    setIsResourcesModalOpen(true);
+  };
+
+  const handleApplicationUpdated = (updatedApp) => {
+    setJobs(prev => prev.map(j => j.id === updatedApp.id ? updatedApp : j));
+    setActiveResourcesJob(updatedApp);
+  };
 
   const handleOpenIntelligence = (job) => {
     setActiveIntelligenceJob(job);
@@ -560,6 +575,7 @@ const JobTracker = () => {
                 application={job}
                 onStatusChange={handleStatusChange}
                 onOpenChecklist={setActiveChecklistJob}
+                onOpenResources={handleOpenResources}
                 onEdit={handleOpenEdit}
                 onDelete={handleDeleteJob}
                 onOpenAnalysis={handleOpenAnalysis}
@@ -1510,6 +1526,16 @@ const JobTracker = () => {
         isOpen={isIntelligenceModalOpen}
         onClose={() => setIsIntelligenceModalOpen(false)}
         application={activeIntelligenceJob}
+      />
+
+      {/* ========================================================= */}
+      {/* MODAL 6: CANDIDATE PERSONAL RESOURCES (PDFs & DOCS)       */}
+      {/* ========================================================= */}
+      <CandidateResourcesModal
+        isOpen={isResourcesModalOpen}
+        onClose={() => setIsResourcesModalOpen(false)}
+        application={activeResourcesJob}
+        onApplicationUpdated={handleApplicationUpdated}
       />
 
     </div>

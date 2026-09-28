@@ -234,16 +234,9 @@ const Dashboard = () => {
 
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto shrink-0">
             {isAuthenticated ? (
-              <>
-                <Link to="/tracker" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-4 flex items-center gap-1.5 shadow-md">
-                  <Plus size={16} /> Add Application
-                </Link>
-                {Boolean(user?.is_admin) && (
-                  <Link to="/admin" className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/15 text-center">
-                    Admin
-                  </Link>
-                )}
-              </>
+              <Link to="/tracker" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-4 flex items-center gap-1.5 shadow-md">
+                <Plus size={16} /> Add Application
+              </Link>
             ) : (
               <>
                 <Link to="/login" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-4 flex items-center gap-1.5 shadow-md">

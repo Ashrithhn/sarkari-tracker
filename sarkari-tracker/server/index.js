@@ -1,6 +1,6 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import fs from 'fs';
 import authRoutes from './routes/auth.js';
 import jobsRoutes from './routes/jobs.js';
@@ -11,8 +11,6 @@ import publicRoutes from './routes/public.js';
 import candidateRoutes from './routes/candidate.js';
 import { runDeadlineScanner } from './services/notificationDispatcher.js';
 import { runDailyRemindersForAllUsers } from './services/dailyReminders.js';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;

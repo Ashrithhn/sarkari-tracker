@@ -101,6 +101,28 @@ export const uploadFile = async (file) => {
   }
   return response.json();
 };
+
+// Candidate Personal Document Upload & Delete
+export const uploadJobDocument = async (jobId, file, docType) => {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('doc_type', docType);
+  const response = await fetch(`/api/jobs/${jobId}/upload`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Upload failed with status ${response.status}`);
+  }
+  return response.json();
+};
+
+export const deleteJobDocument = (jobId, docType) => 
+  apiCall(`/api/jobs/${jobId}/document/${docType}`, { method: 'DELETE' });
+
 export const deleteJob = (id) => apiCall(`/api/jobs/${id}`, { method: 'DELETE' });
 export const getJobStats = () => apiCall('/api/jobs/stats');
 export const checkExamApplication = (examId) => apiCall(`/api/jobs/check/${examId}`);

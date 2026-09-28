@@ -23,8 +23,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { name: 'My Applications', path: '/tracker', icon: Briefcase },
     { name: 'Calendar', path: '/calendar', icon: CalendarIcon },
     { name: 'Notifications', path: '/notifications', icon: Bell },
-    { name: 'Study Resources', path: '/resources', icon: BookOpen },
-    ...(Boolean(user?.is_admin) ? [{ name: 'Admin Verification Portal', path: '/admin', icon: ShieldCheck }] : [])
+    { name: 'Study Resources', path: '/resources', icon: BookOpen }
   ];
 
   const closeMobileSidebar = () => {

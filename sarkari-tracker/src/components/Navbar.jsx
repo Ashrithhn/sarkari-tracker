@@ -196,11 +196,6 @@ const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
                 <div className="px-4 py-2 border-b border-slate-100 dark:border-navy-700/50">
                   <p className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{user?.name || 'Candidate'}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email || ''}</p>
-                  {Boolean(user?.is_admin) && (
-                    <span className="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                      Admin Access
-                    </span>
-                  )}
                 </div>
                 <div className="py-1">
                   <Link 
@@ -210,15 +205,6 @@ const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
                   >
                     <User className="w-3.5 h-3.5" /> My Applications
                   </Link>
-                  {Boolean(user?.is_admin) && (
-                    <Link 
-                      to="/admin" 
-                      onClick={() => setProfileOpen(false)}
-                      className="w-full px-4 py-2 text-left text-xs text-saffron-600 dark:text-saffron-400 font-semibold hover:bg-slate-100 dark:hover:bg-navy-800 flex items-center gap-2"
-                    >
-                      <Settings className="w-3.5 h-3.5" /> Admin Verification Portal
-                    </Link>
-                  )}
                 </div>
                 <div className="py-1 border-t border-slate-100 dark:border-navy-700/50">
                   <button 
