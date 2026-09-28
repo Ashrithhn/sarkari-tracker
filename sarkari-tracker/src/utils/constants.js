@@ -58,6 +58,15 @@ export const KARNATAKA_BOARDS = [
 
 export const API_BASE = (import.meta.env.VITE_API_BASE || 'https://sarkari-api-5ah7.onrender.com').replace(/\/$/, '');
 
+export const getPublicPortalUrl = () => {
+  if (typeof window === 'undefined') return 'https://sarkari-tracker-vpmt.vercel.app';
+  if (import.meta.env.VITE_PUBLIC_PORTAL_URL) return import.meta.env.VITE_PUBLIC_PORTAL_URL;
+  if (window.location.hostname.includes('vercel.app')) {
+    return 'https://sarkari-tracker-vpmt.vercel.app';
+  }
+  return 'http://localhost:3000';
+};
+
 /**
  * Universal date formatter guaranteeing DD/MM/YYYY across all views
  */

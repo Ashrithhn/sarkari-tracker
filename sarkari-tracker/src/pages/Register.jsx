@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Phone, UserPlus, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { getPublicPortalUrl } from '../utils/constants';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -69,13 +70,13 @@ const Register = () => {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 relative">
       <div className="w-full max-w-md space-y-6">
         
-        {/* Back Link */}
-        <Link 
-          to="/" 
+        {/* Back Link to Official Portal */}
+        <a 
+          href={getPublicPortalUrl()} 
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
         >
-          <ArrowLeft size={16} /> Back to Dashboard
-        </Link>
+          <ArrowLeft size={16} /> Back to Official Portal
+        </a>
 
         {/* Card Header */}
         <div className="text-center space-y-1">

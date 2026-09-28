@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getToken, setToken as setLocalToken, removeToken, getMe, login as apiLogin, register as apiRegister } from '../utils/api';
+import { getPublicPortalUrl } from '../utils/constants';
 
 const AuthContext = createContext();
 
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     removeToken();
-    window.location.href = '/';
+    window.location.href = getPublicPortalUrl();
   };
 
   const isAuthenticated = !!token && !!user;

@@ -10,20 +10,27 @@ import {
 } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { getJobStats, getNotifications, getJobs, getExams } from '../utils/api';
-import { EXAM_CATEGORIES, formatDate } from '../utils/constants';
+import { EXAM_CATEGORIES, formatDate, getPublicPortalUrl } from '../utils/constants';
 import { checkAndDispatchDailyReminders } from '../utils/browserNotifications';
 import StatCard from '../components/StatCard';
 import DeadlineTimer from '../components/DeadlineTimer';
 import JobCard from '../components/JobCard';
 
 const Dashboard = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const [stats, setStats] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [jobs, setJobs] = useState([]);
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // If user is not authenticated on the candidate portal, redirect to public website
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      window.location.href = getPublicPortalUrl();
+    }
+  }, [authLoading, isAuthenticated]);
 
   // Exam Search & Filter on Dashboard
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
@@ -185,6 +192,15 @@ const Dashboard = () => {
       return matchesSearch && matchesCat;
     });
   }, [exams, searchTerm, selectedCategory]);
+
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
+        <div className="w-8 h-8 border-3 border-saffron-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs text-slate-500 font-medium">Redirecting to official portal...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-4 sm:space-y-8 animate-fade-in">
