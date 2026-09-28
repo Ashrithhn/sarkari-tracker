@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Bell, CheckCircle, ShieldCheck, AlertCircle, Clock } from 'lucide-react';
+import { Bell, CheckCircle, ShieldCheck, AlertCircle, Clock, Volume2 } from 'lucide-react';
 import { getNotifications, markNotificationRead, markAllNotificationsRead, getUnreadCount } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
+import { 
+  getNotificationPermission, 
+  requestNotificationPermission, 
+  checkAndDispatchDailyReminders 
+} from '../utils/browserNotifications';
 
 function getRelativeTime(timestamp) {
   if (!timestamp) return 'Recently';
@@ -15,6 +20,7 @@ function getRelativeTime(timestamp) {
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr < 24) return `${diffHr}h ago`;
   const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
   return `${diffDay}d ago`;
 }
 
@@ -23,6 +29,7 @@ const NotificationBell = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [permission, setPermission] = useState(() => getNotificationPermission());
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -41,8 +48,19 @@ const NotificationBell = () => {
       setNotifications(list);
       const count = list.filter(n => !n.read).length;
       setUnreadCount(count);
+
+      // Check and dispatch native device daily reminder alerts
+      checkAndDispatchDailyReminders(list);
     } catch (e) {
       console.warn('Could not load notifications:', e.message);
+    }
+  };
+
+  const handleEnableDeviceAlerts = async () => {
+    const granted = await requestNotificationPermission();
+    setPermission(granted ? 'granted' : 'denied');
+    if (granted && notifications.length > 0) {
+      checkAndDispatchDailyReminders(notifications);
     }
   };
 
@@ -111,6 +129,21 @@ const NotificationBell = () => {
               </button>
             )}
           </div>
+
+          {/* Quick Device Notification Prompt */}
+          {permission === 'default' && (
+            <div className="px-4 py-2 bg-saffron-50 dark:bg-saffron-950/40 border-b border-saffron-100 dark:border-saffron-900/40 flex items-center justify-between gap-2">
+              <span className="text-[11px] text-saffron-900 dark:text-saffron-200 font-medium">
+                🔔 Enable daily alerts on this device?
+              </span>
+              <button
+                onClick={handleEnableDeviceAlerts}
+                className="px-2 py-0.5 rounded-lg bg-saffron-500 hover:bg-saffron-600 text-white text-[10px] font-bold shrink-0"
+              >
+                Allow
+              </button>
+            </div>
+          )}
           
           <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
             {notifications.length > 0 ? (

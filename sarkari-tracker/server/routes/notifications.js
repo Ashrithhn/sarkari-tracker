@@ -1,6 +1,7 @@
 import express from 'express';
 import db from '../db.js';
 import { authenticateToken } from '../middleware/auth.js';
+import { generateDailyRemindersForUser } from '../services/dailyReminders.js';
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -8,7 +9,14 @@ router.use(authenticateToken);
 // Notifications
 router.get('/notifications', (req, res) => {
   try {
-    // Sync valid notifications for user's tracked exams OR verified official commission announcements
+    // 1. Generate real-time daily countdown reminders for applied jobs
+    try {
+      generateDailyRemindersForUser(req.user.id);
+    } catch (e) {
+      console.warn('Daily reminder generation warning:', e.message);
+    }
+
+    // 2. Sync valid notifications for user's tracked exams OR verified official commission announcements
     db.prepare(`
       INSERT OR IGNORE INTO user_notifications (user_id, notification_id, read)
       SELECT ?, n.id, 0 FROM notifications n
@@ -98,6 +106,10 @@ router.delete('/notifications/clear-all', (req, res) => {
 
 router.get('/notifications/unread-count', (req, res) => {
   try {
+    try {
+      generateDailyRemindersForUser(req.user.id);
+    } catch (e) {}
+
     const row = db.prepare('SELECT COUNT(*) as count FROM user_notifications WHERE user_id = ? AND read = 0').get(req.user.id);
     res.json({ count: row ? row.count : 0 });
   } catch (error) {

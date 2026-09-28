@@ -10,6 +10,7 @@ import adminRoutes from './routes/admin.js';
 import publicRoutes from './routes/public.js';
 import candidateRoutes from './routes/candidate.js';
 import { runDeadlineScanner } from './services/notificationDispatcher.js';
+import { runDailyRemindersForAllUsers } from './services/dailyReminders.js';
 
 dotenv.config();
 
@@ -80,19 +81,21 @@ app.use((err, req, res, next) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🇮🇳 SarkariTracker Server running on port ${PORT}`);
   
-  // Run initial deadline scan
+  // Run initial deadline scan & daily applied job reminders
   try {
     runDeadlineScanner();
+    runDailyRemindersForAllUsers();
   } catch (err) {
-    console.error('Initial deadline scanner failed:', err.message);
+    console.error('Initial daily scanner failed:', err.message);
   }
 
-  // Schedule background deadline checks every 12 hours
+  // Schedule background daily checks every 12 hours
   setInterval(() => {
     try {
       runDeadlineScanner();
+      runDailyRemindersForAllUsers();
     } catch (err) {
-      console.error('Scheduled deadline scanner failed:', err.message);
+      console.error('Scheduled daily scanner failed:', err.message);
     }
   }, 12 * 60 * 60 * 1000);
 });

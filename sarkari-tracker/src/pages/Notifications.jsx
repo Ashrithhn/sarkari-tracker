@@ -9,10 +9,15 @@ import {
 } from '../utils/api';
 import { 
   Bell, CheckCircle2, AlertTriangle, Calendar, FileText, 
-  Award, X, Circle, Trash2, ExternalLink, ShieldCheck, Building2, CheckCheck 
+  Award, X, Circle, Trash2, ExternalLink, ShieldCheck, Building2, CheckCheck, Clock, Smartphone 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDate } from '../utils/constants';
+import { 
+  getNotificationPermission, 
+  requestNotificationPermission, 
+  checkAndDispatchDailyReminders 
+} from '../utils/browserNotifications';
 
 function getRelativeTime(timestamp) {
   if (!timestamp) return 'Recently';
@@ -34,6 +39,7 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [actionLoading, setActionLoading] = useState(false);
+  const [devicePermission, setDevicePermission] = useState(() => getNotificationPermission());
 
   useEffect(() => {
     fetchNotifs();
@@ -43,12 +49,23 @@ const Notifications = () => {
     setLoading(true);
     try {
       const data = await getNotifications();
-      setNotifications(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      setNotifications(list);
+      // Dispatch device native daily reminders
+      checkAndDispatchDailyReminders(list);
     } catch (e) {
       console.warn('Failed to load notifications:', e);
       setNotifications([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEnableDeviceAlerts = async () => {
+    const granted = await requestNotificationPermission();
+    setDevicePermission(granted ? 'granted' : 'denied');
+    if (granted && notifications.length > 0) {
+      checkAndDispatchDailyReminders(notifications);
     }
   };
 
@@ -105,21 +122,25 @@ const Notifications = () => {
   const filteredNotifs = notifications.filter(n => {
     if (filter === 'all') return true;
     if (filter === 'unread') return !n.read;
+    if (filter === 'daily') return n.type === 'daily_reminder' || n.type === 'deadline' || n.type === 'exam';
     if (filter === 'official') return n.is_urgent === 1 || n.type === 'alert';
     if (filter === 'deadline') return n.type === 'deadline' || n.type === 'date_change';
     if (filter === 'admit_card') return n.type === 'admit_card' || n.type === 'result';
     return true;
   });
 
+  const dailyCount = notifications.filter(n => n.type === 'daily_reminder' || n.type === 'deadline' || n.type === 'exam').length;
   const unreadCount = notifications.filter(n => !n.read).length;
   const readCount = notifications.length - unreadCount;
 
   const getIcon = (type, isUrgent) => {
+    if (type === 'daily_reminder' || type === 'deadline') {
+      return <Clock className="w-5 h-5 text-saffron-500" />;
+    }
     if (isUrgent) {
       return <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />;
     }
     switch(type) {
-      case 'deadline':
       case 'date_change': 
         return <AlertTriangle className="w-5 h-5 text-amber-500" />;
       case 'admit_card': 
@@ -141,13 +162,13 @@ const Notifications = () => {
         <div className="glass-card p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-saffron-50 dark:bg-saffron-950/40 text-saffron-700 dark:text-saffron-400 text-xs font-bold mb-2 border border-saffron-200 dark:border-saffron-900/40">
-              <ShieldCheck className="w-3.5 h-3.5" /> Official Verified Alerts Feed
+              <ShieldCheck className="w-3.5 h-3.5" /> Official Verified Alerts & Daily Countdown
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-              <Bell className="w-7 h-7 text-saffron-500" /> Notifications & Updates
+              <Bell className="w-7 h-7 text-saffron-500" /> Notifications & Daily Reminders
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Real-time updates, official schedules, and personal reminders for your tracked examinations.
+              Automated daily countdowns of your applied exams, deadline reminders, and official commission updates.
             </p>
           </div>
 
@@ -187,10 +208,44 @@ const Notifications = () => {
           </div>
         </div>
 
+        {/* Daily Device Alerts Banner */}
+        <div className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-saffron-200 dark:border-saffron-900/50 bg-gradient-to-r from-saffron-50/80 via-orange-50/40 to-white dark:from-saffron-950/20 dark:via-navy-900 dark:to-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-saffron-500 text-white shrink-0 shadow-xs">
+              <Smartphone className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                Daily Applied Job Reminders on Your Device
+              </h3>
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+                Receive morning alerts on your mobile phone or browser showing days remaining for your applied exams.
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0">
+            {devicePermission === 'granted' ? (
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 text-xs font-bold border border-emerald-300 dark:border-emerald-800">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Daily Alerts Active
+              </span>
+            ) : (
+              <button
+                onClick={handleEnableDeviceAlerts}
+                className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span>Enable Device Reminders</span>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Filter Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
           {[
             { id: 'all', label: `All (${notifications.length})` },
+            { id: 'daily', label: `⏳ Daily Applied Reminders (${dailyCount})` },
             { id: 'unread', label: `Unread (${unreadCount})` },
             { id: 'official', label: 'Official Notifications' },
             { id: 'deadline', label: 'Deadlines & Schedules' },
@@ -252,6 +307,12 @@ const Notifications = () => {
                         {notif.is_urgent === 1 && (
                           <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
                             <ShieldCheck className="w-3 h-3" /> Official Notification
+                          </span>
+                        )}
+
+                        {(notif.type === 'daily_reminder' || notif.type === 'deadline' || notif.type === 'exam') && (
+                          <span className="bg-saffron-100 dark:bg-saffron-950/60 text-saffron-800 dark:text-saffron-300 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> Daily Applied Reminder
                           </span>
                         )}
 

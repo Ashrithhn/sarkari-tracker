@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { getJobStats, getNotifications, getJobs, getExams } from '../utils/api';
 import { EXAM_CATEGORIES, formatDate } from '../utils/constants';
+import { checkAndDispatchDailyReminders } from '../utils/browserNotifications';
 import StatCard from '../components/StatCard';
 import DeadlineTimer from '../components/DeadlineTimer';
 import JobCard from '../components/JobCard';
@@ -50,7 +51,13 @@ const Dashboard = () => {
           getNotifications().catch(() => [])
         ]);
         setExams(examsData || []);
-        setNotifications((notifsData || []).slice(0, 6));
+        const notifList = Array.isArray(notifsData) ? notifsData : [];
+        setNotifications(notifList.slice(0, 6));
+
+        // Dispatch device native daily reminders if permission granted
+        if (notifList.length > 0) {
+          checkAndDispatchDailyReminders(notifList);
+        }
 
         // If authenticated, also fetch user's personal tracking records
         if (user) {
@@ -86,22 +93,26 @@ const Dashboard = () => {
           const examName = job.custom_exam_name || job.name || job.short_name || 'Exam';
           const lastDate = job.effectiveLastDate || job.user_last_date;
           if (lastDate && new Date(lastDate) >= now && (job.status === 'Applied' || job.status === 'applied')) {
+            const daysLeft = Math.ceil((new Date(lastDate) - now) / (1000 * 60 * 60 * 24));
             list.push({
               id: `last_${job.id}`,
               title: `${examName} - Application Deadline`,
               targetDate: lastDate,
               type: 'deadline',
+              daysRemaining: daysLeft,
               isUserJob: true
             });
           }
 
           const examDate = job.effectiveExamDate || job.user_exam_date;
           if (examDate && new Date(examDate) >= now) {
+            const daysToExam = Math.ceil((new Date(examDate) - now) / (1000 * 60 * 60 * 24));
             list.push({
               id: `exam_${job.id}`,
               title: `${examName} - Exam Date`,
               targetDate: examDate,
               type: 'exam',
+              daysRemaining: daysToExam,
               isUserJob: true
             });
           }
@@ -470,11 +481,22 @@ const Dashboard = () => {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <h4 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1">{item.title}</h4>
-                      {item.isUserJob && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 shrink-0">
-                          My Application
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {item.daysRemaining !== undefined && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            item.daysRemaining <= 3 
+                              ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 animate-pulse'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                          }`}>
+                            {item.daysRemaining === 0 ? 'Today!' : `${item.daysRemaining}d left`}
+                          </span>
+                        )}
+                        {item.isUserJob && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+                            My Application
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <DeadlineTimer targetDate={item.targetDate} size="small" />
                   </div>
