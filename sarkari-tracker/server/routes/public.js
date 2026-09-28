@@ -67,7 +67,7 @@ function formatExamDates(exam, contentDates, webDates) {
 router.get('/exams', (req, res) => {
   try {
     const { search, category, level, limit = 50, page = 1 } = req.query;
-    let query = 'SELECT * FROM exams WHERE is_active = 1';
+    let query = "SELECT * FROM exams WHERE is_active = 1 AND data_status = 'verified'";
     const params = [];
 
     if (category && category !== 'All') {
@@ -143,7 +143,7 @@ router.get('/exams', (req, res) => {
       };
     });
 
-    const totalCount = db.prepare('SELECT COUNT(*) as count FROM exams WHERE is_active = 1').get().count;
+    const totalCount = db.prepare("SELECT COUNT(*) as count FROM exams WHERE is_active = 1 AND data_status = 'verified'").get().count;
 
     res.json({
       success: true,

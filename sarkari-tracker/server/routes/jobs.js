@@ -173,13 +173,28 @@ router.post('/', (req, res) => {
       user_result_date
     } = req.body;
 
-    if (!exam_id && !custom_exam_name) {
+    let validExamId = null;
+    if (exam_id) {
+      const examRow = db.prepare('SELECT id FROM exams WHERE id = ?').get(exam_id);
+      if (examRow) {
+        validExamId = examRow.id;
+      }
+    }
+    if (!validExamId && (post_name || custom_exam_name)) {
+      const examByName = db.prepare('SELECT id FROM exams WHERE LOWER(short_name) = LOWER(?) OR LOWER(name) = LOWER(?) OR LOWER(short_name) = LOWER(?) OR LOWER(name) = LOWER(?) LIMIT 1')
+        .get(post_name || '', post_name || '', custom_exam_name || '', custom_exam_name || '');
+      if (examByName) {
+        validExamId = examByName.id;
+      }
+    }
+
+    if (!validExamId && !custom_exam_name) {
       return res.status(400).json({ error: 'Please choose an official exam or enter a custom job name' });
     }
 
     // Check duplicate
-    if (exam_id) {
-      const existing = db.prepare('SELECT id FROM applications WHERE user_id = ? AND exam_id = ?').get(req.user.id, exam_id);
+    if (validExamId) {
+      const existing = db.prepare('SELECT id FROM applications WHERE user_id = ? AND exam_id = ?').get(req.user.id, validExamId);
       if (existing) {
         return res.status(400).json({ error: 'You are already tracking this examination' });
       }
@@ -195,7 +210,7 @@ router.post('/', (req, res) => {
 
     const info = insert.run(
       req.user.id,
-      exam_id || null,
+      validExamId || null,
       custom_exam_name || null,
       post_name || 'Candidate Post',
       registration_number || null,

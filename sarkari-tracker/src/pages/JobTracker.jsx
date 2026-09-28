@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   getJobs, 
@@ -13,18 +14,32 @@ import {
   triggerDailyExamChecks
 } from '../utils/api';
 import { EXAM_CATEGORIES, APPLICATION_STATUSES, KARNATAKA_CATEGORIES } from '../utils/constants';
+import { EXAM_SUGGESTIONS } from '../data/examSuggestions';
 import { 
   Search, Filter, Plus, Grid, List, AlertCircle, X, 
   Download, FileCheck, CheckSquare, Square, Building2, 
-  Calendar, CheckCircle2, Trash2, Edit, Sparkles, Globe, ExternalLink, RefreshCw 
+  Calendar, CheckCircle2, Trash2, Edit, Sparkles, Globe, ExternalLink, RefreshCw, Zap
 } from 'lucide-react';
 import JobCard from '../components/JobCard';
 import DailyIntelligenceModal from '../components/DailyIntelligenceModal';
 
+const MODAL_EXAM_CATEGORIES = [
+  { id: 'All', label: 'All Exams (160+)' },
+  { id: 'Karnataka', label: 'Karnataka (KEA / KPSC / Police)' },
+  { id: 'Banking', label: 'Banking (IBPS / SBI)' },
+  { id: 'UPSC', label: 'UPSC' },
+  { id: 'SSC', label: 'SSC' },
+  { id: 'Railway', label: 'Railways' },
+  { id: 'Defence', label: 'Defence' },
+  { id: 'PSU', label: 'PSUs' },
+  { id: 'Science', label: 'Science / Tech' }
+];
+
 const JobTracker = () => {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState([]);
-  const [availableExams, setAvailableExams] = useState([]);
+  const [availableExams, setAvailableExams] = useState(EXAM_SUGGESTIONS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -39,7 +54,9 @@ const JobTracker = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [addMode, setAddMode] = useState('registry'); // 'registry' or 'custom'
   const [examSearch, setExamSearch] = useState('');
+  const [modalCategory, setModalCategory] = useState('All');
   const [selectedRegistryExam, setSelectedRegistryExam] = useState(null);
+  const [customSuggestions, setCustomSuggestions] = useState([]);
 
   // Form Fields for Add/Apply
   const [formData, setFormData] = useState({
@@ -153,6 +170,28 @@ const JobTracker = () => {
     fetchJobs();
   }, []);
 
+  // Listen to incoming search params (e.g. from Dashboard or Navbar "Track Application")
+  useEffect(() => {
+    const shouldAdd = searchParams.get('add');
+    const examQuery = searchParams.get('exam');
+    if (shouldAdd || examQuery) {
+      let target = null;
+      if (examQuery) {
+        target = availableExams.find(e => 
+          (e.short_name && e.short_name.toLowerCase().includes(examQuery.toLowerCase())) || 
+          (e.name && e.name.toLowerCase().includes(examQuery.toLowerCase()))
+        );
+        if (target) {
+          setExamSearch(target.short_name);
+        } else {
+          setExamSearch(examQuery);
+        }
+      }
+      openAddModal(target);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams]);
+
   const fetchJobs = async () => {
     setLoading(true);
     setError('');
@@ -168,15 +207,19 @@ const JobTracker = () => {
     }
   };
 
-  const openAddModal = async () => {
+  const openAddModal = async (preselectedExam = null) => {
     setIsAddModalOpen(true);
     setAddMode('registry');
-    setSelectedRegistryExam(null);
+    setSelectedRegistryExam(preselectedExam);
+    setModalCategory(preselectedExam?.category || 'All');
+    if (preselectedExam) {
+      setExamSearch(preselectedExam.short_name || preselectedExam.name || '');
+    }
     setFormData({
-      custom_exam_name: '',
-      post_name: '',
-      custom_conducting_body: '',
-      official_portal_link: '',
+      custom_exam_name: preselectedExam ? preselectedExam.name : '',
+      post_name: preselectedExam ? (preselectedExam.short_name || preselectedExam.name) : '',
+      custom_conducting_body: preselectedExam ? preselectedExam.conducting_body : '',
+      official_portal_link: preselectedExam ? (preselectedExam.official_site || preselectedExam.careers_url || '') : '',
       category: 'General',
       registration_number: '',
       roll_number: '',
@@ -190,22 +233,38 @@ const JobTracker = () => {
 
     try {
       const exams = await getExams();
-      setAvailableExams(exams || []);
+      if (exams && exams.length > 0) {
+        setAvailableExams(exams);
+        if (preselectedExam) {
+          const match = exams.find(e => 
+            e.id === preselectedExam.id || 
+            (e.short_name && e.short_name.toLowerCase() === preselectedExam.short_name?.toLowerCase()) ||
+            (e.name && e.name.toLowerCase() === preselectedExam.name?.toLowerCase())
+          );
+          if (match) setSelectedRegistryExam(match);
+        }
+      }
     } catch (err) {
-      console.warn('Could not load exams registry:', err);
+      console.warn('Could not load exams registry from API, keeping instant suggestion catalog:', err);
     }
   };
 
-  const handleApplyRegistry = async (e) => {
-    e.preventDefault();
-    if (!selectedRegistryExam) {
-      alert('Please select an official exam from the list');
+  const handleApplyRegistry = async (e, directExam = null) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const targetExam = directExam || selectedRegistryExam;
+    if (!targetExam) {
+      alert('Please select an official exam from the suggestions list');
       return;
     }
 
     try {
-      await applyToExam(selectedRegistryExam.id, {
-        category: formData.category,
+      await applyToExam(targetExam.id || null, {
+        custom_exam_name: targetExam.name,
+        post_name: targetExam.short_name || targetExam.name,
+        custom_conducting_body: targetExam.conducting_body,
+        official_portal_link: targetExam.official_site || targetExam.careers_url || '',
+        category: formData.category || 'General',
+        state: targetExam.state || (targetExam.category === 'Karnataka' ? 'Karnataka' : null),
         registration_number: formData.registration_number,
         roll_number: formData.roll_number,
         fee_paid: formData.fee_paid ? 1 : 0,
@@ -560,7 +619,7 @@ const JobTracker = () => {
                     : 'text-slate-600 dark:text-slate-400'
                 }`}
               >
-                1. Select from 85+ Official Exams
+                1. Select from 160+ Official Exams (India & Karnataka)
               </button>
               <button
                 type="button"
@@ -577,58 +636,182 @@ const JobTracker = () => {
 
             {/* Content for Mode 1: Registry */}
             {addMode === 'registry' && (
-              <form onSubmit={handleApplyRegistry} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Search Official Commission Registry
-                  </label>
-                  <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 bg-slate-50 dark:bg-slate-800">
-                    <Search className="w-4 h-4 text-slate-400" />
+              <form onSubmit={handleApplyRegistry} className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <Building2 className="w-4 h-4 text-saffron-500" />
+                      Search & Select Official Examination
+                    </label>
+                    <span className="text-[11px] text-slate-500">
+                      160+ Central & Karnataka Exams
+                    </span>
+                  </div>
+
+                  {/* Search Input Box */}
+                  <div className="flex items-center gap-2 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 bg-slate-50 dark:bg-slate-800 focus-within:ring-2 focus-within:ring-saffron-500">
+                    <Search className="w-4 h-4 text-slate-400 shrink-0" />
                     <input 
                       type="text" 
-                      placeholder="Search UPSC, SSC, IBPS, KEA, KPSC, ISRO, ONGC..." 
+                      placeholder="Type to search (e.g. KEA, KPSC, Police, UPSC, SSC, IBPS, KPTCL, BESCOM)..." 
                       value={examSearch}
                       onChange={(e) => setExamSearch(e.target.value)}
-                      className="bg-transparent border-none outline-none flex-1 text-xs text-slate-800 dark:text-slate-200"
+                      className="bg-transparent border-none outline-none flex-1 text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
                     />
+                    {examSearch && (
+                      <button 
+                        type="button" 
+                        onClick={() => setExamSearch('')}
+                        className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Category Pills inside Modal */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                    {MODAL_EXAM_CATEGORIES.map(cat => {
+                      const count = availableExams.filter(e => {
+                        if (cat.id === 'All') return true;
+                        if (cat.id === 'Karnataka') return e.category === 'Karnataka' || e.state === 'Karnataka' || e.level === 'state';
+                        return e.category === cat.id;
+                      }).length;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => setModalCategory(cat.id)}
+                          className={`px-2.5 py-1 rounded-lg font-medium text-[11px] whitespace-nowrap transition-colors flex items-center gap-1 ${
+                            modalCategory === cat.id 
+                              ? 'bg-saffron-500 text-white font-bold' 
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                          }`}
+                        >
+                          <span>{cat.label}</span>
+                          <span className={`text-[9px] px-1 rounded-full ${modalCategory === cat.id ? 'bg-white/30 text-white' : 'bg-slate-200 dark:bg-slate-700'}`}>
+                            {count}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                   
-                  <div className="max-h-48 overflow-y-auto space-y-1.5 border border-slate-100 dark:border-slate-800 rounded-xl p-2 bg-slate-50/50 dark:bg-slate-900/50">
-                    {availableExams
-                      .filter(e => {
-                        const term = examSearch.trim().toLowerCase();
-                        if (!term) return true;
-                        const tokens = term.split(/\s+/).filter(Boolean);
-                        const searchableText = `${e.name || ''} ${e.short_name || ''} ${e.conducting_body || ''} ${e.category || ''} ${e.state || ''}`.toLowerCase();
-                        return tokens.every(token => searchableText.includes(token));
-                      })
-                      .map(exam => {
-                        const isSelected = selectedRegistryExam?.id === exam.id;
-                        return (
-                          <div 
-                            key={exam.id} 
-                            onClick={() => setSelectedRegistryExam(exam)}
-                            className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all ${
-                              isSelected 
-                                ? 'bg-saffron-50 dark:bg-saffron-950/40 border border-saffron-400' 
-                                : 'hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent'
-                            }`}
-                          >
-                            <div>
-                              <div className="font-bold text-xs text-slate-800 dark:text-slate-100">{exam.short_name}</div>
-                              <div className="text-[11px] text-slate-500">{exam.conducting_body} • {exam.category}</div>
+                  {/* Results Count & Suggestion List */}
+                  {(() => {
+                    const filtered = availableExams.filter(e => {
+                      const matchCategory = modalCategory === 'All' || 
+                        e.category === modalCategory || 
+                        (modalCategory === 'Karnataka' && (e.category === 'Karnataka' || e.state === 'Karnataka' || e.level === 'state'));
+
+                      const term = examSearch.trim().toLowerCase();
+                      if (!term) return matchCategory;
+                      const tokens = term.split(/\s+/).filter(Boolean);
+                      const searchableText = `${e.name || ''} ${e.short_name || ''} ${e.conducting_body || ''} ${e.category || ''} ${e.state || ''}`.toLowerCase();
+                      return matchCategory && tokens.every(token => searchableText.includes(token));
+                    });
+
+                    return (
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-[10px] text-slate-400 px-1">
+                          <span>Showing {filtered.length} examination(s)</span>
+                          {selectedRegistryExam && (
+                            <span className="text-saffron-600 dark:text-saffron-400 font-semibold">
+                              ✓ {selectedRegistryExam.short_name} selected
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="max-h-56 overflow-y-auto space-y-1.5 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 bg-slate-50/50 dark:bg-slate-900/50 custom-scrollbar">
+                          {filtered.length > 0 ? (
+                            filtered.map(exam => {
+                              const isSelected = selectedRegistryExam?.id === exam.id || 
+                                (selectedRegistryExam?.short_name && selectedRegistryExam.short_name === exam.short_name);
+                              const isKarnataka = exam.category === 'Karnataka' || exam.state === 'Karnataka' || exam.level === 'state';
+
+                              return (
+                                <div 
+                                  key={exam.id || exam.short_name} 
+                                  onClick={() => setSelectedRegistryExam(exam)}
+                                  className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all border ${
+                                    isSelected 
+                                      ? 'bg-saffron-50 dark:bg-saffron-950/40 border-saffron-400 dark:border-saffron-600 shadow-xs' 
+                                      : 'hover:bg-white dark:hover:bg-slate-800/80 border-slate-200/50 dark:border-slate-800/50'
+                                  }`}
+                                >
+                                  <div className="min-w-0 pr-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="font-bold text-xs text-slate-900 dark:text-slate-100">{exam.short_name}</span>
+                                      <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded-md ${
+                                        isKarnataka 
+                                          ? 'bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300 border border-red-200/50' 
+                                          : 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border border-blue-200/50'
+                                      }`}>
+                                        {isKarnataka ? 'Karnataka' : (exam.category || 'Central')}
+                                      </span>
+                                    </div>
+                                    <div className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-1 mt-0.5">
+                                      {exam.name}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 dark:text-slate-500 line-clamp-1">
+                                      {exam.conducting_body} {exam.official_site ? `• ${exam.official_site.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}` : ''}
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleApplyRegistry(e, exam);
+                                      }}
+                                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-saffron-500 hover:bg-saffron-600 text-white transition-colors flex items-center gap-1 shadow-2xs"
+                                      title="Fast track this application directly"
+                                    >
+                                      <Zap className="w-3 h-3" />
+                                      <span>Track</span>
+                                    </button>
+                                    {isSelected ? (
+                                      <CheckCircle2 className="w-5 h-5 text-saffron-600 shrink-0" />
+                                    ) : (
+                                      <div className="w-5 h-5 rounded-full border border-slate-300 dark:border-slate-700" />
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          ) : (
+                            <div className="text-center py-6 text-slate-400 space-y-1">
+                              <p className="text-xs font-semibold">No official exams match "{examSearch}" in this category.</p>
+                              <p className="text-[11px]">Switch to "All Exams" or use Mode 2 to enter any custom recruitment.</p>
                             </div>
-                            {isSelected && <CheckCircle2 className="w-4 h-4 text-saffron-600" />}
-                          </div>
-                        );
-                      })}
-                  </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {selectedRegistryExam && (
-                  <div className="p-3 bg-saffron-50/60 dark:bg-saffron-950/20 border border-saffron-200 dark:border-saffron-900/50 rounded-xl text-xs space-y-1">
-                    <span className="font-bold text-saffron-900 dark:text-saffron-300">Selected: {selectedRegistryExam.name}</span>
-                    <p className="text-[11px] text-slate-500">Conducting Body: {selectedRegistryExam.conducting_body} | Official Site: {selectedRegistryExam.official_site}</p>
+                  <div className="p-3.5 bg-saffron-50/80 dark:bg-saffron-950/30 border border-saffron-300 dark:border-saffron-800/60 rounded-2xl text-xs space-y-1 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-saffron-900 dark:text-saffron-200">
+                        Selected: {selectedRegistryExam.name}
+                      </span>
+                      {selectedRegistryExam.official_site && (
+                        <a 
+                          href={selectedRegistryExam.official_site} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="text-[10px] text-saffron-700 dark:text-saffron-400 underline font-semibold flex items-center gap-1"
+                        >
+                          Official Portal <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                      Conducting Commission: <strong>{selectedRegistryExam.conducting_body}</strong> | Category: <strong>{selectedRegistryExam.category}</strong>
+                    </p>
                   </div>
                 )}
 
@@ -717,21 +900,64 @@ const JobTracker = () => {
               </form>
             )}
 
-            {/* Content for Mode 2: Custom Job */}
+            {/* Content for Mode 2: Custom Job with Autocomplete Suggestions */}
             {addMode === 'custom' && (
               <form onSubmit={handleCreateCustomJob} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                <div className="space-y-1">
+                <div className="space-y-1 relative">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     Exam / Recruitment Notification Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. BEL Project Engineer 2026 or KPTCL AE"
+                    placeholder="Type name (e.g. BEL, KPTCL, High Court, ISRO, Police)..."
                     value={formData.custom_exam_name}
-                    onChange={e => setFormData({ ...formData, custom_exam_name: e.target.value })}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setFormData({ ...formData, custom_exam_name: val });
+                      if (val.trim().length >= 2) {
+                        const term = val.trim().toLowerCase();
+                        const tokens = term.split(/\s+/).filter(Boolean);
+                        const matched = availableExams.filter(ex => {
+                          const text = `${ex.name || ''} ${ex.short_name || ''} ${ex.conducting_body || ''}`.toLowerCase();
+                          return tokens.every(tok => text.includes(tok));
+                        }).slice(0, 5);
+                        setCustomSuggestions(matched);
+                      } else {
+                        setCustomSuggestions([]);
+                      }
+                    }}
                     className="input-field text-xs"
                   />
+
+                  {/* Autocomplete Dropdown */}
+                  {customSuggestions.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/50">
+                      <div className="p-1.5 bg-slate-50 dark:bg-slate-900 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Suggested Official Exams (Click to Autofill):
+                      </div>
+                      {customSuggestions.map(sug => (
+                        <div
+                          key={sug.id || sug.short_name}
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              custom_exam_name: sug.name,
+                              post_name: sug.short_name || sug.name,
+                              custom_conducting_body: sug.conducting_body || '',
+                              official_portal_link: sug.official_site || sug.careers_url || '',
+                              category: formData.category || 'General'
+                            });
+                            setCustomSuggestions([]);
+                          }}
+                          className="p-2 hover:bg-saffron-50 dark:hover:bg-slate-700/70 cursor-pointer transition-colors"
+                        >
+                          <div className="text-xs font-bold text-slate-800 dark:text-slate-100">{sug.short_name}</div>
+                          <div className="text-[11px] text-slate-500">{sug.conducting_body} • {sug.category}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

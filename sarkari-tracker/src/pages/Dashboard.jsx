@@ -15,6 +15,29 @@ import { checkAndDispatchDailyReminders } from '../utils/browserNotifications';
 import StatCard from '../components/StatCard';
 import DeadlineTimer from '../components/DeadlineTimer';
 import JobCard from '../components/JobCard';
+import { EXAM_SUGGESTIONS } from '../data/examSuggestions';
+
+const POPULAR_KARNATAKA_SUGGESTIONS = [
+  { label: 'KEA Village Admin Officer (VAO)', query: 'KEA Village Administrative Officer' },
+  { label: 'KPSC KAS Probationers', query: 'KPSC KAS' },
+  { label: 'Karnataka Police SI (PSI)', query: 'Karnataka Police Sub-Inspector' },
+  { label: 'Karnataka Police Constable', query: 'Karnataka Police Constable' },
+  { label: 'KPTCL Assistant Engineer (AE)', query: 'KPTCL Assistant Engineer' },
+  { label: 'BESCOM Assistant', query: 'BESCOM' },
+  { label: 'Karnataka High Court', query: 'Karnataka High Court' },
+  { label: 'Karnataka FDA / SDA', query: 'Karnataka FDA' }
+];
+
+const POPULAR_CENTRAL_SUGGESTIONS = [
+  { label: 'UPSC Civil Services (CSE)', query: 'UPSC Civil Services' },
+  { label: 'SSC CGL 2026', query: 'SSC CGL' },
+  { label: 'SSC CHSL 10+2', query: 'SSC CHSL' },
+  { label: 'IBPS Probationary Officer (PO)', query: 'IBPS PO' },
+  { label: 'SBI Clerk / Junior Associate', query: 'SBI Clerk' },
+  { label: 'RRB NTPC Railways', query: 'RRB NTPC' },
+  { label: 'UPSC CDS Defence', query: 'UPSC CDS' },
+  { label: 'ISRO / DRDO Tech', query: 'ISRO' }
+];
 
 const Dashboard = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -22,7 +45,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [jobs, setJobs] = useState([]);
-  const [exams, setExams] = useState([]);
+  const [exams, setExams] = useState(EXAM_SUGGESTIONS);
   const [loading, setLoading] = useState(true);
 
   // Exam Search & Filter on Dashboard
@@ -300,26 +323,37 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Public Exam Directory & Registry */}
+          {/* Search Indian & Karnataka Government Examinations */}
           <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Building2 className="w-5 h-5 text-saffron-500 shrink-0" /> Official Exam Registry
+                  <Search className="w-5 h-5 text-saffron-500 shrink-0" /> Search Government Examinations
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">Verified Indian government recruitment schedules.</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Explore 160+ official Indian & Karnataka recruitment exams (UPSC, SSC, Banking, Railways, KEA, KPSC).
+                </p>
               </div>
 
-              {/* Search Input */}
-              <div className="relative w-full sm:w-64">
+              {/* Search Input Box */}
+              <div className="relative w-full sm:w-80">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input 
-                  type="text"
-                  placeholder="Search exam or commission..."
+                  type="text" 
+                  placeholder="Search exam or commission (KEA, KPSC, Police, UPSC)..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500"
+                  className="w-full pl-9 pr-8 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-800 dark:text-slate-200"
                 />
+                {searchTerm && (
+                  <button 
+                    type="button" 
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -358,101 +392,184 @@ const Dashboard = () => {
               })}
             </div>
 
-            {/* Exam Cards Grid */}
-            {filteredExams.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {filteredExams.slice(0, visibleCount).map(exam => (
-                  <div 
-                    key={exam.id}
-                    className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-saffron-400 dark:hover:border-saffron-600 transition-all flex flex-col justify-between space-y-3 sm:space-y-4"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-1.5 sm:mb-2">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-saffron-100 text-saffron-800 dark:bg-saffron-950/60 dark:text-saffron-300">
-                          {exam.category || 'Central'}
-                        </span>
-                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3" /> Official
-                        </span>
-                      </div>
-
-                      <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
-                        {exam.name}
-                      </h3>
-                      <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-                        {exam.conducting_body} {exam.state ? `• ${exam.state}` : ''}
-                      </p>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 space-y-1 text-[11px] sm:text-xs">
-                      <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                        <span>Apply Deadline:</span>
-                        <span className="font-semibold text-slate-900 dark:text-white">
-                          {exam.dates?.apply_end || exam.apply_end || 'Notice Awaited'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-slate-600 dark:text-slate-300">
-                        <span>Exam Date:</span>
-                        <span className="font-semibold text-slate-900 dark:text-white">
-                          {exam.dates?.exam_date || exam.exam_date || 'Will be updated soon'}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 pt-1">
-                      <Link
-                        to={`/exams/${exam.id}`}
-                        className="btn-primary text-xs py-1.5 px-3 flex-1 text-center justify-center rounded-xl font-semibold"
-                      >
-                        View Details & Syllabus
-                      </Link>
-                      {exam.official_site && (
-                        <a
-                          href={exam.official_site}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors shrink-0"
-                          title="Open Official Commission Portal"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                    </div>
+            {/* DEFAULT VIEW: Quick Suggestions Hub when not searching */}
+            {!searchTerm.trim() && selectedCategory === 'All' ? (
+              <div className="space-y-6 pt-2">
+                {/* Karnataka Highlights */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-500/5 via-saffron-500/5 to-amber-500/5 border border-red-200/50 dark:border-red-950/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-red-900 dark:text-red-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                      Karnataka State Recruitment (KEA, KPSC, Police, ESCOMs)
+                    </span>
+                    <span className="text-[11px] text-slate-500">65+ State Exams</span>
                   </div>
-                ))}
+
+                  <div className="flex flex-wrap gap-2">
+                    {POPULAR_KARNATAKA_SUGGESTIONS.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSearchTerm(item.query)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-red-200 dark:border-slate-700 hover:border-red-400 dark:hover:border-red-500 text-slate-800 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 transition-all shadow-2xs flex items-center gap-1"
+                      >
+                        <Search className="w-3 h-3 text-red-500" />
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Central, Banking, Railways & Defence Highlights */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-purple-500/5 border border-blue-200/50 dark:border-blue-950/40 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                      All-India Recruitment (UPSC, SSC, Banking, Railways, Defence)
+                    </span>
+                    <span className="text-[11px] text-slate-500">95+ Central Exams</span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {POPULAR_CENTRAL_SUGGESTIONS.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSearchTerm(item.query)}
+                        className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-all shadow-2xs flex items-center gap-1"
+                      >
+                        <Search className="w-3 h-3 text-blue-500" />
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Instructions banner */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-xs">
+                  <p className="text-slate-600 dark:text-slate-400 text-center sm:text-left">
+                    💡 <strong>Search or click any suggestion above</strong> to view official commission portals or track personal application dates.
+                  </p>
+                  <button
+                    onClick={() => setSearchTerm(' ')}
+                    className="btn-secondary text-xs py-2 px-4 whitespace-nowrap shrink-0"
+                  >
+                    Browse All 160+ Exams
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="text-center py-10 px-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
-                <Search className="w-8 h-8 text-slate-400 mx-auto" />
-                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                  {searchTerm ? `No exams found for "${searchTerm}"` : 'No exams found in this category'}
-                </h4>
-                <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  Try searching for keywords like "KPSC", "KEA", "Police", "Railway", "Clerk", "FDA", "High Court", or "UPSC".
-                </p>
-                <button 
-                  onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
-                  className="mt-1 text-xs font-semibold px-4 py-2 rounded-xl bg-saffron-500 text-white hover:bg-saffron-600 transition-colors"
-                >
-                  View All Exams ({exams.length})
-                </button>
-              </div>
-            )}
+              /* SEARCH RESULTS: Displayed when user enters search or chooses a category */
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+                  <span>
+                    Found <strong>{filteredExams.length}</strong> matching examinations
+                    {searchTerm.trim() ? ` for "${searchTerm.trim()}"` : ''}
+                    {selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}
+                  </span>
+                  <button 
+                    onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
+                    className="text-saffron-600 dark:text-saffron-400 font-semibold hover:underline"
+                  >
+                    Reset Search
+                  </button>
+                </div>
 
-            {filteredExams.length > visibleCount && (
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-4">
-                <button 
-                  onClick={() => setVisibleCount(prev => prev + 12)}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-xs"
-                >
-                  Load More (+12 Exams)
-                </button>
-                <button 
-                  onClick={() => setVisibleCount(filteredExams.length)}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-saffron-50 dark:bg-saffron-950/40 text-saffron-700 dark:text-saffron-300 hover:bg-saffron-100 border border-saffron-200 dark:border-saffron-800 text-xs font-bold transition-all"
-                >
-                  Show All ({filteredExams.length} Exams)
-                </button>
+                {filteredExams.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    {filteredExams.slice(0, visibleCount).map(exam => {
+                      const isKarnataka = exam.category === 'Karnataka' || exam.state === 'Karnataka' || exam.level === 'state';
+                      return (
+                        <div 
+                          key={exam.id || exam.short_name}
+                          className="p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-saffron-400 dark:hover:border-saffron-600 transition-all flex flex-col justify-between space-y-3"
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                isKarnataka 
+                                  ? 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200/50' 
+                                  : 'bg-saffron-100 text-saffron-800 dark:bg-saffron-950/60 dark:text-saffron-300'
+                              }`}>
+                                {isKarnataka ? 'Karnataka' : (exam.category || 'Central')}
+                              </span>
+                              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <ShieldCheck className="w-3 h-3" /> Official
+                              </span>
+                            </div>
+
+                            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
+                              {exam.short_name} - {exam.name}
+                            </h3>
+                            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                              {exam.conducting_body} {exam.state ? `• ${exam.state}` : ''}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                            <Link
+                              to={`/tracker?add=1&exam=${encodeURIComponent(exam.short_name)}`}
+                              className="btn-primary text-xs py-1.5 px-3 flex-1 text-center justify-center rounded-xl font-semibold flex items-center gap-1"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              <span>Track Application</span>
+                            </Link>
+
+                            <Link
+                              to={`/exams/${exam.id}`}
+                              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors"
+                            >
+                              Syllabus
+                            </Link>
+
+                            {exam.official_site && (
+                              <a
+                                href={exam.official_site}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors shrink-0"
+                                title="Open Official Commission Portal"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-10 px-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
+                    <Search className="w-8 h-8 text-slate-400 mx-auto" />
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                      {searchTerm ? `No exams found for "${searchTerm}"` : 'No exams found in this category'}
+                    </h4>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto">
+                      Try searching for keywords like "KPSC", "KEA", "Police", "Railway", "Clerk", "FDA", "High Court", or "UPSC".
+                    </p>
+                    <button 
+                      onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
+                      className="mt-1 text-xs font-semibold px-4 py-2 rounded-xl bg-saffron-500 text-white hover:bg-saffron-600 transition-colors"
+                    >
+                      Clear Search & View Suggestions
+                    </button>
+                  </div>
+                )}
+
+                {filteredExams.length > visibleCount && (
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-4">
+                    <button 
+                      onClick={() => setVisibleCount(prev => prev + 12)}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-xs"
+                    >
+                      Load More (+12 Exams)
+                    </button>
+                    <button 
+                      onClick={() => setVisibleCount(filteredExams.length)}
+                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-saffron-50 dark:bg-saffron-950/40 text-saffron-700 dark:text-saffron-300 hover:bg-saffron-100 border border-saffron-200 dark:border-saffron-800 text-xs font-bold transition-all"
+                    >
+                      Show All ({filteredExams.length} Exams)
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
