@@ -115,6 +115,16 @@ export const clearReadNotifications = () => apiCall('/api/notifications/clear-re
 export const clearAllNotifications = () => apiCall('/api/notifications/clear-all', { method: 'DELETE' });
 export const getUnreadCount = () => apiCall('/api/notifications/unread-count');
 
+// Daily Exam Intelligence Questions & Answers
+export const getDailyQuestions = () => apiCall('/api/questions');
+export const triggerDailyExamChecks = () => apiCall('/api/run-daily-checks', { method: 'POST' });
+export const getExamAnswers = (examId, customExamName) => {
+  const params = new URLSearchParams();
+  if (examId) params.append('exam_id', examId);
+  if (customExamName) params.append('custom_exam_name', customExamName);
+  return apiCall(`/api/exam-answers?${params.toString()}`);
+};
+
 // Reminders
 export const getReminders = () => apiCall('/api/reminders');
 export const createReminder = (data) => apiCall('/api/reminders', { method: 'POST', body: JSON.stringify(data) });

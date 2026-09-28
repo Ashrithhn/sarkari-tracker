@@ -18,6 +18,7 @@ const JobCard = ({
   onDelete,
   onOpenAnalysis,
   onAnalyzeJob,
+  onOpenIntelligence,
   isAnalyzing = false
 }) => {
   const app = application || job;
@@ -207,6 +208,21 @@ const JobCard = ({
             </span>
           </button>
         )}
+
+        {/* Daily 21-Question Intelligence Monitor */}
+        <button
+          type="button"
+          onClick={() => onOpenIntelligence && onOpenIntelligence(app)}
+          className="w-full p-2.5 rounded-xl bg-gradient-to-r from-saffron-50 to-amber-50 dark:from-saffron-950/40 dark:to-amber-950/40 hover:from-saffron-100 hover:to-amber-100 dark:hover:from-saffron-900/60 dark:hover:to-amber-900/60 transition-all border border-saffron-200/80 dark:border-saffron-800/80 text-xs flex items-center justify-between mb-3 text-saffron-950 dark:text-saffron-200 shadow-xs group"
+        >
+          <span className="flex items-center gap-1.5 font-bold">
+            <Sparkles className="w-3.5 h-3.5 text-saffron-600 dark:text-saffron-400 group-hover:rotate-12 transition-transform" />
+            <span>AI Gazette & Date Monitor</span>
+          </span>
+          <span className="text-[10px] bg-saffron-200/80 dark:bg-saffron-800/80 text-saffron-900 dark:text-saffron-100 px-2 py-0.5 rounded-full font-bold">
+            Daily Questions →
+          </span>
+        </button>
 
         {/* Web Keyword Intelligence (For custom jobs or analyzed jobs) */}
         {app.web_analysis ? (

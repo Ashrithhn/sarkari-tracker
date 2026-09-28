@@ -165,4 +165,42 @@ router.put('/reminders/:id', (req, res) => {
   }
 });
 
+// Daily Exam Question Set & Intelligence Endpoints
+
+// 1. Get all questions config
+router.get('/questions', (req, res) => {
+  try {
+    const questions = db.prepare('SELECT * FROM exam_questions WHERE is_active = 1 ORDER BY display_order ASC').all();
+    res.json({ questions });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 2. Trigger daily exam checks (1 exam = 1 Gemini call for tracked/followed exams)
+router.post('/run-daily-checks', async (req, res) => {
+  try {
+    const { runDailyExamChecks } = await import('../services/dailyQuestionMonitor.js');
+    const result = await runDailyExamChecks();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 3. Get latest answers for a specific exam or application
+router.get('/exam-answers', async (req, res) => {
+  try {
+    const { exam_id, custom_exam_name } = req.query;
+    if (!exam_id && !custom_exam_name) {
+      return res.status(400).json({ error: 'exam_id or custom_exam_name required' });
+    }
+    const { getLatestAnswersForExam } = await import('../services/dailyQuestionMonitor.js');
+    const answers = getLatestAnswersForExam(exam_id ? Number(exam_id) : null, custom_exam_name || null);
+    res.json({ answers });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

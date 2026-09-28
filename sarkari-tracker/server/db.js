@@ -236,6 +236,43 @@ db.exec(`
     reading_time_minutes INTEGER DEFAULT 5,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS exam_questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    question_key TEXT UNIQUE NOT NULL,
+    question_text TEXT NOT NULL,
+    category TEXT DEFAULT 'all', -- 'all' | 'karnataka'
+    notify_condition TEXT,
+    is_active BOOLEAN DEFAULT 1,
+    display_order INTEGER DEFAULT 0
+  );
+
+  CREATE TABLE IF NOT EXISTS exam_answers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exam_id INTEGER,
+    custom_exam_name TEXT,
+    question_key TEXT NOT NULL,
+    status TEXT NOT NULL, -- 'yes' | 'no' | 'not_found'
+    value TEXT,
+    date TEXT,
+    details TEXT,
+    source_url TEXT,
+    quote TEXT,
+    trust_label TEXT DEFAULT 'AI-found, unverified',
+    fetched_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS follows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    exam_id INTEGER,
+    custom_exam_name TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (exam_id) REFERENCES exams(id) ON DELETE CASCADE,
+    UNIQUE(user_id, exam_id)
+  );
 `);
 
 try {
@@ -244,6 +281,26 @@ try {
 
 try {
   db.exec('ALTER TABLE exams ADD COLUMN slug TEXT');
+} catch (e) {}
+
+try {
+  db.exec('ALTER TABLE notifications ADD COLUMN dedup_key TEXT');
+} catch (e) {}
+
+try {
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_notifications_dedup_key ON notifications(dedup_key)');
+} catch (e) {}
+
+try {
+  db.exec('ALTER TABLE notifications ADD COLUMN custom_exam_name TEXT');
+} catch (e) {}
+
+try {
+  db.exec('ALTER TABLE notifications ADD COLUMN source_url TEXT');
+} catch (e) {}
+
+try {
+  db.exec('ALTER TABLE notifications ADD COLUMN trust_label TEXT DEFAULT "AI-found, unverified"');
 } catch (e) {}
 
 // Helper to generate URL-safe slugs
@@ -255,6 +312,52 @@ export function slugify(text) {
     .replace(/[^\w\s-]/g, '')
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+// Seed questions into exam_questions if empty
+try {
+  const qCount = db.prepare('SELECT COUNT(*) as count FROM exam_questions').get().count;
+  if (qCount === 0) {
+    const insertQ = db.prepare(`
+      INSERT OR IGNORE INTO exam_questions (question_key, question_text, category, notify_condition, display_order)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const standardQuestions = [
+      ['notification_released', 'Has the official notification/advertisement been released? Give release date and official portal link.', 'all', 'Changes from No to Yes', 1],
+      ['apply_start', 'When does online application start? Give application opening date.', 'all', 'Date appears or changes', 2],
+      ['last_date', 'What is the last date to apply online? Give deadline date.', 'all', 'Date changes', 3],
+      ['last_date_extended', 'Was the last date to apply extended? State whether extended and give the new extended date.', 'all', 'Becomes true', 4],
+      ['fee_last_date', 'What is the last date for fee payment?', 'all', 'Date changes', 5],
+      ['correction_window', 'Is the application edit/correction window open? Dates?', 'all', 'Opens or changes', 6],
+      ['corrigendum', 'Has any corrigendum, addendum or revised notice been issued? Title, date, link.', 'all', 'New one found', 7],
+      ['vacancy_change', 'Has the number of vacancies increased or decreased? Old and new count.', 'all', 'Count changes', 8],
+      ['eligibility_change', 'Any change in age limit, qualification, or reservation/relaxation criteria?', 'all', 'Any change', 9],
+      ['exam_date', 'What are the examination dates for each stage (prelims, mains)?', 'all', 'Date announced or changes', 10],
+      ['postponed_rescheduled', 'Has the exam been postponed, rescheduled, or cancelled? New date?', 'all', 'Becomes true', 11],
+      ['exam_city_slip', 'Has the exam city intimation slip or advance city allotment been released?', 'all', 'Becomes true', 12],
+      ['admit_card', 'Has the admit card / hall ticket been released? Direct link.', 'all', 'Becomes true', 13],
+      ['answer_key', 'Is the provisional answer key out? Objection window dates?', 'all', 'Becomes true', 14],
+      ['result', 'Has the written exam/prelims result been declared? Link.', 'all', 'Becomes true', 15],
+      ['cutoff', 'Has the cutoff / marks list been published? Category-wise marks.', 'all', 'Becomes true', 16],
+      ['final_result', 'Has the final selection list or rank merit list been published?', 'all', 'Becomes true', 17],
+      ['other_notice', 'Any other important official commission notice in the last 7 days?', 'all', 'New one found', 18],
+      // Karnataka State
+      ['document_verification_schedule', 'Has the document verification (DV) schedule or eligible candidate list been released?', 'karnataka', 'Becomes true', 19],
+      ['hyderabad_karnataka_quota_change', 'Has any notice regarding Article 371(J) / Kalyana Karnataka reservation eligibility or quota been issued?', 'karnataka', 'Any change', 20],
+      ['provisional_selection_list', 'Has the provisional 1:1 or 1:2 selection / verification list been published?', 'karnataka', 'Becomes true', 21]
+    ];
+
+    const seedAllQ = db.transaction((rows) => {
+      for (const row of rows) {
+        insertQ.run(...row);
+      }
+    });
+    seedAllQ(standardQuestions);
+    console.log(`✓ Seeded ${standardQuestions.length} daily monitoring questions`);
+  }
+} catch (err) {
+  console.error('Failed to seed exam_questions:', err.message);
 }
 
 // Auto-seed default admin and student users if table is empty
@@ -275,61 +378,11 @@ if (userCount === 0) {
   }
 }
 
-// Auto-seed and sync official exams from registry
-try {
-  const registryPath = path.join(__dirname, 'data/examRegistry.json');
-  if (fs.existsSync(registryPath)) {
-    const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
-    const existingExams = db.prepare('SELECT id, short_name, name FROM exams').all();
-    const existingSet = new Set(existingExams.map(e => (e.short_name || e.name).toLowerCase().trim()));
-
-    const insertExam = db.prepare(`
-      INSERT INTO exams (
-        name, short_name, conducting_body, level, state, category,
-        official_site, careers_url, notification_url, results_url,
-        admit_card_url, syllabus_source_url, frequency, scrape_frequency,
-        adapter_type, is_active, data_status, slug
-      ) VALUES (
-        @name, @short_name, @conducting_body, @level, @state, @category,
-        @official_site, @careers_url, @notification_url, @results_url,
-        @admit_card_url, @syllabus_source_url, @frequency, @scrape_frequency,
-        @adapter_type, @active, 'empty', @slug
-      )
-    `);
-
-    const missing = registry.filter(e => !existingSet.has((e.short_name || e.name).toLowerCase().trim()));
-    if (missing.length > 0) {
-      const insertMissing = db.transaction((examsToInsert) => {
-        for (const e of examsToInsert) {
-          const shortName = e.short_name || e.name || 'Exam';
-          const slug = slugify(shortName);
-          insertExam.run({
-            name: e.name || '',
-            short_name: shortName,
-            conducting_body: e.conducting_body || '',
-            level: e.level || 'central',
-            state: e.state || null,
-            category: e.category || 'Central',
-            official_site: e.official_site || '',
-            careers_url: e.careers_url || null,
-            notification_url: e.notification_url || null,
-            results_url: e.results_url || null,
-            admit_card_url: e.admit_card_url || null,
-            syllabus_source_url: e.syllabus_source_url || null,
-            frequency: e.frequency || 'annual',
-            scrape_frequency: e.scrape_frequency || 360,
-            adapter_type: e.adapter_type || 'generic',
-            active: e.active !== undefined ? e.active : (e.is_active !== undefined ? e.is_active : 1),
-            slug: slug
-          });
-        }
-      });
-      insertMissing(missing);
-      console.log(`✓ Synchronized ${missing.length} new exams into SQLite (Total now: ${existingExams.length + missing.length})`);
-    }
-  }
-} catch (err) {
-  console.error('Exam sync failed:', err.message);
+// Registry auto-seeding disabled per user request to avoid misguiding users
+// (Registry will be populated with verified commissions later)
+const AUTO_SEED_REGISTRY = false;
+if (AUTO_SEED_REGISTRY) {
+  // disabled
 }
 
 // Backfill missing slugs for all exams

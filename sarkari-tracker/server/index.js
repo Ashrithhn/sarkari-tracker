@@ -78,6 +78,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Something went wrong!' });
 });
 
+import { runDailyExamChecks } from './services/dailyQuestionMonitor.js';
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🇮🇳 SarkariTracker Server running on port ${PORT}`);
   
@@ -89,11 +91,19 @@ app.listen(PORT, '0.0.0.0', () => {
     console.error('Initial daily scanner failed:', err.message);
   }
 
+  // Run initial AI exam intelligence monitor after 5 seconds delay
+  setTimeout(() => {
+    runDailyExamChecks().catch(err => {
+      console.warn('Startup daily exam intelligence check:', err.message);
+    });
+  }, 5000);
+
   // Schedule background daily checks every 12 hours
   setInterval(() => {
     try {
       runDeadlineScanner();
       runDailyRemindersForAllUsers();
+      runDailyExamChecks().catch(e => console.warn('Scheduled daily AI monitor check:', e.message));
     } catch (err) {
       console.error('Scheduled daily scanner failed:', err.message);
     }

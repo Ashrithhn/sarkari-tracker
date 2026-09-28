@@ -9,15 +9,17 @@ import {
   toggleChecklistItem, 
   addChecklistItem,
   exportJobsCsv,
-  analyzeJobKeywords
+  analyzeJobKeywords,
+  triggerDailyExamChecks
 } from '../utils/api';
 import { EXAM_CATEGORIES, APPLICATION_STATUSES, KARNATAKA_CATEGORIES } from '../utils/constants';
 import { 
   Search, Filter, Plus, Grid, List, AlertCircle, X, 
   Download, FileCheck, CheckSquare, Square, Building2, 
-  Calendar, CheckCircle2, Trash2, Edit, Sparkles, Globe, ExternalLink 
+  Calendar, CheckCircle2, Trash2, Edit, Sparkles, Globe, ExternalLink, RefreshCw 
 } from 'lucide-react';
 import JobCard from '../components/JobCard';
+import DailyIntelligenceModal from '../components/DailyIntelligenceModal';
 
 const JobTracker = () => {
   const { user } = useAuth();
@@ -69,6 +71,29 @@ const JobTracker = () => {
   const [activeAnalysisJob, setActiveAnalysisJob] = useState(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [analyzingJobId, setAnalyzingJobId] = useState(null);
+
+  // Daily Question Intelligence Modal State
+  const [activeIntelligenceJob, setActiveIntelligenceJob] = useState(null);
+  const [isIntelligenceModalOpen, setIsIntelligenceModalOpen] = useState(false);
+  const [isRunningDailyChecks, setIsRunningDailyChecks] = useState(false);
+
+  const handleOpenIntelligence = (job) => {
+    setActiveIntelligenceJob(job);
+    setIsIntelligenceModalOpen(true);
+  };
+
+  const handleRunDailyChecks = async () => {
+    setIsRunningDailyChecks(true);
+    try {
+      const res = await triggerDailyExamChecks();
+      alert(`AI Gazette Scan Complete!\nChecked ${res.examsChecked || 0} active exam(s).\nGenerated ${res.notificationsGenerated || 0} notification update(s).`);
+      await fetchJobs();
+    } catch (err) {
+      alert(err.message || 'Failed to trigger daily checks');
+    } finally {
+      setIsRunningDailyChecks(false);
+    }
+  };
 
   const handleOpenAnalysis = (job) => {
     setActiveAnalysisJob(job);
@@ -364,7 +389,17 @@ const JobTracker = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 self-start sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+            <button
+              onClick={handleRunDailyChecks}
+              disabled={isRunningDailyChecks || jobs.length === 0}
+              className="btn-secondary text-xs sm:text-sm flex items-center gap-1.5 py-2.5 px-3.5 bg-gradient-to-r from-amber-50 to-saffron-50 dark:from-amber-950/30 dark:to-saffron-950/30 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-800 hover:border-amber-400"
+              title="Audit official commission notices and Google Search for updates across all tracked exams"
+            >
+              <RefreshCw className={`w-4 h-4 text-saffron-600 dark:text-saffron-400 ${isRunningDailyChecks ? 'animate-spin' : ''}`} />
+              <span>{isRunningDailyChecks ? 'Auditing...' : "Run Today's AI Check"}</span>
+            </button>
+
             <button
               onClick={exportJobsCsv}
               className="btn-secondary text-xs sm:text-sm flex items-center gap-1.5 py-2.5 px-3.5"
@@ -470,6 +505,7 @@ const JobTracker = () => {
                 onDelete={handleDeleteJob}
                 onOpenAnalysis={handleOpenAnalysis}
                 onAnalyzeJob={handleAnalyzeJob}
+                onOpenIntelligence={handleOpenIntelligence}
                 isAnalyzing={analyzingJobId === job.id}
               />
             ))}
@@ -1240,6 +1276,15 @@ const JobTracker = () => {
           </div>
         </div>
       )}
+
+      {/* ========================================================= */}
+      {/* MODAL 5: 21-QUESTION DAILY INTELLIGENCE MONITOR MODAL     */}
+      {/* ========================================================= */}
+      <DailyIntelligenceModal 
+        isOpen={isIntelligenceModalOpen}
+        onClose={() => setIsIntelligenceModalOpen(false)}
+        application={activeIntelligenceJob}
+      />
 
     </div>
   );
