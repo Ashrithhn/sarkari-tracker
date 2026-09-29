@@ -42,18 +42,18 @@ const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-14 sm:h-16 z-30 glass-card rounded-none border-b border-white/20 dark:border-navy-700/50 flex items-center justify-between px-3 sm:px-4 lg:px-6">
+    <nav className="fixed top-0 left-0 right-0 h-14 sm:h-16 z-30 bg-white/95 dark:bg-[#0B0D10]/95 backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.08] flex items-center justify-between px-3 sm:px-4 lg:px-6">
       <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button 
           onClick={toggleSidebar}
-          className="lg:hidden p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-600 dark:text-slate-300 transition-colors shrink-0"
+          className="lg:hidden p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[#1F1E1E] text-slate-600 dark:text-[#A0A6B1] transition-colors shrink-0"
           aria-label="Open Navigation Menu"
         >
           <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
         <Link to="/" className="flex items-center gap-1.5 min-w-0">
-          <span className="text-base sm:text-xl lg:text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-saffron-500 via-slate-800 to-green-600 dark:via-white drop-shadow-xs truncate">
-            🇮🇳 Sarkari<span className="text-saffron-500">Tracker</span>
+          <span className="text-base sm:text-xl lg:text-2xl font-black text-slate-900 dark:text-white drop-shadow-xs truncate">
+            🇮🇳 Sarkari<span className="text-[#00E599]">Tracker</span>
           </span>
         </Link>
       </div>
@@ -79,7 +79,7 @@ const Navbar = ({ darkMode, toggleDarkMode, toggleSidebar }) => {
                 setIsSearchFocused(true);
               }}
               onFocus={() => setIsSearchFocused(true)}
-              className="input-field pl-10 pr-8 py-2 rounded-full w-full bg-slate-100/50 dark:bg-navy-900/50 border-slate-200 dark:border-navy-700 text-xs"
+              className="input-field pl-10 pr-8 py-2 rounded-full w-full bg-slate-100/50 dark:bg-[#14171D] border-slate-200 dark:border-white/[0.08] text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-[#A0A6B1] focus:ring-1 focus:ring-[#00E599]"
             />
             {navSearch && (
               <button 

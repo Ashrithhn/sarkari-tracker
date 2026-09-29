@@ -18,7 +18,7 @@ const Layout = ({ darkMode, toggleDarkMode }) => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-navy-900 transition-colors duration-300 flex flex-col font-sans text-slate-800 dark:text-slate-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0D10] transition-colors duration-300 flex flex-col font-sans text-slate-800 dark:text-white">
       <Navbar 
         darkMode={darkMode} 
         toggleDarkMode={toggleDarkMode} 

@@ -1,17 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-primary: #0B0D10;
+  --bg-secondary: #1F1E1E;
+  --bg-surface: #14171D;
+  --text-primary: #FFFFFF;
+  --text-muted: #A0A6B1;
+  --accent-green: #00E599;
+  --accent-purple: #7C5CFF;
+  --brand-blue: #3860BE;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+}
+
 @layer base {
   * {
-    @apply border-gray-200 dark:border-gray-700;
+    @apply border-gray-200 dark:border-white/[0.08];
   }
 
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
     width: 100%;
+    font-family: 'Inter', sans-serif;
     @apply transition-colors duration-200;
+  }
+
+  body.dark, .dark body, html.dark {
+    background-color: #0B0D10;
+    color: #FFFFFF;
   }
 
   ::-webkit-scrollbar {
@@ -20,37 +40,43 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+    @apply bg-gray-300 dark:bg-white/[0.15] rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-500;
+    @apply bg-gray-400 dark:bg-white/[0.25];
   }
 }
 
 @layer components {
+  /* Tavily-style Card with Cod Gray background and subtle border */
   .glass-card {
-    @apply bg-white/80 dark:bg-navy-900/80 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 rounded-2xl shadow-lg shadow-gray-200/50 dark:shadow-black/20;
+    @apply bg-white/90 dark:bg-[#14171D] backdrop-blur-xl border border-gray-200 dark:border-white/[0.08] rounded-2xl shadow-sm dark:shadow-none;
   }
 
   .glass-card-hover {
-    @apply glass-card hover:shadow-xl hover:shadow-gray-200/60 dark:hover:shadow-black/30 hover:-translate-y-0.5 transition-all duration-300;
+    @apply glass-card hover:border-gray-300 dark:hover:border-white/[0.18] hover:-translate-y-0.5 transition-all duration-300;
   }
 
-  .gradient-saffron {
-    @apply bg-gradient-to-r from-saffron-500 to-saffron-600;
-  }
-
-  .gradient-navy {
-    @apply bg-gradient-to-r from-navy-700 to-navy-800;
+  /* Tavily Green to Purple Gradient */
+  .gradient-tavily {
+    background: linear-gradient(135deg, #00E599, #7C5CFF);
   }
 
   .gradient-hero {
-    @apply bg-gradient-to-br from-navy-800 via-navy-900 to-saffron-900;
+    background: linear-gradient(135deg, #0B0D10 0%, #14171D 50%, #1F1E1E 100%);
+  }
+
+  .gradient-saffron {
+    background: linear-gradient(135deg, #00E599, #00c985);
+  }
+
+  .gradient-navy {
+    background: linear-gradient(135deg, #14171D, #1F1E1E);
   }
 
   .badge {
@@ -58,76 +84,82 @@
   }
 
   .badge-ssc {
-    @apply badge bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300;
+    @apply badge bg-blue-100 text-blue-800 dark:bg-[#3860BE]/20 dark:text-[#60a5fa] dark:border dark:border-[#3860BE]/30;
   }
 
   .badge-banking {
-    @apply badge bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300;
+    @apply badge bg-green-100 text-green-800 dark:bg-[#00E599]/15 dark:text-[#00E599] dark:border dark:border-[#00E599]/30;
   }
 
   .badge-railway {
-    @apply badge bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300;
+    @apply badge bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 dark:border dark:border-red-500/20;
   }
 
   .badge-upsc {
-    @apply badge bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300;
+    @apply badge bg-purple-100 text-purple-800 dark:bg-[#7C5CFF]/20 dark:text-[#a78bfa] dark:border dark:border-[#7C5CFF]/30;
   }
 
   .badge-psu {
-    @apply badge bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300;
+    @apply badge bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 dark:border dark:border-amber-500/20;
   }
 
   .badge-state {
-    @apply badge bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300;
+    @apply badge bg-teal-100 text-teal-800 dark:bg-[#00E599]/20 dark:text-[#00E599] dark:border dark:border-[#00E599]/30;
   }
 
   .badge-defence {
-    @apply badge bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300;
+    @apply badge bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border dark:border-indigo-500/20;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-white dark:bg-navy-900 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-saffron-500 focus:border-transparent outline-none transition-all duration-200 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500;
+    @apply w-full px-4 py-3 bg-white dark:bg-[#14171D] border border-gray-300 dark:border-white/[0.08] rounded-xl focus:ring-2 focus:ring-[#00E599] focus:border-transparent outline-none transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-[#A0A6B1];
   }
 
+  /* Tavily CTA Button: Mint Green #00E599 */
   .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 text-white font-semibold rounded-xl shadow-lg shadow-saffron-500/25 hover:shadow-saffron-600/30 transition-all duration-200 active:scale-[0.98];
+    @apply px-6 py-3 bg-[#00E599] hover:bg-[#00c985] text-[#0B0D10] font-bold rounded-xl shadow-lg shadow-[#00E599]/20 hover:shadow-[#00E599]/30 transition-all duration-200 active:scale-[0.98];
   }
 
+  /* Secondary Button: Cod Gray with subtle border */
   .btn-secondary {
-    @apply px-6 py-3 bg-white dark:bg-navy-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-navy-700 text-gray-700 dark:text-gray-200 font-semibold rounded-xl transition-all duration-200 active:scale-[0.98];
+    @apply px-6 py-3 bg-white dark:bg-[#1F1E1E] border border-gray-300 dark:border-white/[0.08] hover:bg-gray-50 dark:hover:bg-[#282727] text-gray-700 dark:text-[#A0A6B1] hover:dark:text-white font-medium rounded-xl transition-all duration-200 active:scale-[0.98];
   }
 
   .btn-danger {
-    @apply px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-all duration-200 active:scale-[0.98];
+    @apply px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl transition-all duration-200 active:scale-[0.98];
   }
 
   .status-applied {
-    @apply badge bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300;
+    @apply badge bg-blue-100 text-blue-700 dark:bg-[#3860BE]/20 dark:text-[#60a5fa];
   }
 
   .status-admit {
-    @apply badge bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300;
+    @apply badge bg-yellow-100 text-yellow-700 dark:bg-amber-900/30 dark:text-amber-300;
   }
 
   .status-exam-done {
-    @apply badge bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300;
+    @apply badge bg-green-100 text-green-700 dark:bg-[#00E599]/20 dark:text-[#00E599];
   }
 
   .status-result {
-    @apply badge bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300;
+    @apply badge bg-purple-100 text-purple-700 dark:bg-[#7C5CFF]/20 dark:text-[#a78bfa];
   }
 
   .status-selected {
-    @apply badge bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300;
+    @apply badge bg-emerald-100 text-emerald-700 dark:bg-[#00E599]/25 dark:text-[#00E599];
   }
 
   .status-rejected {
-    @apply badge bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300;
+    @apply badge bg-red-100 text-red-700 dark:bg-rose-900/30 dark:text-rose-300;
   }
 }
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-saffron-500 to-saffron-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#00E599] to-[#7C5CFF];
+  }
+
+  .text-muted {
+    color: #A0A6B1;
   }
 }
