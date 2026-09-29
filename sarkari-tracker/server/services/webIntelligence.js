@@ -279,7 +279,59 @@ async function searchBingNews(query) {
 const searchExamNews = searchGoogleNews;
 
 /**
- * Filters and ranks articles by relevance, prioritizing deadline extension notices and rich descriptions
+ * Authority domains pattern for all Indian recruitment exams (Banking, SSC, UPSC, Railway, State PSC, Tech)
+ */
+const AUTHORITY_DOMAINS_REGEX = /bankersadda|adda247|testbook|jagranjosh|careerpower|oliveboard|pw\.live|byjus|shiksha|drishtiias|kpscvaani|cetonline|upsc\.gov|ssc\.gov|ibps\.in|careers360|collegedunia/i;
+
+/**
+ * Extracts key examination schedule table snippet from authority articles
+ */
+async function fetchAuthorityScheduleSnippet(rawUrl) {
+  if (!rawUrl) return null;
+  try {
+    let destUrl = rawUrl;
+    if (destUrl.includes('url=')) {
+      const match = destUrl.match(/url=([^&]+)/);
+      if (match) destUrl = decodeURIComponent(match[1]);
+    }
+    if (!AUTHORITY_DOMAINS_REGEX.test(destUrl)) {
+      return null;
+    }
+    const res = await fetch(destUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      signal: AbortSignal.timeout(2800)
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const clean = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                      .replace(/<[^>]+>/g, ' ')
+                      .replace(/\s+/g, ' ');
+
+    const prelimsMatch = clean.match(/(?:preliminary examination|prelims exam|tier[\s-]?1|phase[\s-]?1)[^\.\n]{10,250}/i);
+    const mainsMatch = clean.match(/(?:main examination|mains exam|tier[\s-]?2|phase[\s-]?2)[^\.\n]{10,250}/i);
+    const generalMatch = clean.match(/(?:important dates|examination schedule|exam schedule|written exam date)[^\.\n]{10,250}/i);
+    const snippets = [prelimsMatch?.[0], mainsMatch?.[0], generalMatch?.[0]].filter(Boolean);
+
+    if (snippets.length > 0) {
+      const hostname = new URL(destUrl).hostname.replace(/^www\./, '');
+      return {
+        title: `Official Schedule Table (${hostname})`,
+        snippet: snippets.join(' ... '),
+        source: hostname,
+        url: destUrl
+      };
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
+/**
+ * Filters and ranks articles by relevance, prioritizing exam schedule and prelims/mains dates
  */
 function filterAndRankArticles(articles, examName) {
   const currentYear = new Date().getFullYear();
@@ -338,23 +390,24 @@ function filterAndRankArticles(articles, examName) {
   for (const item of uniqueList) {
     const fullText = `${item.title} ${item.description || item.snippet || ''}`.toLowerCase();
 
-    if (/extended|extension|corrigendum|postponed|revised|late fee/i.test(fullText)) {
+    if (/exam date|admit card|schedule|prelims|mains|written test|cbt date/i.test(fullText)) {
+      scheduleArticles.push(item);
+    } else if (/extended|extension|corrigendum|postponed|revised|late fee/i.test(fullText)) {
       extensionArticles.push(item);
     } else if (/last date|apply|deadline|registration/i.test(fullText)) {
       deadlineArticles.push(item);
-    } else if (/exam date|admit card|schedule|prelims|mains|written test/i.test(fullText)) {
-      scheduleArticles.push(item);
     } else {
       otherArticles.push(item);
     }
   }
 
+  // Prioritize exam schedules first so they never get crowded out by deadline extension headlines!
   return [
-    ...extensionArticles.slice(0, 6),
+    ...scheduleArticles.slice(0, 6),
+    ...extensionArticles.slice(0, 5),
     ...deadlineArticles.slice(0, 4),
-    ...scheduleArticles.slice(0, 4),
     ...otherArticles.slice(0, 2)
-  ].slice(0, 14);
+  ].slice(0, 16);
 }
 
 /**
@@ -722,11 +775,12 @@ export async function generateExamAiOverview({ examId = null, examName, conducti
   const currentYear = new Date().getFullYear();
   const nextYear = currentYear + 1;
 
-  // 1. Fetch live articles from both Bing News and Google News with targeted queries
+  // 1. Targeted live searches across official exam schedules, portals and news
   const queries = [
-    `${examName} registration last date extended till late fee`,
-    `${examName} last date to apply without late fee ${currentYear} ${nextYear}`,
-    `${examName} exam date schedule prelims ${currentYear} ${nextYear}`
+    `"${examName}" exam date ${currentYear} ${nextYear} prelims mains schedule`,
+    `"${examName}" notification ${currentYear} exam date last date apply online`,
+    `"${examName}" exam schedule tentative preliminary examination`,
+    `"${examName}" registration last date extended late fee`
   ];
 
   const searchPromises = [];
@@ -743,13 +797,29 @@ export async function generateExamAiOverview({ examId = null, examName, conducti
 
   const rankedArticles = filterAndRankArticles(allArticles, examName);
 
-  const cleanedArticles = rankedArticles.map(a => ({
-    title: cleanHtml(a.title || a.source_title || ''),
-    snippet: cleanHtml(a.description || a.snippet || ''),
-    source: a.source || a.source_domain || 'Online Media',
-    url: a.link || a.source_url || a.url || '',
-    date: a.pubDate || a.pub_date || ''
-  }));
+  // Fast parallel extraction of structured schedule tables from top authority educational portals
+  const examSlug = examName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const candidateUrls = [
+    `https://www.bankersadda.com/${examSlug}-exam-date-${currentYear}/`,
+    `https://www.bankersadda.com/${examSlug}-exam-date/`,
+    `https://www.bankersadda.com/${examSlug}-${currentYear}/`,
+    ...rankedArticles.filter(a => a.link && AUTHORITY_DOMAINS_REGEX.test(a.link)).map(a => a.link)
+  ];
+  const uniqueCandidateUrls = [...new Set(candidateUrls)].slice(0, 5);
+
+  const authorityPromises = uniqueCandidateUrls.map(u => fetchAuthorityScheduleSnippet(u));
+  const extraSnippets = (await Promise.all(authorityPromises)).filter(Boolean);
+
+  const cleanedArticles = [
+    ...extraSnippets,
+    ...rankedArticles.map(a => ({
+      title: cleanHtml(a.title || a.source_title || ''),
+      snippet: cleanHtml(a.description || a.snippet || ''),
+      source: a.source || a.source_domain || 'Online Media',
+      url: a.link || a.source_url || a.url || '',
+      date: a.pubDate || a.pub_date || ''
+    }))
+  ];
 
   // 2. Call Gemini
   let aiData = null;
@@ -766,27 +836,26 @@ Conducting Body: "${conductingBody || 'Official Commission / Examination Authori
 TODAY'S CURRENT DATE: ${todayFormatted} (${todayObj.toDateString()})
 CURRENT ACTIVE RECRUITMENT CYCLE: ${currentYear} - ${nextYear}
 
-CRAWLED REAL-TIME ANNOUNCEMENTS & MEDIA HEADLINES:
-${JSON.stringify(cleanedArticles.slice(0, 8), null, 2)}
+CRAWLED REAL-TIME ANNOUNCEMENTS, OFFICIAL SCHEDULE TABLES & MEDIA:
+${JSON.stringify(cleanedArticles.slice(0, 14), null, 2)}
 
 TASK:
 Extract the EXACT dates and categorize them clearly with NO EXTRA UNNECESSARY FLUFF.
 Follow these rules strictly:
 1. STRICT DATE FORMAT:
-   ALL dates in your output MUST be in DD/MM/YYYY format (e.g. "12/10/2026", "27/09/2026").
-2. REJECT OBSOLETE PAST YEARS:
-   Focus ONLY on active 2026-2027 cycle. Ignore 2024/2025.
-3. EXTENDED DATES PRIORITY (CRITICAL OVERRIDE RULE):
+   ALL dates in your output MUST be in DD/MM/YYYY format (e.g. "10/10/2026", "27/12/2026", "28/08/2026").
+2. EXAM DATES EXTRACTION (PRELIMS & MAINS):
+   - "prelims_exam_date": Date when the Preliminary Examination, Tier-1, or CBT exam is held in DD/MM/YYYY (or multiple dates like "10/10/2026, 11/10/2026", or null if no schedule announced).
+   - "mains_exam_date": Date when the Main Examination, Tier-2, or Phase-2 exam is held in DD/MM/YYYY (or null).
+   - An EXAM DATE is NEVER the application deadline! Check schedule tables and official announcements for actual exam dates.
+3. EXTENDED DATES PRIORITY (APPLICATION DEADLINE):
    - "apply_last_date": Regular deadline (without late fee) in DD/MM/YYYY or null.
    - "extended_last_date": Extended deadline (with or without late fee) in DD/MM/YYYY or null. Set "is_extended": true if extended.
    - "active_last_date": Final active application closing deadline in DD/MM/YYYY or null.
-4. EXAM DATE vs APPLICATION DEADLINE (CRITICAL DISTINCTION):
-   - "prelims_exam_date": Date when the written / prelims / computer-based examination is held in DD/MM/YYYY (or null).
-   - An EXAM DATE is NEVER the application deadline! If articles only discuss application deadlines or registration dates, set "prelims_exam_date": null. NEVER set prelims_exam_date to the same date as active_last_date or apply_last_date.
-5. COMPARE WITH TODAY'S DATE (${todayFormatted}):
+4. COMPARE WITH TODAY'S DATE (${todayFormatted}):
    - If active_last_date is before ${todayFormatted}: "application_status": "closed", "is_closed": true.
    - If active_last_date is on or after ${todayFormatted}: "application_status": "open", "is_closed": false.
-6. "overview_summary": Maximum 2 clear, direct sentences stating the application status and the exam date if announced.
+5. "overview_summary": Maximum 2 clear, direct sentences stating both the application status and the exam dates (prelims and mains) if found in sources.
 
 Return ONLY valid JSON matching this schema:
 {
@@ -805,7 +874,7 @@ Return ONLY valid JSON matching this schema:
   "fee_deadline": "DD/MM/YYYY or null",
   "important_details": ["...", "..."],
   "source_links": [...],
-  "confidence": "Tentative / Reported Online"
+  "confidence": "Official Calendar / Reported Online"
 }
 `;
 
