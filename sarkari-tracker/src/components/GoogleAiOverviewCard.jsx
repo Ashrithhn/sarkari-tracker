@@ -80,8 +80,20 @@ const GoogleAiOverviewCard = ({
               </h3>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 flex items-center gap-1">
                 <ShieldAlert className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                <span>Tentative / Reported Online</span>
+                <span>{overview.confidence || 'Tentative / Reported Online'}</span>
               </span>
+              {overview.cross_verification?.verifier && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                  <span>{overview.cross_verification.verifier}</span>
+                </span>
+              )}
+              {overview.is_cached && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                  <span>24h Verified Cache ({overview.cache_age_hours ?? 0}h ago)</span>
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
               Live Google Search Grounding for {examTitle || 'Government Exam'}

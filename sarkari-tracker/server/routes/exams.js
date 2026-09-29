@@ -250,7 +250,8 @@ router.post('/:id/scan-ai', async (req, res) => {
       examId,
       examName: examRow.short_name || examRow.name,
       conductingBody: examRow.conducting_body,
-      existingDiscoveries: existing
+      existingDiscoveries: existing,
+      forceFresh: true
     });
 
     res.json({ success: true, ai_overview: aiOverview });
