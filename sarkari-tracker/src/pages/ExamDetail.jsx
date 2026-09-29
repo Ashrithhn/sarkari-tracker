@@ -11,7 +11,9 @@ import {
   scanWebForExam,
   scanExamAi,
   candidateUploadFile,
-  candidateContributeExam
+  candidateContributeExam,
+  uploadJobDocument,
+  deleteJobDocument
 } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../utils/constants';
@@ -23,7 +25,7 @@ import {
   Briefcase, FileText, Youtube, CheckCircle, IndianRupee, 
   ShieldCheck, AlertTriangle, ExternalLink, Filter, TrendingUp,
   Image as ImageIcon, ZoomIn, X, Info, Award, Edit, Plus,
-  Globe, RefreshCw, Users, CheckCircle2, Upload
+  Globe, RefreshCw, Users, CheckCircle2, Upload, Trash2
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -385,6 +387,72 @@ const ExamDetail = () => {
     }
   };
 
+  const [uploadingDocType, setUploadingDocType] = useState(null);
+
+  const handleDirectUploadDoc = async (docType, file) => {
+    if (!user) {
+      alert('Please log in to save your personal exam files.');
+      return;
+    }
+    if (!file) return;
+
+    setUploadingDocType(docType);
+    try {
+      let appId = application?.id;
+      if (!appId) {
+        // Auto-track for candidate so documents can be linked
+        const applyRes = await applyToExam(exam.id, {
+          custom_exam_name: exam.name,
+          post_name: exam.short_name || exam.name,
+          custom_conducting_body: exam.conducting_body
+        });
+        if (applyRes?.application) {
+          appId = applyRes.application.id;
+          setApplication(applyRes.application);
+        } else {
+          const checkRes = await checkExamApplication(exam.id);
+          if (checkRes?.application) {
+            appId = checkRes.application.id;
+            setApplication(checkRes.application);
+          }
+        }
+      }
+
+      if (!appId) {
+        throw new Error('Could not link application to your account.');
+      }
+
+      const res = await uploadJobDocument(appId, file, docType);
+      if (res && res.application) {
+        setApplication(res.application);
+      } else {
+        await checkApplicationStatus();
+      }
+      alert(`Your personal ${docType === 'cutoff' ? 'cut-off document' : docType} has been saved directly to your account!`);
+    } catch (err) {
+      alert(err.message || `Failed to upload ${docType}`);
+    } finally {
+      setUploadingDocType(null);
+    }
+  };
+
+  const handleDirectDeleteDoc = async (docType) => {
+    if (!application?.id) return;
+    if (!window.confirm(`Are you sure you want to remove your uploaded ${docType}?`)) return;
+
+    try {
+      const res = await deleteJobDocument(application.id, docType);
+      if (res && res.application) {
+        setApplication(res.application);
+      } else {
+        await checkApplicationStatus();
+      }
+      alert(`Your uploaded ${docType} has been removed.`);
+    } catch (err) {
+      alert(err.message || 'Failed to remove document');
+    }
+  };
+
   // Process cutoffs for charts and display
   const cutoffsList = exam?.historicalCutoffs || [];
   
@@ -693,6 +761,78 @@ const ExamDetail = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Candidate's Personal Uploaded Notification */}
+                {application?.notification_file ? (
+                  <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold shrink-0">
+                        <FileText className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                            Your Uploaded Notification PDF
+                          </h4>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/70 dark:text-blue-300">
+                            Available Only To You
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          Personal copy saved to your account. No waiting for admin verification.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      <a
+                        href={application.notification_file}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                      >
+                        <Download className="w-3.5 h-3.5" /> View / Download
+                      </a>
+                      <label className="btn-secondary text-xs py-1.5 px-2.5 flex items-center gap-1 cursor-pointer">
+                        <Upload className="w-3 h-3" />
+                        <span>Replace</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          onChange={(e) => e.target.files?.[0] && handleDirectUploadDoc('notification', e.target.files[0])}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleDirectDeleteDoc('notification')}
+                        className="p-1.5 rounded-xl border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400"
+                        title="Remove uploaded notification"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <FileText className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span className="text-xs text-slate-600 dark:text-slate-300">
+                        Have the official circular or advertisement PDF? Upload it to keep it handy in your account.
+                      </span>
+                    </div>
+                    <label className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 cursor-pointer">
+                      <Upload className="w-3 h-3" />
+                      <span>{uploadingDocType === 'notification' ? 'Uploading...' : 'Upload My PDF'}</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        disabled={uploadingDocType === 'notification'}
+                        onChange={(e) => e.target.files?.[0] && handleDirectUploadDoc('notification', e.target.files[0])}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                )}
 
                 {/* REAL-TIME WEB INTELLIGENCE & EXPECTED UPDATES */}
                 <div className="glass-card p-6 rounded-2xl border border-sky-300 dark:border-sky-800/70 bg-gradient-to-br from-sky-50/40 via-white to-blue-50/20 dark:from-slate-900 dark:to-slate-800/90 shadow-sm space-y-4">
@@ -1152,6 +1292,78 @@ const ExamDetail = () => {
                   )}
                 </div>
 
+                {/* Candidate's Personal Uploaded Cutoff / Scorecard */}
+                {application?.cutoff_file ? (
+                  <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-300 flex items-center justify-center font-bold shrink-0">
+                        <TrendingUp className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                            Your Uploaded Cut-off / Scorecard PDF
+                          </h4>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/70 dark:text-amber-300">
+                            Available Only To You
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          Personal marks or cutoff PDF saved directly to your account without waiting for admin approval.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      <a
+                        href={application.cutoff_file}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                      >
+                        <Download className="w-3.5 h-3.5" /> View / Download PDF
+                      </a>
+                      <label className="btn-secondary text-xs py-1.5 px-2.5 flex items-center gap-1 cursor-pointer">
+                        <Upload className="w-3 h-3" />
+                        <span>Replace</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                          onChange={(e) => e.target.files?.[0] && handleDirectUploadDoc('cutoff', e.target.files[0])}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleDirectDeleteDoc('cutoff')}
+                        className="p-1.5 rounded-xl border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400"
+                        title="Remove uploaded cutoff"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <TrendingUp className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span className="text-xs text-slate-600 dark:text-slate-300">
+                        Have your marks card, scorecard, or cutoff circular? Upload it directly to your personal archive.
+                      </span>
+                    </div>
+                    <label className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 cursor-pointer">
+                      <Upload className="w-3 h-3" />
+                      <span>{uploadingDocType === 'cutoff' ? 'Uploading...' : 'Upload Scorecard PDF'}</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                        disabled={uploadingDocType === 'cutoff'}
+                        onChange={(e) => e.target.files?.[0] && handleDirectUploadDoc('cutoff', e.target.files[0])}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                )}
+
                 {/* Sub-section 1: Official Cutoff Scorecard Photo (if uploaded by admin) */}
                 {cutoffPhotoUrl && (
                   <div className="p-4 rounded-2xl border border-saffron-200 dark:border-saffron-900/40 bg-saffron-50/40 dark:bg-slate-900/60 space-y-3">
@@ -1263,6 +1475,78 @@ const ExamDetail = () => {
                     </a>
                   )}
                 </div>
+
+                {/* Candidate's Personal Uploaded Syllabus */}
+                {application?.syllabus_file ? (
+                  <div className="p-4 rounded-2xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-900/60 text-purple-600 dark:text-purple-300 flex items-center justify-center font-bold shrink-0">
+                        <BookOpen className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                            Your Uploaded Syllabus & Topic Notes
+                          </h4>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/70 dark:text-purple-300">
+                            Available Only To You
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          Personal document saved directly to your account. No waiting for admin approval.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                      <a
+                        href={application.syllabus_file}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                      >
+                        <Download className="w-3.5 h-3.5" /> View / Download PDF
+                      </a>
+                      <label className="btn-secondary text-xs py-1.5 px-2.5 flex items-center gap-1 cursor-pointer">
+                        <Upload className="w-3 h-3" />
+                        <span>Replace</span>
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                          onChange={(e) => e.target.files?.[0] && handleDirectUploadDoc('syllabus', e.target.files[0])}
+                          className="hidden"
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleDirectDeleteDoc('syllabus')}
+                        className="p-1.5 rounded-xl border border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-600 dark:text-red-400"
+                        title="Remove uploaded syllabus"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <BookOpen className="w-4 h-4 text-purple-500 shrink-0" />
+                      <span className="text-xs text-slate-600 dark:text-slate-300">
+                        Have your own syllabus copy or coaching notes? Upload it here to keep your study material handy.
+                      </span>
+                    </div>
+                    <label className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 cursor-pointer">
+                      <Upload className="w-3 h-3" />
+                      <span>{uploadingDocType === 'syllabus' ? 'Uploading...' : 'Upload My Syllabus'}</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                        disabled={uploadingDocType === 'syllabus'}
+                        onChange={(e) => e.target.files?.[0] && handleDirectUploadDoc('syllabus', e.target.files[0])}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                )}
 
                 {exam.syllabus && exam.syllabus.length > 0 ? (
                   <div className="space-y-4">

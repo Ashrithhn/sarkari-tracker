@@ -300,6 +300,10 @@ try {
 } catch (e) {}
 
 try {
+  db.exec('ALTER TABLE applications ADD COLUMN cutoff_file TEXT');
+} catch (e) {}
+
+try {
   db.exec('ALTER TABLE applications ADD COLUMN ai_overview TEXT');
 } catch (e) {}
 

@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { 
   FileText, Calendar, Bell, Plus, Award, CheckCircle, 
   Clock, ShieldCheck, ExternalLink, ArrowRight, Search,
-  Building2, LogIn, UserPlus, CheckCircle2, AlertCircle, Sparkles, Filter
+  Building2, LogIn, UserPlus, CheckCircle2, AlertCircle, Sparkles, Filter, X
 } from 'lucide-react';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend 

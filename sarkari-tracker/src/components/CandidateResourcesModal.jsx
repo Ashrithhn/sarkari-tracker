@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { 
   X, FileText, BookOpen, Award, ClipboardCheck, Receipt, 
   Upload, ExternalLink, Trash2, CheckCircle2, AlertCircle, 
-  Download, Loader2, Sparkles, FolderArchive 
+  Download, Loader2, Sparkles, FolderArchive, TrendingUp
 } from 'lucide-react';
 import { uploadJobDocument, deleteJobDocument } from '../utils/api';
 
@@ -51,6 +51,15 @@ const RESOURCE_TYPES = [
     icon: Receipt,
     accent: 'from-cyan-500/10 to-sky-500/10 border-cyan-200 dark:border-cyan-900/60 text-cyan-600 dark:text-cyan-400',
     badge: 'Fee Receipt'
+  },
+  {
+    key: 'cutoff',
+    fileKey: 'cutoff_file',
+    title: 'Cut-off Marks / Scorecard PDF',
+    description: 'Scorecard, mark list, or category-wise cutoff PDF for your personal record.',
+    icon: TrendingUp,
+    accent: 'from-amber-500/10 to-yellow-500/10 border-amber-200 dark:border-amber-900/60 text-amber-600 dark:text-amber-400',
+    badge: 'Cut-off / Scorecard'
   }
 ];
 

@@ -112,6 +112,7 @@ function formatApplication(app) {
     applied_date: app.applied_date,
     fee_paid: Boolean(app.fee_paid),
     fee_receipt_file: app.fee_receipt_file || null,
+    cutoff_file: app.cutoff_file || null,
     notification_file: app.notification_file || null,
     syllabus_file: app.syllabus_file || null,
     admit_card_file: app.admit_card_file || null,
@@ -534,13 +535,13 @@ router.post('/:id/checklist', (req, res) => {
   }
 });
 
-// 5b. Candidate Personal Resource Upload (Notification, Syllabus, Admit Card, Application Slip, Fee Receipt)
+// 5b. Candidate Personal Resource Upload (Notification, Syllabus, Admit Card, Application Slip, Fee Receipt, Cutoff)
 router.post('/:id/upload', upload.single('file'), (req, res) => {
   try {
     const { doc_type } = req.body;
-    const allowedTypes = ['notification', 'syllabus', 'admit_card', 'application_form', 'fee_receipt'];
+    const allowedTypes = ['notification', 'syllabus', 'admit_card', 'application_form', 'fee_receipt', 'cutoff'];
     if (!allowedTypes.includes(doc_type)) {
-      return res.status(400).json({ error: 'Invalid document type. Must be one of: notification, syllabus, admit_card, application_form, fee_receipt' });
+      return res.status(400).json({ error: 'Invalid document type. Must be one of: notification, syllabus, admit_card, application_form, fee_receipt, cutoff' });
     }
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -557,7 +558,8 @@ router.post('/:id/upload', upload.single('file'), (req, res) => {
       syllabus: 'syllabus_file',
       admit_card: 'admit_card_file',
       application_form: 'application_form_file',
-      fee_receipt: 'fee_receipt_file'
+      fee_receipt: 'fee_receipt_file',
+      cutoff: 'cutoff_file'
     };
     const targetColumn = columnMap[doc_type];
 
@@ -597,7 +599,7 @@ router.post('/:id/upload', upload.single('file'), (req, res) => {
 router.delete('/:id/document/:docType', (req, res) => {
   try {
     const { docType } = req.params;
-    const allowedTypes = ['notification', 'syllabus', 'admit_card', 'application_form', 'fee_receipt'];
+    const allowedTypes = ['notification', 'syllabus', 'admit_card', 'application_form', 'fee_receipt', 'cutoff'];
     if (!allowedTypes.includes(docType)) {
       return res.status(400).json({ error: 'Invalid document type' });
     }
@@ -612,7 +614,8 @@ router.delete('/:id/document/:docType', (req, res) => {
       syllabus: 'syllabus_file',
       admit_card: 'admit_card_file',
       application_form: 'application_form_file',
-      fee_receipt: 'fee_receipt_file'
+      fee_receipt: 'fee_receipt_file',
+      cutoff: 'cutoff_file'
     };
     const targetColumn = columnMap[docType];
     const existingFile = app[targetColumn];
