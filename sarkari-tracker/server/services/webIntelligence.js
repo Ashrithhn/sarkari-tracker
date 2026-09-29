@@ -71,6 +71,17 @@ function normalizeDate(raw) {
   return toDDMMYYYY(raw);
 }
 
+export function parseDateToTimestamp(raw) {
+  if (!raw) return 0;
+  const dmy = toDDMMYYYY(raw);
+  if (!dmy) return 0;
+  const parts = dmy.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (parts) {
+    return new Date(Number(parts[3]), Number(parts[2]) - 1, Number(parts[1])).getTime();
+  }
+  return 0;
+}
+
 /**
  * Compares an application deadline with current date (2026-09-29)
  * Returns { isClosed, statusText, badgeText, daysLeft }
@@ -159,36 +170,45 @@ function extractExamDetailsFromText(title, description = '') {
   let expectedApplyEnd = null;
   let expectedApplyStart = null;
 
-  // Contextual clues
-  const hasExamDateClue = /exam\s+date|examination\s+(?:on|date|schedule)|written\s+test|prelims\s+date|cbt\s+date/i.test(combined);
-  const hasDeadlineClue = /last\s+date|apply\s+online\s+till|deadline|registration\s+(?:closes|ends|last)/i.test(combined);
+  // Split into sentences for accurate local context extraction
+  const sentences = combined.split(/(?<=[.!?])\s+|\n+/);
+  for (const s of sentences) {
+    const datesInSentence = [...s.matchAll(fullDateRegex)].map(m => normalizeDate(m[1]));
+    if (datesInSentence.length === 0) continue;
 
-  if (hasDeadlineClue && matchedDates.length > 0) {
+    if (!expectedApplyEnd && /last\s+date|apply\s+online\s+till|deadline|registration\s+(?:closes|ends|last)|extended\s+till/i.test(s)) {
+      expectedApplyEnd = datesInSentence[0];
+    }
+    if (!expectedExamDate && /exam\s+date|examination\s+(?:on|date|schedule)|written\s+test|prelims\s+date|cbt\s+date|held\s+on/i.test(s)) {
+      expectedExamDate = datesInSentence[datesInSentence.length - 1];
+    }
+    if (!expectedApplyStart && /start(?:s|ing)?\s+(?:on|from)|apply\s+online\s+from/i.test(s)) {
+      expectedApplyStart = datesInSentence[0];
+    }
+  }
+
+  // Fallbacks using global matched dates if sentence extraction missed
+  if (!expectedApplyEnd && /last\s+date|deadline|registration/i.test(combined) && matchedDates.length > 0) {
     expectedApplyEnd = matchedDates[0];
   }
+  if (!expectedExamDate && /exam|prelims|test|held/i.test(combined) && matchedDates.length > 0) {
+    expectedExamDate = matchedDates[matchedDates.length - 1];
+  }
 
-  if (hasExamDateClue && matchedDates.length > 0) {
-    const candidateExamDate = matchedDates[matchedDates.length - 1];
-    if (candidateExamDate !== expectedApplyEnd) {
-      expectedExamDate = candidateExamDate;
+  // STRICT CHRONOLOGICAL INVARIANT: Application deadline is ALWAYS before the exam date!
+  if (expectedApplyEnd && expectedExamDate) {
+    if (expectedApplyEnd === expectedExamDate) {
+      expectedExamDate = null;
+    } else {
+      const applyT = parseDateToTimestamp(expectedApplyEnd);
+      const examT = parseDateToTimestamp(expectedExamDate);
+      if (applyT && examT && applyT > examT) {
+        // Dates were flipped in the text (e.g. "Exam on 11 Oct, registration closed 28 Aug")
+        const temp = expectedApplyEnd;
+        expectedApplyEnd = expectedExamDate;
+        expectedExamDate = temp;
+      }
     }
-  }
-
-  if (combined.match(/start(?:s|ing)?|from/i) && matchedDates.length > 1) {
-    expectedApplyStart = matchedDates[0];
-  }
-
-  // Fallback ONLY when there are multiple distinct dates and no exam date assigned yet
-  if (!expectedExamDate && matchedDates.length > 1) {
-    const latestDate = matchedDates[matchedDates.length - 1];
-    if (latestDate !== expectedApplyEnd) {
-      expectedExamDate = latestDate;
-    }
-  }
-
-  // Strict collision check: Exam date CANNOT be the same as the application deadline!
-  if (expectedExamDate && expectedApplyEnd && expectedExamDate === expectedApplyEnd) {
-    expectedExamDate = null;
   }
 
   // Eligibility snippets
@@ -1119,8 +1139,9 @@ Return ONLY valid JSON matching this schema:
 `;
 
     const candidateModels = [
-      'gemini-3.1-flash-lite',
       'gemini-3-flash-preview',
+      'gemini-3.1-flash-lite',
+      'gemini-2.5-flash-lite',
       'gemini-3.8-flash'
     ];
 
@@ -1216,7 +1237,20 @@ Return ONLY valid JSON matching this schema:
       aiData.mains_exam_date = toDDMMYYYY(aiData.mains_exam_date);
     }
 
-    const effectiveLastDate = aiData.extended_last_date || aiData.active_last_date || aiData.apply_last_date;
+    let effectiveLastDate = aiData.extended_last_date || aiData.active_last_date || aiData.apply_last_date;
+
+    // CRITICAL CHRONOLOGICAL INVARIANT: Application deadline is ALWAYS before the Prelims exam date!
+    const applyTimestamp = parseDateToTimestamp(effectiveLastDate);
+    const examTimestamp = parseDateToTimestamp(aiData.prelims_exam_date);
+    if (applyTimestamp && examTimestamp && applyTimestamp > examTimestamp) {
+      console.log(`[WebIntelligence] Corrected inverted dates: apply ${effectiveLastDate} vs exam ${aiData.prelims_exam_date}`);
+      const temp = aiData.apply_last_date;
+      aiData.apply_last_date = aiData.prelims_exam_date;
+      aiData.prelims_exam_date = temp;
+      if (aiData.extended_last_date) aiData.extended_last_date = null;
+      aiData.active_last_date = aiData.apply_last_date;
+      effectiveLastDate = aiData.apply_last_date;
+    }
 
     // CRITICAL COLLISION GUARD: Exam date can NEVER be the same as the application deadline!
     if (aiData.prelims_exam_date && effectiveLastDate && (
