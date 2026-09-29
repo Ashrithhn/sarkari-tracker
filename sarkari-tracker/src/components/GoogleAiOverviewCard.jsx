@@ -245,7 +245,9 @@ const GoogleAiOverviewCard = ({
               )}
 
               {/* Prelims Exam Date */}
-              {overview.prelims_exam_date && (
+              {overview.prelims_exam_date && 
+               overview.prelims_exam_date !== activeDeadline && 
+               formatDate(overview.prelims_exam_date) !== formatDate(activeDeadline) && (
                 <div className="p-3 rounded-xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/90 dark:border-blue-900/60 shadow-xs flex items-start gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5">
                     <Calendar className="w-3.5 h-3.5" />

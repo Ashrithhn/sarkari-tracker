@@ -683,7 +683,9 @@ const ExamDetail = () => {
                       </div>
                     )}
 
-                    {aiOverview.prelims_exam_date && (
+                    {aiOverview.prelims_exam_date && 
+                     aiOverview.prelims_exam_date !== (aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date) &&
+                     formatDate(aiOverview.prelims_exam_date) !== formatDate(aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date) && (
                       <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
                         <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
                         <div>

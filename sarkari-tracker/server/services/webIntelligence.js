@@ -160,22 +160,35 @@ function extractExamDetailsFromText(title, description = '') {
   let expectedApplyStart = null;
 
   // Contextual clues
-  if (combined.match(/exam\s+date|examination|written\s+test/i) && matchedDates.length > 0) {
-    expectedExamDate = matchedDates[matchedDates.length - 1]; // usually later date
-  }
-  if (combined.match(/last\s+date|apply\s+online\s+till|deadline/i) && matchedDates.length > 0) {
+  const hasExamDateClue = /exam\s+date|examination\s+(?:on|date|schedule)|written\s+test|prelims\s+date|cbt\s+date/i.test(combined);
+  const hasDeadlineClue = /last\s+date|apply\s+online\s+till|deadline|registration\s+(?:closes|ends|last)/i.test(combined);
+
+  if (hasDeadlineClue && matchedDates.length > 0) {
     expectedApplyEnd = matchedDates[0];
   }
+
+  if (hasExamDateClue && matchedDates.length > 0) {
+    const candidateExamDate = matchedDates[matchedDates.length - 1];
+    if (candidateExamDate !== expectedApplyEnd) {
+      expectedExamDate = candidateExamDate;
+    }
+  }
+
   if (combined.match(/start(?:s|ing)?|from/i) && matchedDates.length > 1) {
     expectedApplyStart = matchedDates[0];
   }
 
-  // Fallback to assign dates if available
-  if (!expectedExamDate && matchedDates.length === 1) {
-    expectedExamDate = matchedDates[0];
-  } else if (!expectedExamDate && matchedDates.length > 1) {
-    expectedExamDate = matchedDates[matchedDates.length - 1];
-    expectedApplyEnd = matchedDates[0];
+  // Fallback ONLY when there are multiple distinct dates and no exam date assigned yet
+  if (!expectedExamDate && matchedDates.length > 1) {
+    const latestDate = matchedDates[matchedDates.length - 1];
+    if (latestDate !== expectedApplyEnd) {
+      expectedExamDate = latestDate;
+    }
+  }
+
+  // Strict collision check: Exam date CANNOT be the same as the application deadline!
+  if (expectedExamDate && expectedApplyEnd && expectedExamDate === expectedApplyEnd) {
+    expectedExamDate = null;
   }
 
   // Eligibility snippets
@@ -747,43 +760,33 @@ export async function generateExamAiOverview({ examId = null, examName, conducti
   if (apiKey) {
     const ai = new GoogleGenAI({ apiKey });
     const prompt = `
-You are Google's AI Overview date extraction engine for Indian government recruitment & entrance examinations.
+You are a fast, accurate date extraction engine for Indian government recruitment examinations.
 Target Exam: "${examName}"
 Conducting Body: "${conductingBody || 'Official Commission / Examination Authority'}"
 TODAY'S CURRENT DATE: ${todayFormatted} (${todayObj.toDateString()})
 CURRENT ACTIVE RECRUITMENT CYCLE: ${currentYear} - ${nextYear}
 
 CRAWLED REAL-TIME ANNOUNCEMENTS & MEDIA HEADLINES:
-${JSON.stringify(cleanedArticles, null, 2)}
+${JSON.stringify(cleanedArticles.slice(0, 8), null, 2)}
 
 TASK:
 Extract the EXACT dates and categorize them clearly with NO EXTRA UNNECESSARY FLUFF.
 Follow these rules strictly:
 1. STRICT DATE FORMAT:
-   ALL dates in your output MUST be in DD/MM/YYYY format (e.g. "12/10/2026", "27/09/2026", "21/11/2026").
-   Do NOT use month names like "October" or format YYYY-MM-DD. Always convert to DD/MM/YYYY.
+   ALL dates in your output MUST be in DD/MM/YYYY format (e.g. "12/10/2026", "27/09/2026").
 2. REJECT OBSOLETE PAST YEARS:
-   Discard any 2024 or 2025 dates unless explicitly relevant to an active cycle. We are in ${currentYear}. Focus ONLY on the active ${currentYear}-${nextYear} recruitment cycle.
+   Focus ONLY on active 2026-2027 cycle. Ignore 2024/2025.
 3. EXTENDED DATES PRIORITY (CRITICAL OVERRIDE RULE):
-   Carefully inspect titles and snippets for phrases like "extended till", "extended to", "deadline extended", "with late fee", "without late fee", "corrigendum".
-   - If an initial or regular deadline is stated (without late fee): set "apply_last_date" in DD/MM/YYYY.
-   - If an extended deadline or deadline WITH LATE FEE is stated: set "extended_last_date" in DD/MM/YYYY and set "is_extended": true.
-   - "active_last_date": MUST be the final extended / late fee deadline in DD/MM/YYYY. If not extended, set to "apply_last_date".
-4. COMPARE WITH TODAY'S DATE (${todayFormatted}):
-   - Check if "active_last_date" has passed relative to today (${todayFormatted}).
-   - If active_last_date is before ${todayFormatted}: set "application_status": "closed", "is_closed": true.
-   - If active_last_date is on or after ${todayFormatted}: set "application_status": "open", "is_closed": false.
-5. "prelims_exam_date": Prelims / Tier-1 / Written exam date in DD/MM/YYYY (or month range like "February 2027" if exact date not fixed) or null.
-6. "mains_exam_date": Mains or Tier-2 date if applicable or null.
-7. "admit_card_date": Expected or confirmed admit card date in DD/MM/YYYY or null.
-8. "vacancies": Total posts if mentioned (e.g. "13,745 Posts") or null.
-9. "fee_deadline": Fee payment deadline in DD/MM/YYYY or null.
-10. "important_details": Array of 2 to 4 crisp key bullet points in format:
-   - "Regular Deadline (Without Late Fee): DD/MM/YYYY"
-   - "Extended Deadline (With Late Fee): DD/MM/YYYY"
-   - "Prelims Exam Date: DD/MM/YYYY"
-   - "Application Status: Closed on DD/MM/YYYY" OR "Application Status: Open till DD/MM/YYYY"
-11. "overview_summary": Maximum 2 clear, direct sentences stating the application status (Open or Closed with date in DD/MM/YYYY) and the scheduled exam dates. NO conversational filler.
+   - "apply_last_date": Regular deadline (without late fee) in DD/MM/YYYY or null.
+   - "extended_last_date": Extended deadline (with or without late fee) in DD/MM/YYYY or null. Set "is_extended": true if extended.
+   - "active_last_date": Final active application closing deadline in DD/MM/YYYY or null.
+4. EXAM DATE vs APPLICATION DEADLINE (CRITICAL DISTINCTION):
+   - "prelims_exam_date": Date when the written / prelims / computer-based examination is held in DD/MM/YYYY (or null).
+   - An EXAM DATE is NEVER the application deadline! If articles only discuss application deadlines or registration dates, set "prelims_exam_date": null. NEVER set prelims_exam_date to the same date as active_last_date or apply_last_date.
+5. COMPARE WITH TODAY'S DATE (${todayFormatted}):
+   - If active_last_date is before ${todayFormatted}: "application_status": "closed", "is_closed": true.
+   - If active_last_date is on or after ${todayFormatted}: "application_status": "open", "is_closed": false.
+6. "overview_summary": Maximum 2 clear, direct sentences stating the application status and the exam date if announced.
 
 Return ONLY valid JSON matching this schema:
 {
@@ -808,11 +811,8 @@ Return ONLY valid JSON matching this schema:
 
     const candidateModels = [
       'gemini-3.1-flash-lite',
-      'gemini-3.5-flash-lite',
-      'gemini-3.8-flash',
-      'gemini-2.5-pro',
       'gemini-3-flash-preview',
-      'gemini-flash-latest'
+      'gemini-3.8-flash'
     ];
 
     for (const model of candidateModels) {
@@ -842,9 +842,16 @@ Return ONLY valid JSON matching this schema:
 
     for (const a of cleanedArticles) {
       const details = extractExamDetailsFromText(a.title, a.snippet);
-      if (!bestExamDate && details.expectedExamDate) bestExamDate = toDDMMYYYY(details.expectedExamDate);
       if (!bestApplyEnd && details.expectedApplyEnd) bestApplyEnd = toDDMMYYYY(details.expectedApplyEnd);
+      if (!bestExamDate && details.expectedExamDate && details.expectedExamDate !== details.expectedApplyEnd) {
+        bestExamDate = toDDMMYYYY(details.expectedExamDate);
+      }
       if (!bestVacancies && details.expectedVacancies) bestVacancies = details.expectedVacancies;
+    }
+
+    // Safety check: Exam date can never be the same as application deadline
+    if (bestExamDate && bestApplyEnd && bestExamDate === bestApplyEnd) {
+      bestExamDate = null;
     }
 
     const status = checkDeadlineStatus(bestApplyEnd);
@@ -901,6 +908,17 @@ Return ONLY valid JSON matching this schema:
     }
 
     const effectiveLastDate = aiData.extended_last_date || aiData.active_last_date || aiData.apply_last_date;
+
+    // CRITICAL COLLISION GUARD: Exam date can NEVER be the same as the application deadline!
+    if (aiData.prelims_exam_date && effectiveLastDate && (
+      aiData.prelims_exam_date === effectiveLastDate ||
+      aiData.prelims_exam_date === aiData.apply_last_date ||
+      aiData.prelims_exam_date === aiData.extended_last_date ||
+      aiData.prelims_exam_date === aiData.active_last_date
+    )) {
+      aiData.prelims_exam_date = null;
+    }
+
     const status = checkDeadlineStatus(effectiveLastDate);
     aiData.is_closed = status.isClosed;
     aiData.application_status = status.isClosed ? 'closed' : 'open';
