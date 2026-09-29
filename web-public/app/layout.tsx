@@ -86,12 +86,15 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${inter.className} min-h-screen flex flex-col justify-between`}>
-        <Navbar />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
+      <body className={`${inter.className} min-h-screen bg-[#9bb0a4] p-2.5 sm:p-4 lg:p-6 flex flex-col font-sans text-slate-800`}>
+        {/* Outer Rounded Container Frame */}
+        <div className="flex-1 bg-white rounded-[34px] sm:rounded-[48px] lg:rounded-[52px] overflow-hidden shadow-2xl border border-slate-300/60 flex flex-col justify-between p-3 sm:p-6 lg:p-8">
+          <Navbar />
+          <main className="flex-1 py-4 sm:py-6">
+            {children}
+          </main>
+          <Footer />
+        </div>
       </body>
     </html>
   );

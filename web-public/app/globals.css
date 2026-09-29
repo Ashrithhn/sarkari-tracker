@@ -1,21 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 antialiased font-sans selection:bg-saffron-500 selection:text-white;
+    @apply bg-[#9bb0a4] text-slate-900 antialiased font-sans selection:bg-saffron-500 selection:text-white;
   }
 }
 
 .glass-card {
-  @apply bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl shadow-sm;
+  @apply bg-white border border-slate-200/80 rounded-[28px] sm:rounded-[32px] shadow-sm;
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-semibold text-white bg-gradient-to-r from-saffron-500 to-saffron-600 hover:from-saffron-600 hover:to-saffron-700 shadow-md shadow-saffron-500/20 transition-all duration-200 active:scale-[0.98];
+  @apply inline-flex items-center justify-center px-5 py-2.5 rounded-full font-bold text-white bg-navy-950 hover:bg-navy-900 shadow-sm transition-all duration-200 active:scale-[0.98];
 }
 
 .btn-secondary {
-  @apply inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 shadow-sm transition-all duration-200 active:scale-[0.98];
+  @apply inline-flex items-center justify-center px-5 py-2.5 rounded-full font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 shadow-2xs transition-all duration-200 active:scale-[0.98];
 }
