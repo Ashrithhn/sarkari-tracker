@@ -70,23 +70,110 @@ export const getPublicPortalUrl = () => {
 };
 
 /**
- * Universal date formatter guaranteeing DD/MM/YYYY across all views
+ * Universal date formatter guaranteeing date/month/year (DD/MM/YYYY) format across all views
  */
 export function formatDate(val) {
   if (!val) return '';
   const str = String(val).trim();
-  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) {
-    return `${m[3]}/${m[2]}/${m[1]}`;
+
+  // Already DD/MM/YYYY
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+    return str;
   }
-  const d = new Date(str);
-  if (!isNaN(d.getTime())) {
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
+
+  // Format: YYYY-MM-DD
+  const ymd = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (ymd) {
+    const day = ymd[3].padStart(2, '0');
+    const month = ymd[2].padStart(2, '0');
+    const year = ymd[1];
     return `${day}/${month}/${year}`;
   }
+
+  // Format: DD-MM-YYYY or DD.MM.YYYY
+  const dmy = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (dmy) {
+    const day = dmy[1].padStart(2, '0');
+    const month = dmy[2].padStart(2, '0');
+    const year = dmy[3];
+    return `${day}/${month}/${year}`;
+  }
+
+  // Format: 27 September 2026 or September 27, 2026
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    const day = String(parsed.getDate()).padStart(2, '0');
+    const month = String(parsed.getMonth() + 1).padStart(2, '0');
+    const year = parsed.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
   return str;
+}
+
+/**
+ * Compares an application deadline or exam date with today's date
+ * Determines if application is CLOSED, CLOSING SOON, or OPEN
+ */
+export function getDeadlineStatus(lastDateStr) {
+  if (!lastDateStr) {
+    return { isClosed: false, isUrgent: false, statusLabel: 'Notice Awaited', daysLeft: null };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Parse date string (handles DD/MM/YYYY, YYYY-MM-DD, or text)
+  let target = null;
+  const dmy = String(lastDateStr).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (dmy) {
+    target = new Date(Number(dmy[3]), Number(dmy[2]) - 1, Number(dmy[1]));
+  } else {
+    target = new Date(lastDateStr);
+  }
+
+  if (!target || isNaN(target.getTime())) {
+    return { isClosed: false, isUrgent: false, statusLabel: lastDateStr, daysLeft: null };
+  }
+
+  target.setHours(0, 0, 0, 0);
+  const diffTime = target.getTime() - today.getTime();
+  const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const formattedDate = formatDate(lastDateStr);
+
+  if (daysLeft < 0) {
+    return {
+      isClosed: true,
+      isUrgent: false,
+      statusLabel: `Application Closed on ${formattedDate}`,
+      badgeText: '🔴 APPLICATION CLOSED',
+      daysLeft: 0
+    };
+  } else if (daysLeft === 0) {
+    return {
+      isClosed: false,
+      isUrgent: true,
+      statusLabel: `Closing TODAY (${formattedDate})`,
+      badgeText: '🚨 CLOSING TODAY',
+      daysLeft: 0
+    };
+  } else if (daysLeft <= 3) {
+    return {
+      isClosed: false,
+      isUrgent: true,
+      statusLabel: `Closing in ${daysLeft} days (${formattedDate})`,
+      badgeText: `⚠️ CLOSING IN ${daysLeft} DAYS`,
+      daysLeft
+    };
+  } else {
+    return {
+      isClosed: false,
+      isUrgent: false,
+      statusLabel: `Open till ${formattedDate} (${daysLeft} days left)`,
+      badgeText: '🟢 APPLICATIONS OPEN',
+      daysLeft
+    };
+  }
 }
 
 export const NOTIFICATION_TYPES = {

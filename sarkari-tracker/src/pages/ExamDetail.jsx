@@ -565,13 +565,17 @@ const ExamDetail = () => {
                 <span className="bg-emerald-600/90 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                   <ShieldCheck className="w-3.5 h-3.5" /> Official Verified Schedule
                 </span>
+              ) : aiOverview?.is_closed ? (
+                <span className="bg-rose-600 text-white text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                  <Clock className="w-3.5 h-3.5 text-white" /> Application Closed ({formatDate(aiOverview.active_last_date || aiOverview.apply_last_date)})
+                </span>
               ) : aiOverview?.is_extended ? (
                 <span className="bg-amber-400 text-slate-950 text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <Clock className="w-3.5 h-3.5 text-slate-950" /> Deadline Extended: {aiOverview.extended_last_date || aiOverview.active_last_date}
+                  <Clock className="w-3.5 h-3.5 text-slate-950" /> Deadline Extended: {formatDate(aiOverview.extended_last_date || aiOverview.active_last_date)}
                 </span>
               ) : (aiOverview?.active_last_date || aiOverview?.apply_last_date) ? (
-                <span className="bg-blue-600/90 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5" /> Google Reported Schedule
+                <span className="bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5" /> Applications Open till {formatDate(aiOverview.active_last_date || aiOverview.apply_last_date)}
                 </span>
               ) : (
                 <span className="bg-amber-600/90 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
@@ -649,7 +653,7 @@ const ExamDetail = () => {
                         <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" /> GOOGLE AI EXTRACTED DATES
                       </span>
                       <span className="text-xs text-amber-300 font-semibold">
-                        {aiOverview.is_extended ? '🔥 Application Deadline Extended' : 'Latest Web Grounding'}
+                        {aiOverview.is_closed ? '🔴 Application Closed' : aiOverview.is_extended ? '🔥 Application Deadline Extended' : 'Latest Web Grounding'}
                       </span>
                     </div>
 
@@ -670,10 +674,10 @@ const ExamDetail = () => {
                         <Clock className="w-4 h-4 text-amber-400 shrink-0" />
                         <div>
                           <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
-                            {aiOverview.is_extended ? 'Extended Deadline' : 'Last Date to Apply'}
+                            {aiOverview.is_closed ? 'Application Closed on' : aiOverview.is_extended ? 'Extended Deadline' : 'Last Date to Apply'}
                           </span>
                           <strong className="text-xs sm:text-sm font-extrabold text-white">
-                            {aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date}
+                            {formatDate(aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date)}
                           </strong>
                         </div>
                       </div>
@@ -687,7 +691,7 @@ const ExamDetail = () => {
                             Expected Exam Date
                           </span>
                           <strong className="text-xs sm:text-sm font-extrabold text-white">
-                            {aiOverview.prelims_exam_date}
+                            {formatDate(aiOverview.prelims_exam_date)}
                           </strong>
                         </div>
                       </div>
@@ -701,7 +705,7 @@ const ExamDetail = () => {
                             Fee Payment Deadline
                           </span>
                           <strong className="text-xs sm:text-sm font-extrabold text-white">
-                            {aiOverview.fee_deadline}
+                            {formatDate(aiOverview.fee_deadline)}
                           </strong>
                         </div>
                       </div>
@@ -1020,7 +1024,7 @@ const ExamDetail = () => {
                                   <Calendar className="w-3 h-3 text-sky-500" /> Expected Exam:
                                 </span>
                                 <strong className="text-slate-800 dark:text-slate-200">
-                                  {disc.expected_exam_date}
+                                  {formatDate(disc.expected_exam_date)}
                                 </strong>
                               </div>
                             )}
@@ -1031,7 +1035,7 @@ const ExamDetail = () => {
                                   <Clock className="w-3 h-3 text-amber-500" /> Expected Last Date:
                                 </span>
                                 <strong className="text-slate-800 dark:text-slate-200">
-                                  {disc.expected_apply_end}
+                                  {formatDate(disc.expected_apply_end)}
                                 </strong>
                               </div>
                             )}

@@ -20,9 +20,10 @@ router.get('/notifications', (req, res) => {
     db.prepare(`
       INSERT OR IGNORE INTO user_notifications (user_id, notification_id, read)
       SELECT ?, n.id, 0 FROM notifications n
-      WHERE n.exam_id IN (SELECT exam_id FROM applications WHERE user_id = ? AND exam_id IS NOT NULL)
-         OR n.is_urgent = 1
-    `).run(req.user.id, req.user.id);
+      WHERE (n.exam_id IN (SELECT exam_id FROM applications WHERE user_id = ? AND exam_id IS NOT NULL)
+         OR n.is_urgent = 1)
+        AND n.id NOT IN (SELECT notification_id FROM user_dismissed_notifications WHERE user_id = ?)
+    `).run(req.user.id, req.user.id, req.user.id);
 
     const notifications = db.prepare(`
       SELECT un.id, 
@@ -73,32 +74,45 @@ router.put('/notifications/read-all', (req, res) => {
   }
 });
 
-// Delete / Dismiss a single notification
-router.delete('/notifications/:id', (req, res) => {
-  try {
-    const result = db.prepare('DELETE FROM user_notifications WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
-    if (result.changes === 0) return res.status(404).json({ error: 'Notification not found' });
-    res.json({ success: true, message: 'Notification dismissed' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Clear all read notifications
+// Clear all read notifications permanently
 router.delete('/notifications/clear-read', (req, res) => {
   try {
+    db.prepare(`
+      INSERT OR IGNORE INTO user_dismissed_notifications (user_id, notification_id, dismissed_at)
+      SELECT user_id, notification_id, datetime('now') FROM user_notifications WHERE user_id = ? AND read = 1
+    `).run(req.user.id);
+
     db.prepare('DELETE FROM user_notifications WHERE user_id = ? AND read = 1').run(req.user.id);
-    res.json({ success: true, message: 'All read notifications cleared' });
+    res.json({ success: true, message: 'All read notifications permanently cleared' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Clear ALL notifications for user
+// Clear ALL notifications for user permanently
 router.delete('/notifications/clear-all', (req, res) => {
   try {
+    db.prepare(`
+      INSERT OR IGNORE INTO user_dismissed_notifications (user_id, notification_id, dismissed_at)
+      SELECT user_id, notification_id, datetime('now') FROM user_notifications WHERE user_id = ?
+    `).run(req.user.id);
+
     db.prepare('DELETE FROM user_notifications WHERE user_id = ?').run(req.user.id);
-    res.json({ success: true, message: 'All notifications cleared' });
+    res.json({ success: true, message: 'All notifications permanently cleared' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete / Dismiss a single notification permanently
+router.delete('/notifications/:id', (req, res) => {
+  try {
+    const un = db.prepare('SELECT notification_id FROM user_notifications WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+    if (!un) return res.status(404).json({ error: 'Notification not found' });
+
+    db.prepare('INSERT OR IGNORE INTO user_dismissed_notifications (user_id, notification_id) VALUES (?, ?)').run(req.user.id, un.notification_id);
+    db.prepare('DELETE FROM user_notifications WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+    res.json({ success: true, message: 'Notification permanently dismissed' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

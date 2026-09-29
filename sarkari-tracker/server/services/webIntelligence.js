@@ -19,14 +19,11 @@ const MONTHS = {
 };
 
 /**
- * Normalizes extracted date strings into YYYY-MM-DD format
+ * Universal date normalizer guaranteeing date/month/year (DD/MM/YYYY) format
  */
-function normalizeDate(raw) {
+export function toDDMMYYYY(raw) {
   if (!raw) return null;
-  const clean = raw.trim().replace(/,/g, '');
-
-  // Format: 2026-11-28
-  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+  const clean = String(raw).trim().replace(/,/g, '');
 
   // Format: 28/11/2026 or 28-11-2026 or 28.11.2026
   const slashMatch = clean.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
@@ -34,20 +31,87 @@ function normalizeDate(raw) {
     const day = slashMatch[1].padStart(2, '0');
     const month = slashMatch[2].padStart(2, '0');
     const year = slashMatch[3];
-    return `${year}-${month}-${day}`;
+    return `${day}/${month}/${year}`;
   }
 
-  // Format: 28 November 2026 or 28th Nov 2026
-  const textMatch = clean.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})$/i);
+  // Format: 2026-11-28
+  const ymdMatch = clean.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (ymdMatch) {
+    const day = ymdMatch[3].padStart(2, '0');
+    const month = ymdMatch[2].padStart(2, '0');
+    const year = ymdMatch[1];
+    return `${day}/${month}/${year}`;
+  }
+
+  // Format: 28 November 2026 or 28th Nov 2026 or November 28, 2026
+  const textMatch = clean.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})$/i) ||
+                    clean.match(/^([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?\s+(\d{4})$/i);
   if (textMatch) {
-    const day = textMatch[1].padStart(2, '0');
-    const monthStr = textMatch[2].toLowerCase();
-    const month = MONTHS[monthStr];
-    const year = textMatch[3];
-    if (month) return `${year}-${month}-${day}`;
+    let day, monthStr, year;
+    if (isNaN(textMatch[1])) {
+      monthStr = textMatch[1].toLowerCase();
+      day = textMatch[2].padStart(2, '0');
+      year = textMatch[3];
+    } else {
+      day = textMatch[1].padStart(2, '0');
+      monthStr = textMatch[2].toLowerCase();
+      year = textMatch[3];
+    }
+    const month = MONTHS[monthStr] || MONTHS[monthStr.slice(0, 3)];
+    if (month) return `${day}/${month}/${year}`;
   }
 
   return clean;
+}
+
+/**
+ * Normalizes extracted date strings into DD/MM/YYYY format
+ */
+function normalizeDate(raw) {
+  return toDDMMYYYY(raw);
+}
+
+/**
+ * Compares an application deadline with current date (2026-09-29)
+ * Returns { isClosed, statusText, badgeText, daysLeft }
+ */
+export function checkDeadlineStatus(dateVal) {
+  if (!dateVal) return { isClosed: false, statusText: 'Awaited', badgeText: 'Notice Awaited', daysLeft: null };
+  const dmy = toDDMMYYYY(dateVal);
+  if (!dmy) return { isClosed: false, statusText: 'Awaited', badgeText: 'Notice Awaited', daysLeft: null };
+
+  const parts = dmy.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (parts) {
+    const target = new Date(Number(parts[3]), Number(parts[2]) - 1, Number(parts[1]));
+    target.setHours(23, 59, 59, 999);
+    const today = new Date();
+    const diffMs = target.getTime() - today.getTime();
+    const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (daysLeft < 0) {
+      return {
+        isClosed: true,
+        statusText: `Closed on ${dmy}`,
+        badgeText: 'Application Closed',
+        daysLeft
+      };
+    } else if (daysLeft === 0) {
+      return {
+        isClosed: false,
+        statusText: `Closes Today (${dmy})`,
+        badgeText: 'Closes Today',
+        daysLeft: 0
+      };
+    } else {
+      return {
+        isClosed: false,
+        statusText: `Open till ${dmy} (${daysLeft} ${daysLeft === 1 ? 'day' : 'days'} left)`,
+        badgeText: `${daysLeft}d Left`,
+        daysLeft
+      };
+    }
+  }
+  return { isClosed: false, statusText: dateVal, badgeText: 'Active', daysLeft: null };
 }
 
 export function cleanHtml(html) {
@@ -87,8 +151,8 @@ function extractExamDetailsFromText(title, description = '') {
     expectedFee = `₹${feeMatch[1]}`;
   }
 
-  // Dates extraction (Exam date & last date)
-  const fullDateRegex = /\b(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+202[5-7]|\d{4}-\d{2}-\d{2}|\d{1,2}[-/.]\d{1,2}[-/.]202[5-7])\b/gi;
+  // Dates extraction (Exam date & last date for active/upcoming cycle 2026-2027)
+  const fullDateRegex = /\b(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+202[6-7]|\d{4}-\d{2}-\d{2}|\d{1,2}[-/.]\d{1,2}[-/.]202[6-7])\b/gi;
   const matchedDates = [...combined.matchAll(fullDateRegex)].map(m => normalizeDate(m[1]));
 
   let expectedExamDate = null;
@@ -205,12 +269,38 @@ const searchExamNews = searchGoogleNews;
  * Filters and ranks articles by relevance, prioritizing deadline extension notices and rich descriptions
  */
 function filterAndRankArticles(articles, examName) {
+  const currentYear = new Date().getFullYear();
+  const pastYear1 = currentYear - 1;
+  const pastYear2 = currentYear - 2;
+  const futureYear = currentYear + 1;
+
   const keywords = (examName || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
   
-  // Keep only relevant articles containing keywords
+  // Keep only relevant articles containing keywords and drop old 2024/2025 cycles
   const relevant = articles.filter(a => {
-    const text = `${a.title} ${a.description || a.snippet || ''}`.toLowerCase();
-    return keywords.length === 0 || keywords.some(k => text.includes(k));
+    const title = (a.title || '').toLowerCase();
+    const desc = (a.description || a.snippet || '').toLowerCase();
+    const text = `${title} ${desc}`;
+
+    // Keyword match
+    const matchesKeyword = keywords.length === 0 || keywords.some(k => text.includes(k));
+    if (!matchesKeyword) return false;
+
+    // Filter out old past years:
+    const mentionsCurrentOrUpcoming = text.includes(String(currentYear)) || text.includes(String(futureYear));
+    const mentionsOldYear = text.includes(String(pastYear1)) || text.includes(String(pastYear2));
+
+    // If title specifically mentions old year (e.g. 2024, 2025) and not current/upcoming, drop it
+    if ((title.includes(String(pastYear1)) || title.includes(String(pastYear2))) && !mentionsCurrentOrUpcoming) {
+      return false;
+    }
+
+    // If text only mentions old year without any reference to current/next year
+    if (mentionsOldYear && !mentionsCurrentOrUpcoming) {
+      return false;
+    }
+
+    return true;
   });
 
   // Deduplicate keeping the version with the longest snippet/description
@@ -651,12 +741,17 @@ export async function generateExamAiOverview({ examId = null, examName, conducti
   // 2. Call Gemini
   let aiData = null;
   const apiKey = process.env.GEMINI_API_KEY;
+  const todayObj = new Date();
+  const todayFormatted = `${String(todayObj.getDate()).padStart(2, '0')}/${String(todayObj.getMonth() + 1).padStart(2, '0')}/${todayObj.getFullYear()}`;
+
   if (apiKey) {
     const ai = new GoogleGenAI({ apiKey });
     const prompt = `
 You are Google's AI Overview date extraction engine for Indian government recruitment & entrance examinations.
 Target Exam: "${examName}"
 Conducting Body: "${conductingBody || 'Official Commission / Examination Authority'}"
+TODAY'S CURRENT DATE: ${todayFormatted} (${todayObj.toDateString()})
+CURRENT ACTIVE RECRUITMENT CYCLE: ${currentYear} - ${nextYear}
 
 CRAWLED REAL-TIME ANNOUNCEMENTS & MEDIA HEADLINES:
 ${JSON.stringify(cleanedArticles, null, 2)}
@@ -664,37 +759,47 @@ ${JSON.stringify(cleanedArticles, null, 2)}
 TASK:
 Extract the EXACT dates and categorize them clearly with NO EXTRA UNNECESSARY FLUFF.
 Follow these rules strictly:
-1. EXTENDED DATES PRIORITY (CRITICAL OVERRIDE RULE):
+1. STRICT DATE FORMAT:
+   ALL dates in your output MUST be in DD/MM/YYYY format (e.g. "12/10/2026", "27/09/2026", "21/11/2026").
+   Do NOT use month names like "October" or format YYYY-MM-DD. Always convert to DD/MM/YYYY.
+2. REJECT OBSOLETE PAST YEARS:
+   Discard any 2024 or 2025 dates unless explicitly relevant to an active cycle. We are in ${currentYear}. Focus ONLY on the active ${currentYear}-${nextYear} recruitment cycle.
+3. EXTENDED DATES PRIORITY (CRITICAL OVERRIDE RULE):
    Carefully inspect titles and snippets for phrases like "extended till", "extended to", "deadline extended", "with late fee", "without late fee", "corrigendum".
-   - If an initial or regular deadline is stated (e.g. October 5, 2026 or September 21, 2026): set "apply_last_date".
-   - If an extended deadline or deadline WITH LATE FEE is stated (e.g. October 12, 2026 or September 27, 2026):
-     set "extended_last_date" and set "is_extended": true.
-   - "active_last_date": MUST be the final extended / late fee deadline (e.g. October 12, 2026 or September 27, 2026).
-2. "prelims_exam_date": Prelims / Tier-1 / Written exam date or date range (e.g. "February 2027" or "November 21-22, 2026") or null.
-3. "mains_exam_date": Mains or Tier-2 date if applicable or null.
-4. "admit_card_date": Expected or confirmed admit card date/window if present or null.
-5. "vacancies": Total posts if mentioned (e.g. "13,745 Posts") or null.
-6. "fee_deadline": Fee payment deadline if mentioned or null.
-7. "important_details": Array of 2 to 4 crisp key bullet points in format:
-   - "Regular Deadline (Without Late Fee): <Date>"
-   - "Extended Deadline (With Late Fee): <Date>"
-   - "Prelims Exam Date: <Date>"
-   - "Fee Payment Deadline: <Date>"
-8. "overview_summary": Maximum 2 clear, direct sentences stating the last date to apply (clarify if extended / with late fee) and the scheduled exam dates. NO conversational filler.
+   - If an initial or regular deadline is stated (without late fee): set "apply_last_date" in DD/MM/YYYY.
+   - If an extended deadline or deadline WITH LATE FEE is stated: set "extended_last_date" in DD/MM/YYYY and set "is_extended": true.
+   - "active_last_date": MUST be the final extended / late fee deadline in DD/MM/YYYY. If not extended, set to "apply_last_date".
+4. COMPARE WITH TODAY'S DATE (${todayFormatted}):
+   - Check if "active_last_date" has passed relative to today (${todayFormatted}).
+   - If active_last_date is before ${todayFormatted}: set "application_status": "closed", "is_closed": true.
+   - If active_last_date is on or after ${todayFormatted}: set "application_status": "open", "is_closed": false.
+5. "prelims_exam_date": Prelims / Tier-1 / Written exam date in DD/MM/YYYY (or month range like "February 2027" if exact date not fixed) or null.
+6. "mains_exam_date": Mains or Tier-2 date if applicable or null.
+7. "admit_card_date": Expected or confirmed admit card date in DD/MM/YYYY or null.
+8. "vacancies": Total posts if mentioned (e.g. "13,745 Posts") or null.
+9. "fee_deadline": Fee payment deadline in DD/MM/YYYY or null.
+10. "important_details": Array of 2 to 4 crisp key bullet points in format:
+   - "Regular Deadline (Without Late Fee): DD/MM/YYYY"
+   - "Extended Deadline (With Late Fee): DD/MM/YYYY"
+   - "Prelims Exam Date: DD/MM/YYYY"
+   - "Application Status: Closed on DD/MM/YYYY" OR "Application Status: Open till DD/MM/YYYY"
+11. "overview_summary": Maximum 2 clear, direct sentences stating the application status (Open or Closed with date in DD/MM/YYYY) and the scheduled exam dates. NO conversational filler.
 
 Return ONLY valid JSON matching this schema:
 {
   "overview_summary": "...",
-  "apply_start_date": "...",
-  "apply_last_date": "...",
-  "extended_last_date": "...",
+  "application_status": "open" | "closed",
+  "is_closed": true | false,
+  "apply_start_date": "DD/MM/YYYY or null",
+  "apply_last_date": "DD/MM/YYYY or null",
+  "extended_last_date": "DD/MM/YYYY or null",
   "is_extended": true,
-  "active_last_date": "...",
-  "prelims_exam_date": "...",
-  "mains_exam_date": "...",
-  "admit_card_date": "...",
+  "active_last_date": "DD/MM/YYYY or null",
+  "prelims_exam_date": "DD/MM/YYYY or null",
+  "mains_exam_date": "DD/MM/YYYY or null",
+  "admit_card_date": "DD/MM/YYYY or null",
   "vacancies": "...",
-  "fee_deadline": "...",
+  "fee_deadline": "DD/MM/YYYY or null",
   "important_details": ["...", "..."],
   "source_links": [...],
   "confidence": "Tentative / Reported Online"
@@ -737,19 +842,28 @@ Return ONLY valid JSON matching this schema:
 
     for (const a of cleanedArticles) {
       const details = extractExamDetailsFromText(a.title, a.snippet);
-      if (!bestExamDate && details.expectedExamDate) bestExamDate = details.expectedExamDate;
-      if (!bestApplyEnd && details.expectedApplyEnd) bestApplyEnd = details.expectedApplyEnd;
+      if (!bestExamDate && details.expectedExamDate) bestExamDate = toDDMMYYYY(details.expectedExamDate);
+      if (!bestApplyEnd && details.expectedApplyEnd) bestApplyEnd = toDDMMYYYY(details.expectedApplyEnd);
       if (!bestVacancies && details.expectedVacancies) bestVacancies = details.expectedVacancies;
     }
 
+    const status = checkDeadlineStatus(bestApplyEnd);
+
     const sentences = [
       `Overview for ${examName}:`,
-      bestApplyEnd ? `The expected last date to apply online is around ${bestApplyEnd}.` : 'Application dates are awaited from the official commission.',
+      bestApplyEnd 
+        ? (status.isClosed ? `Application closed on ${bestApplyEnd}.` : `The last date to apply online is ${bestApplyEnd} (${status.statusText}).`)
+        : 'Application dates are awaited from the official commission.',
       bestExamDate ? `The examination is tentatively scheduled for ${bestExamDate} according to educational media reports.` : 'Exam schedule will be announced soon.'
     ];
 
     aiData = {
       overview_summary: sentences.join(' '),
+      application_status: status.isClosed ? 'closed' : 'open',
+      is_closed: status.isClosed,
+      status_text: status.statusText,
+      badge_text: status.badgeText,
+      days_left: status.daysLeft,
       apply_start_date: null,
       apply_last_date: bestApplyEnd,
       extended_last_date: null,
@@ -761,12 +875,42 @@ Return ONLY valid JSON matching this schema:
       vacancies: bestVacancies ? `${bestVacancies} Posts` : null,
       fee_deadline: null,
       important_details: [
-        bestApplyEnd ? `Expected Deadline: ${bestApplyEnd}` : null,
+        bestApplyEnd ? (status.isClosed ? `Application Status: Closed on ${bestApplyEnd}` : `Application Deadline: ${bestApplyEnd}`) : null,
         bestExamDate ? `Tentative Exam Date: ${bestExamDate}` : null
       ].filter(Boolean),
       source_links: cleanedArticles.slice(0, 3).map(a => ({ title: a.title, url: a.url, source: a.source })),
       confidence: 'Tentative / Reported Online'
     };
+  }
+
+  // 4. Post-process and normalize all dates to strict DD/MM/YYYY and compute freshness status
+  if (aiData) {
+    if (aiData.apply_start_date) aiData.apply_start_date = toDDMMYYYY(aiData.apply_start_date);
+    if (aiData.apply_last_date) aiData.apply_last_date = toDDMMYYYY(aiData.apply_last_date);
+    if (aiData.extended_last_date) aiData.extended_last_date = toDDMMYYYY(aiData.extended_last_date);
+    if (aiData.active_last_date) aiData.active_last_date = toDDMMYYYY(aiData.active_last_date);
+    if (aiData.fee_deadline) aiData.fee_deadline = toDDMMYYYY(aiData.fee_deadline);
+    if (aiData.admit_card_date && /^\d/.test(aiData.admit_card_date)) {
+      aiData.admit_card_date = toDDMMYYYY(aiData.admit_card_date);
+    }
+    if (aiData.prelims_exam_date && /^\d/.test(aiData.prelims_exam_date)) {
+      aiData.prelims_exam_date = toDDMMYYYY(aiData.prelims_exam_date);
+    }
+    if (aiData.mains_exam_date && /^\d/.test(aiData.mains_exam_date)) {
+      aiData.mains_exam_date = toDDMMYYYY(aiData.mains_exam_date);
+    }
+
+    const effectiveLastDate = aiData.extended_last_date || aiData.active_last_date || aiData.apply_last_date;
+    const status = checkDeadlineStatus(effectiveLastDate);
+    aiData.is_closed = status.isClosed;
+    aiData.application_status = status.isClosed ? 'closed' : 'open';
+    aiData.status_text = status.statusText;
+    aiData.badge_text = status.badgeText;
+    aiData.days_left = status.daysLeft;
+
+    if (effectiveLastDate && !aiData.active_last_date) {
+      aiData.active_last_date = effectiveLastDate;
+    }
   }
 
   // Ensure source links are populated
@@ -781,7 +925,7 @@ Return ONLY valid JSON matching this schema:
   aiData.analyzed_at = new Date().toISOString();
   aiData.exam_name = examName;
 
-  // 4. Save to database if examId given
+  // 5. Save to database if examId given
   if (examId) {
     try {
       db.prepare('UPDATE exams SET ai_overview = ? WHERE id = ?').run(JSON.stringify(aiData), examId);

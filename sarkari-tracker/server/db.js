@@ -169,6 +169,13 @@ db.exec(`
     UNIQUE(user_id, notification_id)
   );
 
+  CREATE TABLE IF NOT EXISTS user_dismissed_notifications (
+    user_id INTEGER NOT NULL,
+    notification_id INTEGER NOT NULL,
+    dismissed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, notification_id)
+  );
+
   CREATE TABLE IF NOT EXISTS reminders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,

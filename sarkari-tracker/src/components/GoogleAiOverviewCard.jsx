@@ -4,7 +4,7 @@ import {
   RefreshCw, CheckCircle2, ArrowRight, ShieldAlert, Zap, 
   HelpCircle, ChevronRight, Check
 } from 'lucide-react';
-import { formatDate } from '../utils/constants';
+import { formatDate, getDeadlineStatus } from '../utils/constants';
 
 const GoogleAiOverviewCard = ({ 
   aiOverview, 
@@ -45,13 +45,16 @@ const GoogleAiOverviewCard = ({
 
   const overview = aiOverview || {};
   const hasDates = overview.apply_last_date || overview.prelims_exam_date || overview.mains_exam_date || overview.apply_start_date;
+  const activeDeadline = overview.extended_last_date || overview.active_last_date || overview.apply_last_date;
+  const deadlineStatus = getDeadlineStatus(activeDeadline);
+  const isClosed = overview.is_closed ?? deadlineStatus.isClosed;
 
   const handleAdopt = () => {
     if (onAdoptDates) {
       onAdoptDates({
-        last_date: overview.extended_last_date || overview.active_last_date || overview.apply_last_date || null,
-        exam_date: overview.prelims_exam_date || overview.mains_exam_date || null,
-        admit_card_date: overview.admit_card_date || null
+        last_date: formatDate(overview.extended_last_date || overview.active_last_date || overview.apply_last_date) || null,
+        exam_date: formatDate(overview.prelims_exam_date || overview.mains_exam_date) || null,
+        admit_card_date: formatDate(overview.admit_card_date) || null
       });
       setAdopted(true);
       setTimeout(() => setAdopted(false), 3000);
@@ -98,6 +101,55 @@ const GoogleAiOverviewCard = ({
         )}
       </div>
 
+      {/* Prominent Application Status Banner (Closed vs Open compared with current date) */}
+      {activeDeadline && (
+        <div className="relative z-10">
+          {isClosed ? (
+            <div className="p-3.5 rounded-2xl bg-rose-500/10 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200 flex items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-rose-700 dark:text-rose-400 block">
+                    Application Status
+                  </span>
+                  <strong className="text-xs sm:text-sm font-extrabold text-rose-950 dark:text-rose-100">
+                    🔴 Application Closed on {formatDate(activeDeadline)}
+                  </strong>
+                </div>
+              </div>
+              <span className="text-[10px] font-black px-2.5 py-1 bg-rose-200 text-rose-900 dark:bg-rose-900 dark:text-rose-200 rounded-full shrink-0">
+                Concluded
+              </span>
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-2xl bg-emerald-500/10 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 flex items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block">
+                    Application Status
+                  </span>
+                  <strong className="text-xs sm:text-sm font-extrabold text-emerald-950 dark:text-emerald-100">
+                    🟢 Applications Open till {formatDate(activeDeadline)}
+                  </strong>
+                </div>
+              </div>
+              <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 ${
+                deadlineStatus.isUrgent 
+                  ? 'bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200 animate-pulse' 
+                  : 'bg-emerald-200 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200'
+              }`}>
+                {deadlineStatus.daysLeft !== null ? `${deadlineStatus.daysLeft}d Left` : 'Active'}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* AI Overview Summary (Google Style) */}
       <div className="relative z-10 space-y-3">
         {overview.overview_summary ? (
@@ -110,11 +162,11 @@ const GoogleAiOverviewCard = ({
           </p>
         )}
 
-        {/* Schedule Overview Key Dates (Matching Image 1 & 2) */}
+        {/* Schedule Overview Key Dates */}
         {hasDates && (
           <div className="space-y-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Overview of Important Exam Dates
+              Overview of Important Exam Dates (DD/MM/YYYY)
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
@@ -130,7 +182,7 @@ const GoogleAiOverviewCard = ({
                       Application Start Date
                     </span>
                     <strong className="text-xs font-bold text-slate-900 dark:text-white">
-                      {overview.apply_start_date}
+                      {formatDate(overview.apply_start_date)}
                     </strong>
                   </div>
                 </div>
@@ -152,7 +204,7 @@ const GoogleAiOverviewCard = ({
                       </span>
                     </div>
                     <strong className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-100">
-                      {overview.extended_last_date || overview.active_last_date || overview.apply_last_date}
+                      {formatDate(overview.extended_last_date || overview.active_last_date || overview.apply_last_date)}
                     </strong>
                   </div>
                 </div>
@@ -169,7 +221,7 @@ const GoogleAiOverviewCard = ({
                       {overview.is_extended ? 'Regular Last Date (Without Late Fee)' : 'Last Date to Apply'}
                     </span>
                     <strong className="text-xs font-bold text-slate-900 dark:text-white">
-                      {overview.apply_last_date}
+                      {formatDate(overview.apply_last_date)}
                     </strong>
                   </div>
                 </div>
@@ -186,7 +238,7 @@ const GoogleAiOverviewCard = ({
                       Fee Payment Deadline
                     </span>
                     <strong className="text-xs font-bold text-slate-900 dark:text-white">
-                      {overview.fee_deadline}
+                      {formatDate(overview.fee_deadline)}
                     </strong>
                   </div>
                 </div>
@@ -203,7 +255,7 @@ const GoogleAiOverviewCard = ({
                       Prelims / Written Exam Date
                     </span>
                     <strong className="text-xs sm:text-sm font-extrabold text-blue-950 dark:text-blue-100">
-                      {overview.prelims_exam_date}
+                      {formatDate(overview.prelims_exam_date)}
                     </strong>
                   </div>
                 </div>
@@ -220,7 +272,7 @@ const GoogleAiOverviewCard = ({
                       Mains Exam Date
                     </span>
                     <strong className="text-xs font-bold text-purple-950 dark:text-purple-100">
-                      {overview.mains_exam_date}
+                      {formatDate(overview.mains_exam_date)}
                     </strong>
                   </div>
                 </div>
@@ -237,7 +289,7 @@ const GoogleAiOverviewCard = ({
                       Admit Card Release
                     </span>
                     <strong className="text-xs font-bold text-emerald-950 dark:text-emerald-100">
-                      {overview.admit_card_date}
+                      {formatDate(overview.admit_card_date)}
                     </strong>
                   </div>
                 </div>

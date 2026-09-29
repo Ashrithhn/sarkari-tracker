@@ -167,15 +167,27 @@ export function generateDailyRemindersForUser(userId) {
  */
 function createUniqueDailyNotification(userId, examId, title, message, type, isUrgent, todayStr) {
   try {
-    // Check if a notification with this title or message was already created today for this user
+    // 1. Check if user dismissed a notification with this title (permanently prevent resurrection)
+    const dismissed = db.prepare(`
+      SELECT ud.notification_id 
+      FROM user_dismissed_notifications ud
+      JOIN notifications n ON ud.notification_id = n.id
+      WHERE ud.user_id = ?
+        AND n.title = ?
+    `).get(userId, title);
+
+    if (dismissed) {
+      return null;
+    }
+
+    // 2. Check if an active notification with this title already exists in user's notifications
     const existing = db.prepare(`
       SELECT n.id 
       FROM notifications n
       JOIN user_notifications un ON n.id = un.notification_id
       WHERE un.user_id = ?
         AND n.title = ?
-        AND date(n.created_at) = date(?)
-    `).get(userId, title, todayStr);
+    `).get(userId, title);
 
     if (existing) {
       return existing.id;
