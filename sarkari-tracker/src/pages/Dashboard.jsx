@@ -57,12 +57,18 @@ const Dashboard = () => {
     const qSearch = searchParams.get('search');
     if (qSearch !== null) {
       setSearchTerm(qSearch);
-      setActiveTab('Exam Directory');
+      setActiveTab('Overview');
+      setTimeout(() => {
+        document.getElementById('exam-search-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     }
     const qCat = searchParams.get('category');
     if (qCat !== null) {
       setSelectedCategory(qCat);
-      setActiveTab('Exam Directory');
+      setActiveTab('Overview');
+      setTimeout(() => {
+        document.getElementById('exam-search-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     }
   }, [searchParams]);
 
@@ -235,21 +241,23 @@ const Dashboard = () => {
       </div>
 
       {/* Pill Tab Navigation */}
-      <div className="pill-tab-track flex items-center gap-1.5 bg-slate-100/90 dark:bg-[#141414] p-1.5 rounded-full w-max border border-slate-200/80 dark:border-neutral-800 overflow-x-auto max-w-full shadow-2xs">
-        {['Overview', 'Exam Directory'].concat(isAuthenticated ? ['My Applications'] : []).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
-              activeTab === tab 
-                ? 'pill-tab-active bg-neutral-950 dark:bg-white text-white dark:text-black hover:text-white dark:hover:text-black shadow-sm' 
-                : 'pill-tab text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
+      {isAuthenticated && (
+        <div className="pill-tab-track flex items-center gap-1.5 bg-slate-100/90 dark:bg-[#141414] p-1.5 rounded-full w-max border border-slate-200/80 dark:border-neutral-800 overflow-x-auto max-w-full shadow-2xs">
+          {['Overview', 'My Applications'].map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+                activeTab === tab 
+                  ? 'pill-tab-active bg-neutral-950 dark:bg-white text-white dark:text-black hover:text-white dark:hover:text-black shadow-sm' 
+                  : 'pill-tab text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* --- OVERVIEW TAB --- */}
       {activeTab === 'Overview' && (
@@ -305,8 +313,8 @@ const Dashboard = () => {
                     <button
                       key={idx}
                       onClick={() => {
-                        setActiveTab('Exam Directory');
                         setSearchTerm(item.query);
+                        document.getElementById('exam-search-section')?.scrollIntoView({ behavior: 'smooth' });
                       }}
                       className="px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200/80 dark:border-neutral-800 hover:border-red-400 dark:hover:border-red-400 text-slate-700 dark:text-neutral-200 transition-all hover:scale-102"
                     >
@@ -330,8 +338,8 @@ const Dashboard = () => {
                     <button
                       key={idx}
                       onClick={() => {
-                        setActiveTab('Exam Directory');
                         setSearchTerm(item.query);
+                        document.getElementById('exam-search-section')?.scrollIntoView({ behavior: 'smooth' });
                       }}
                       className="px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200/80 dark:border-neutral-800 hover:border-blue-400 dark:hover:border-blue-400 text-slate-700 dark:text-neutral-200 transition-all hover:scale-102"
                     >
@@ -348,12 +356,13 @@ const Dashboard = () => {
                 </p>
                 <button
                   onClick={() => {
-                    setActiveTab('Exam Directory');
                     setSearchTerm('');
+                    setSelectedCategory('All');
+                    document.getElementById('exam-search-section')?.scrollIntoView({ behavior: 'smooth' });
                   }}
                   className="rounded-full bg-white dark:bg-[#202020] border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-[#262626] text-xs font-bold py-2.5 px-5 whitespace-nowrap shrink-0 transition-all shadow-2xs"
                 >
-                  Browse All 160+ Exams
+                  Browse All 160+ Exams ↓
                 </button>
               </div>
 
@@ -427,14 +436,11 @@ const Dashboard = () => {
 
             </div>
           </div>
-        </div>
-      )}
 
-      {/* --- EXAM DIRECTORY TAB --- */}
-      {activeTab === 'Exam Directory' && (
-        <div className="space-y-6">
-          {/* Hero Band with Deep Black & Large Rounded Corners */}
-          <div className="bg-[#0a0a0a] dark:bg-[#080808] border border-neutral-800 rounded-[32px] sm:rounded-[42px] py-10 px-6 text-center relative mt-2 shadow-md">
+          {/* --- SEARCH ALL EXAMINATIONS DIRECTORY SECTION --- */}
+          <div id="exam-search-section" className="space-y-6 pt-2">
+            {/* Hero Band with Deep Black & Large Rounded Corners */}
+            <div className="bg-[#0a0a0a] dark:bg-[#080808] border border-neutral-800 rounded-[32px] sm:rounded-[42px] py-10 px-6 text-center relative mt-2 shadow-md">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 tracking-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
               Search Government Examinations
             </h2>
@@ -583,7 +589,8 @@ const Dashboard = () => {
             </div>
           )}
         </div>
-      )}
+      </div>
+    )}
 
       {/* --- MY APPLICATIONS TAB --- */}
       {activeTab === 'My Applications' && isAuthenticated && (
