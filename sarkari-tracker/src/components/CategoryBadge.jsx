@@ -7,7 +7,7 @@ const CategoryBadge = ({ category }) => {
   const categoryConfig = EXAM_CATEGORIES?.find(c => c.id === category) || {
     name: category,
     icon: Briefcase,
-    badgeClass: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700'
+    badgeClass: 'bg-slate-100 text-slate-800 dark:bg-[#1e1e1e] dark:text-neutral-300 border-slate-200 dark:border-neutral-700'
   };
 
   const Icon = categoryConfig.icon || Briefcase;
