@@ -159,36 +159,43 @@ function extractExamDetailsFromText(title, description = '') {
   let expectedApplyEnd = null;
   let expectedApplyStart = null;
 
-  // Contextual clues
-  const hasExamDateClue = /exam\s+date|examination\s+(?:on|date|schedule)|written\s+test|prelims\s+date|cbt\s+date/i.test(combined);
-  const hasDeadlineClue = /last\s+date|apply\s+online\s+till|deadline|registration\s+(?:closes|ends|last)/i.test(combined);
+  // Dedicated phrase matching to associate dates directly with their purpose
+  const prelimsMatch = combined.match(/(?:preliminary examination|prelims|tier[\s-]?1|written exam|cbt\s+date|exam\s+date|examination\s+on)[^\d]{0,40}(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+202[6-7]|\d{4}-\d{2}-\d{2}|\d{1,2}[-/.]\d{1,2}[-/.]202[6-7])/i);
+  if (prelimsMatch) {
+    expectedExamDate = normalizeDate(prelimsMatch[1]);
+  }
 
-  if (hasDeadlineClue && matchedDates.length > 0) {
+  const deadlineMatch = combined.match(/(?:last date|apply online till|registration closes|application deadline|extended till|closes on)[^\d]{0,40}(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+202[6-7]|\d{4}-\d{2}-\d{2}|\d{1,2}[-/.]\d{1,2}[-/.]202[6-7])/i);
+  if (deadlineMatch) {
+    expectedApplyEnd = normalizeDate(deadlineMatch[1]);
+  }
+
+  // Fallbacks if not matched by specific phrases
+  if (!expectedApplyEnd && matchedDates.length > 0) {
     expectedApplyEnd = matchedDates[0];
   }
-
-  if (hasExamDateClue && matchedDates.length > 0) {
-    const candidateExamDate = matchedDates[matchedDates.length - 1];
-    if (candidateExamDate !== expectedApplyEnd) {
-      expectedExamDate = candidateExamDate;
-    }
-  }
-
-  if (combined.match(/start(?:s|ing)?|from/i) && matchedDates.length > 1) {
-    expectedApplyStart = matchedDates[0];
-  }
-
-  // Fallback ONLY when there are multiple distinct dates and no exam date assigned yet
   if (!expectedExamDate && matchedDates.length > 1) {
-    const latestDate = matchedDates[matchedDates.length - 1];
-    if (latestDate !== expectedApplyEnd) {
-      expectedExamDate = latestDate;
-    }
+    expectedExamDate = matchedDates[matchedDates.length - 1];
   }
 
   // Strict collision check: Exam date CANNOT be the same as the application deadline!
   if (expectedExamDate && expectedApplyEnd && expectedExamDate === expectedApplyEnd) {
     expectedExamDate = null;
+  }
+
+  // Chronological Invariant: Application deadline is ALWAYS before the exam date!
+  if (expectedApplyEnd && expectedExamDate) {
+    const p1 = expectedApplyEnd.split('/');
+    const p2 = expectedExamDate.split('/');
+    if (p1.length === 3 && p2.length === 3) {
+      const d1 = new Date(Number(p1[2]), Number(p1[1]) - 1, Number(p1[0]));
+      const d2 = new Date(Number(p2[2]), Number(p2[1]) - 1, Number(p2[0]));
+      if (d1.getTime() > d2.getTime()) {
+        const temp = expectedApplyEnd;
+        expectedApplyEnd = expectedExamDate;
+        expectedExamDate = temp;
+      }
+    }
   }
 
   // Eligibility snippets
