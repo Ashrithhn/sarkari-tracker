@@ -108,7 +108,8 @@ const Dashboard = () => {
             const daysLeft = Math.ceil((new Date(lastDate) - now) / (1000 * 60 * 60 * 24));
             list.push({
               id: `last_${job.id}`,
-              title: `${examName} - Deadline`,
+              title: examName,
+              subtext: 'Registration Deadline',
               targetDate: lastDate,
               type: 'deadline',
               daysRemaining: daysLeft,
@@ -121,7 +122,8 @@ const Dashboard = () => {
             const daysToExam = Math.ceil((new Date(examDate) - now) / (1000 * 60 * 60 * 24));
             list.push({
               id: `exam_${job.id}`,
-              title: `${examName} - Exam Date`,
+              title: examName,
+              subtext: 'Examination Date',
               targetDate: examDate,
               type: 'exam',
               daysRemaining: daysToExam,
@@ -138,21 +140,27 @@ const Dashboard = () => {
         const exName = ex.short_name || ex.name;
         const lastDate = ex.dates?.apply_end || ex.apply_end;
         if (lastDate && !isNaN(new Date(lastDate).getTime()) && new Date(lastDate) >= now) {
+          const daysLeft = Math.ceil((new Date(lastDate) - now) / (1000 * 60 * 60 * 24));
           list.push({
             id: `reg_last_${ex.id}`,
-            title: `${exName} - Application Deadline`,
+            title: exName,
+            subtext: 'Application Deadline',
             targetDate: lastDate,
             type: 'deadline',
+            daysRemaining: daysLeft,
             examId: ex.id
           });
         }
         const examDate = ex.dates?.exam_date || ex.exam_date;
         if (examDate && !isNaN(new Date(examDate).getTime()) && new Date(examDate) >= now) {
+          const daysToExam = Math.ceil((new Date(examDate) - now) / (1000 * 60 * 60 * 24));
           list.push({
             id: `reg_exam_${ex.id}`,
-            title: `${exName} - Examination Date`,
+            title: exName,
+            subtext: 'Examination Date',
             targetDate: examDate,
             type: 'exam',
+            daysRemaining: daysToExam,
             examId: ex.id
           });
         }
@@ -278,30 +286,43 @@ const Dashboard = () => {
 
           {/* Deadlines & Updates Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-            {/* Upcoming Deadlines Card */}
+            {/* Upcoming Deadlines & Exam Dates Card */}
             <div className="bg-white dark:bg-[#121212] rounded-[28px] sm:rounded-[34px] border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-2xs">
               <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-rose-500" /> Upcoming Deadlines
+                <Clock className="w-5 h-5 text-saffron-500" /> Upcoming Exam Dates & Deadlines
               </h2>
               <div className="space-y-3">
                 {upcomingDeadlines.length > 0 ? (
                   upcomingDeadlines.map(item => (
-                    <div key={item.id} className="flex flex-col justify-between gap-2 p-3.5 rounded-2xl bg-rose-50/60 dark:bg-[#1a1114] border border-rose-100 dark:border-rose-950/60">
-                      <div className="flex justify-between items-start gap-2">
-                        <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">{item.title}</h4>
-                        {item.daysRemaining !== undefined && (
-                          <span className={`shrink-0 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                            item.daysRemaining <= 3 
-                              ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 animate-pulse'
-                              : item.daysRemaining <= 7
-                                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                                : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                          }`}>
-                            {item.daysRemaining === 0 ? 'Today!' : `${item.daysRemaining}d left`}
-                          </span>
-                        )}
+                    <div 
+                      key={item.id} 
+                      className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#181818] border border-slate-100 dark:border-neutral-800 flex items-center justify-between gap-3 hover:border-slate-200 dark:hover:border-neutral-700 transition-colors"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                            {item.title}
+                          </h4>
+                          {item.isUserJob && (
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 shrink-0">
+                              Applied
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium truncate">
+                          {item.subtext || (item.type === 'exam' ? 'Exam Date' : 'Deadline')}: {formatDate(item.targetDate)}
+                        </p>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-neutral-400 font-medium">{formatDate(item.targetDate)}</p>
+
+                      {item.daysRemaining !== undefined && (
+                        <span className="shrink-0 text-xs font-bold px-3 py-1 rounded-full bg-white dark:bg-[#222222] text-slate-700 dark:text-neutral-200 border border-slate-200 dark:border-neutral-700 shadow-2xs">
+                          {item.daysRemaining === 0 
+                            ? 'Today!' 
+                            : item.daysRemaining === 1 
+                              ? '1 day to go' 
+                              : `${item.daysRemaining} days to go`}
+                        </span>
+                      )}
                     </div>
                   ))
                 ) : (

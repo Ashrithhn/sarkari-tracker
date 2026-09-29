@@ -92,8 +92,8 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, subtitle, maxVa
         )}
       </div>
 
-      {/* Battery-Style Pill Progress Meter (Prominent vertical capsules) */}
-      <div className="mt-5 flex gap-1.5 h-6 sm:h-7 items-center">
+      {/* Battery-Style Pill Progress Meter (Hidden on mobile as requested) */}
+      <div className="mt-4 sm:mt-5 hidden sm:flex gap-1.5 h-6 sm:h-7 items-center">
         {Array.from({ length: numPills }).map((_, i) => {
           const isFilled = i < (accent ? 5 : filledPillsCount);
           let pillColor = '';
