@@ -6,6 +6,27 @@ import {
 } from 'lucide-react';
 import { formatDate, getDeadlineStatus } from '../utils/constants';
 
+const OFFICIAL_DOMAINS = [
+  'gov.in', 'nic.in', 'ibps.in', 'nta.ac.in', 'sbi.co.in', 'rbi.org.in',
+  'karnataka.gov.in', 'upsc.gov.in', 'ssc.gov.in', 'rrbcdg.gov.in', 'kea.kar.nic.in', 'kpsc.kar.nic.in'
+];
+
+export const detectOfficialDomain = (overview) => {
+  if (overview?.official_source_domain) return overview.official_source_domain;
+  const links = overview?.source_links || [];
+  for (const s of links) {
+    const u = typeof s === 'string' ? s : s?.url;
+    if (!u) continue;
+    try {
+      const host = new URL(u).hostname.toLowerCase().replace(/^www\./, '');
+      if (OFFICIAL_DOMAINS.some(d => host === d || host.endsWith('.' + d))) {
+        return host;
+      }
+    } catch (e) {}
+  }
+  return null;
+};
+
 const GoogleAiOverviewCard = ({ 
   aiOverview, 
   examTitle,
@@ -48,13 +69,16 @@ const GoogleAiOverviewCard = ({
   const activeDeadline = overview.extended_last_date || overview.active_last_date || overview.apply_last_date;
   const deadlineStatus = getDeadlineStatus(activeDeadline);
   const isClosed = overview.is_closed ?? deadlineStatus.isClosed;
+  const officialSource = detectOfficialDomain(overview);
+  const isOfficial = Boolean(officialSource);
 
   const handleAdopt = () => {
-    if (onAdoptDates) {
+    if (onAdoptDates && officialSource) {
       onAdoptDates({
         last_date: formatDate(overview.extended_last_date || overview.active_last_date || overview.apply_last_date) || null,
         exam_date: formatDate(overview.prelims_exam_date || overview.mains_exam_date) || null,
-        admit_card_date: formatDate(overview.admit_card_date) || null
+        admit_card_date: formatDate(overview.admit_card_date) || null,
+        source_domain: officialSource
       });
       setAdopted(true);
       setTimeout(() => setAdopted(false), 3000);
@@ -349,33 +373,61 @@ const GoogleAiOverviewCard = ({
 
       </div>
 
-      {/* Action Footer: 1-Click Adopt Target Dates */}
+      {/* Action Footer: 1-Click Adopt Target Dates with Official Source Trust Verification */}
       {showAdoptButton && hasDates && onAdoptDates && (
-        <div className="relative z-10 pt-4 border-t border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="text-xs text-[#A0A6B1]">
-            💡 Adopt these web-discovered dates into your personal tracker for instant countdowns & reminders.
-          </div>
+        <div className="relative z-10 pt-4 border-t border-white/[0.08]">
+          {isOfficial ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="text-xs text-[#A0A6B1]">
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#00E599]/15 text-[#00E599] font-bold text-[11px] mb-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#00E599]" />
+                  <span>Official Commission Source: {officialSource}</span>
+                </div>
+                <p className="text-[11px] text-[#A0A6B1]">
+                  Adopting will record these dates as &quot;Adopted from AI (Source: {officialSource})&quot;.
+                </p>
+              </div>
 
-          <button
-            onClick={handleAdopt}
-            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg ${
-              adopted
-                ? 'bg-emerald-500 text-[#0B0D10]'
-                : 'bg-[#00E599] hover:bg-[#00c985] text-[#0B0D10] shadow-[#00E599]/20'
-            }`}
-          >
-            {adopted ? (
-              <>
-                <Check className="w-4 h-4 text-[#0B0D10]" />
-                <span>Adopted to My Tracker!</span>
-              </>
-            ) : (
-              <>
-                <Zap className="w-4 h-4 fill-[#0B0D10]" />
-                <span>⚡ Use as My Target Dates</span>
-              </>
-            )}
-          </button>
+              <button
+                type="button"
+                onClick={handleAdopt}
+                className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-lg shrink-0 ${
+                  adopted
+                    ? 'bg-emerald-500 text-[#0B0D10]'
+                    : 'bg-[#00E599] hover:bg-[#00c985] text-[#0B0D10] shadow-[#00E599]/20'
+                }`}
+              >
+                {adopted ? (
+                  <>
+                    <Check className="w-4 h-4 text-[#0B0D10]" />
+                    <span>Adopted ({officialSource})!</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 fill-[#0B0D10]" />
+                    <span>⚡ Adopt AI Dates ({officialSource})</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-500/10 border border-amber-500/25 p-3.5 rounded-xl">
+              <div className="flex items-start gap-2.5 text-xs text-amber-200">
+                <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="block font-bold text-amber-300">
+                    AI found these dates, but the source is unverified.
+                  </strong>
+                  <span className="text-[11px] text-amber-200/80">
+                    1-Click adoption is locked until an official (.gov.in, .nic.in, or commission portal) notification is confirmed. Wait for official confirmation.
+                  </span>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30 shrink-0 self-start sm:self-center">
+                Unverified Source
+              </span>
+            </div>
+          )}
         </div>
       )}
 

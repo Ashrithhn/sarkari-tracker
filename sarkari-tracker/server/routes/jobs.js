@@ -132,15 +132,17 @@ function formatApplication(app) {
     user_result_date: app.user_result_date,
     custom_exam_name: app.custom_exam_name,
 
+    user_dates_source: app.user_dates_source || (app.user_last_date || app.user_exam_date ? 'User Entered' : null),
+
     dates: {
       last_date: effectiveLastDate,
-      last_date_source: app.user_last_date ? 'User Entered' : (adminDates.apply_end ? 'Official Verified' : null),
+      last_date_source: app.user_last_date ? (app.user_dates_source || 'User Entered') : (adminDates.apply_end ? 'Official Verified' : null),
       admit_card_date: effectiveAdmitCardDate,
-      admit_card_date_source: app.user_admit_card_date ? 'User Entered' : (adminDates.admit_card ? 'Official Verified' : null),
+      admit_card_date_source: app.user_admit_card_date ? (app.user_dates_source || 'User Entered') : (adminDates.admit_card ? 'Official Verified' : null),
       exam_date: effectiveExamDate,
-      exam_date_source: app.user_exam_date ? 'User Entered' : (adminDates.exam_date ? 'Official Verified' : null),
+      exam_date_source: app.user_exam_date ? (app.user_dates_source || 'User Entered') : (adminDates.exam_date ? 'Official Verified' : null),
       result_date: effectiveResultDate,
-      result_date_source: app.user_result_date ? 'User Entered' : (adminDates.result ? 'Official Verified' : null)
+      result_date_source: app.user_result_date ? (app.user_dates_source || 'User Entered') : (adminDates.result ? 'Official Verified' : null)
     },
     
     user_dates: {
@@ -738,21 +740,34 @@ router.post('/:id/scan-ai', async (req, res) => {
 });
 
 // 5e. One-Click Adopt AI Overview Target Dates into candidate's personal dates
-router.post('/:id/adopt-dates', (req, res) => {
+router.post('/:id/adopt-dates', async (req, res) => {
   try {
-    const { last_date, exam_date, admit_card_date } = req.body;
+    const { last_date, exam_date, admit_card_date, source_domain } = req.body;
     const app = db.prepare('SELECT * FROM applications WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
     if (!app) return res.status(404).json({ error: 'Application not found or unauthorized' });
 
-    // Update candidate personal dates
+    // Validate that the source domain is official before allowing adoption
+    const { getOfficialSourceDomain } = await import('../services/webIntelligence.js');
+    const detectedDomain = source_domain ? getOfficialSourceDomain([source_domain]) : null;
+
+    if (source_domain && !detectedDomain) {
+      return res.status(400).json({
+        error: 'Cannot adopt unverified dates. Direct 1-click adoption requires a verified official government domain (.gov.in, .nic.in, or official commission portal).'
+      });
+    }
+
+    const officialLabel = detectedDomain ? `Adopted from AI (Source: ${detectedDomain})` : 'Adopted from AI';
+
+    // Update candidate personal dates with explicit source labeling
     db.prepare(`
       UPDATE applications SET 
         user_last_date = COALESCE(?, user_last_date),
         user_exam_date = COALESCE(?, user_exam_date),
         user_admit_card_date = COALESCE(?, user_admit_card_date),
+        user_dates_source = ?,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ? AND user_id = ?
-    `).run(last_date || null, exam_date || null, admit_card_date || null, req.params.id, req.user.id);
+    `).run(last_date || null, exam_date || null, admit_card_date || null, officialLabel, req.params.id, req.user.id);
 
     // Upsert reminders
     const titleName = app.custom_exam_name || 'Tracked Application';
@@ -776,7 +791,7 @@ router.post('/:id/adopt-dates', (req, res) => {
 
     res.json({
       success: true,
-      message: 'Adopted AI Overview dates as your personal target dates!',
+      message: `Adopted official dates from AI (Source: ${detectedDomain || 'Commission Portal'})!`,
       application: formatApplication(updated)
     });
   } catch (error) {

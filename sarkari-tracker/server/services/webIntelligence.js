@@ -890,13 +890,46 @@ export async function crossVerifyExamDates({ examName, extractedData, rawEvidenc
   };
 }
 
+// Shared in-flight scans deduplication map (prevents parallel identical searches)
+const inFlightScans = new Map();
+// Per-exam forced refresh cooldown map (key: examId/cleanName, value: timestamp)
+const examScanCooldowns = new Map();
+const SCAN_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes minimum between forced web rescrapes per exam
+
+export const OFFICIAL_DOMAIN_SUFFIXES = [
+  'gov.in', 'nic.in', 'ibps.in', 'nta.ac.in', 'sbi.co.in', 'rbi.org.in',
+  'karnataka.gov.in', 'upsc.gov.in', 'ssc.gov.in', 'rrbcdg.gov.in', 'kea.kar.nic.in', 'kpsc.kar.nic.in'
+];
+
+export function getOfficialSourceDomain(urls = []) {
+  for (const u of urls) {
+    if (!u) continue;
+    try {
+      const host = new URL(u).hostname.toLowerCase().replace(/^www\./, '');
+      if (OFFICIAL_DOMAIN_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) {
+        return host;
+      }
+    } catch (e) {}
+  }
+  return null;
+}
+
 /**
  * Generate Google AI Overview style structured dates and summary using Gemini + Tavily + Groq
  */
 export async function generateExamAiOverview({ examId = null, examName, conductingBody = '', existingDiscoveries = [], forceFresh = false }) {
   if (!examName) return null;
 
-  // 1. Check 24-Hour Database Cache first (avoids exhausting search limits)
+  const cleanName = cleanSearchQuery(examName) || examName;
+  const scanKey = examId ? `exam_${examId}` : `name_${cleanName.toLowerCase()}`;
+
+  // 1. In-Flight Request Deduplication: If a scan is already running for this exam, join it
+  if (inFlightScans.has(scanKey)) {
+    console.log(`[WebIntelligence] Scan for "${cleanName}" is already in-flight. Joining active promise.`);
+    return inFlightScans.get(scanKey);
+  }
+
+  // 2. Check 24-Hour Database Cache first
   if (!forceFresh && examId) {
     try {
       const cachedRow = db.prepare('SELECT ai_overview FROM exams WHERE id = ?').get(examId);
@@ -913,9 +946,50 @@ export async function generateExamAiOverview({ examId = null, examName, conducti
     }
   }
 
+  // 3. Shared Per-Exam Cooldown on Forced Refresh: Prevent 50 users from exhausting search limits
+  if (forceFresh) {
+    const lastScanTime = examScanCooldowns.get(scanKey);
+    if (lastScanTime && (Date.now() - lastScanTime) < SCAN_COOLDOWN_MS) {
+      const remainingMins = Math.ceil((SCAN_COOLDOWN_MS - (Date.now() - lastScanTime)) / 60000);
+      console.log(`[WebIntelligence] Cooldown active for "${cleanName}". Last scanned ${Math.round((Date.now() - lastScanTime)/1000)}s ago. Remaining cooldown: ${remainingMins}m.`);
+      
+      // Attempt to return existing overview with cooldown metadata
+      if (examId) {
+        try {
+          const cachedRow = db.prepare('SELECT ai_overview FROM exams WHERE id = ?').get(examId);
+          if (cachedRow?.ai_overview) {
+            const parsed = JSON.parse(cachedRow.ai_overview);
+            return {
+              ...parsed,
+              is_cached: true,
+              cooldown_active: true,
+              cooldown_remaining_minutes: remainingMins,
+              message: `Exam was refreshed recently. Next live web search available in ${remainingMins} minutes.`
+            };
+          }
+        } catch (e) {}
+      }
+    }
+  }
+
+  // Launch scan with in-flight deduplication tracking
+  const scanPromise = (async () => {
+    try {
+      const result = await executeFreshExamScan({ examId, examName, cleanName, conductingBody, existingDiscoveries });
+      examScanCooldowns.set(scanKey, Date.now());
+      return result;
+    } finally {
+      inFlightScans.delete(scanKey);
+    }
+  })();
+
+  inFlightScans.set(scanKey, scanPromise);
+  return scanPromise;
+}
+
+async function executeFreshExamScan({ examId, examName, cleanName, conductingBody, existingDiscoveries }) {
   const currentYear = new Date().getFullYear();
   const nextYear = currentYear + 1;
-  const cleanName = cleanSearchQuery(examName) || examName;
 
   console.log(`[WebIntelligence] Running fresh AI search grounding for "${cleanName}"...`);
 
@@ -1174,6 +1248,19 @@ Return ONLY valid JSON matching this schema:
       source: a.source
     }));
   }
+
+  // Check if any source belongs to an official government / commission domain
+  const allCandidateUrls = [
+    ...(aiData.source_links || []).map(s => s.url),
+    ...cleanedArticles.map(a => a.url)
+  ].filter(Boolean);
+  const detectedOfficialDomain = getOfficialSourceDomain(allCandidateUrls);
+  aiData.has_official_source = Boolean(detectedOfficialDomain);
+  aiData.official_source_domain = detectedOfficialDomain;
+  aiData.trust_status = detectedOfficialDomain ? 'official_verified_source' : 'unverified_web_source';
+  aiData.trust_badge = detectedOfficialDomain 
+    ? `Official Source: ${detectedOfficialDomain}`
+    : 'Third-Party / Unofficial Web Reports';
 
   // 5. Strategy 1: The "Cross-Verifier"
   const rawEvidenceSummary = cleanedArticles.map(a => `${a.title}: ${a.snippet}`).join('\n');
