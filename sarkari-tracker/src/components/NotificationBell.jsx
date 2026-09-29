@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Bell, CheckCircle, ShieldCheck, AlertCircle, Clock, Volume2 } from 'lucide-react';
 import { getNotifications, markNotificationRead, markAllNotificationsRead, getUnreadCount } from '../utils/api';
@@ -31,6 +31,31 @@ const NotificationBell = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [permission, setPermission] = useState(() => getNotificationPermission());
   const [loading, setLoading] = useState(false);
+  const notificationRef = useRef(null);
+
+  // Close when clicking/touching anywhere outside or pressing Escape
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerDown = (e) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -94,10 +119,10 @@ const NotificationBell = () => {
   };
 
   return (
-    <div className="relative">
+    <div ref={notificationRef} className="relative">
       <button 
         onClick={handleToggle}
-        className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+        className="relative p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-600 dark:text-slate-300 transition-colors"
         title="Official Notifications"
       >
         <Bell className="w-5 h-5" />
@@ -109,8 +134,8 @@ const NotificationBell = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-88 max-w-[calc(100vw-2rem)] glass-card border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-2 animate-fade-in-up origin-top-right z-50 bg-white dark:bg-slate-900">
-          <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+        <div className="absolute right-0 mt-2 w-88 max-w-[calc(100vw-2rem)] border border-slate-200/80 dark:border-neutral-800 rounded-2xl shadow-xl py-2 animate-fade-in-up origin-top-right z-50 bg-white dark:bg-[#141414]">
+          <div className="px-4 py-2.5 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-slate-800 dark:text-slate-100 text-sm">Notifications</span>
               {unreadCount > 0 && (
@@ -145,19 +170,19 @@ const NotificationBell = () => {
             </div>
           )}
           
-          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-neutral-800">
             {notifications.length > 0 ? (
               notifications.slice(0, 6).map((notif) => (
                 <div 
                   key={notif.id} 
-                  className={`px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
+                  className={`px-4 py-3 hover:bg-slate-50 dark:hover:bg-[#1a1a1a] transition-colors ${
                     !notif.read ? 'bg-saffron-50/40 dark:bg-saffron-950/20' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {notif.exam_short_name && (
-                        <span className="text-[10px] font-bold bg-navy-100 text-navy-800 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-bold bg-navy-100 text-navy-800 dark:bg-[#222222] dark:text-neutral-300 px-1.5 py-0.5 rounded">
                           {notif.exam_short_name}
                         </span>
                       )}
@@ -212,7 +237,7 @@ const NotificationBell = () => {
             )}
           </div>
           
-          <div className="px-4 py-2.5 border-t border-slate-100 dark:border-slate-800 text-center bg-slate-50/50 dark:bg-slate-800/40">
+          <div className="px-4 py-2.5 border-t border-slate-100 dark:border-neutral-800 text-center bg-slate-50/50 dark:bg-[#181818]">
             <Link 
               to="/notifications" 
               className="text-xs font-bold text-saffron-600 dark:text-saffron-400 hover:underline"
