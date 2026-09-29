@@ -139,14 +139,14 @@ function extractExamDetailsFromText(title, description = '') {
 /**
  * Searches Google News RSS for real-time exam news and announcements
  */
-async function searchExamNews(query) {
+async function searchGoogleNews(query) {
   const url = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-IN&gl=IN&ceid=IN:en`;
   try {
     const res = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       },
-      signal: AbortSignal.timeout(8000)
+      signal: AbortSignal.timeout(6000)
     });
 
     if (!res.ok) return [];
@@ -164,9 +164,94 @@ async function searchExamNews(query) {
 
     return items;
   } catch (err) {
-    console.warn(`[WebIntelligence] News search failed for query "${query}":`, err.message);
     return [];
   }
+}
+
+/**
+ * Searches Bing News RSS for real-time announcements with rich textual descriptions
+ */
+async function searchBingNews(query) {
+  const url = `https://www.bing.com/news/search?q=${encodeURIComponent(query)}&format=rss`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      },
+      signal: AbortSignal.timeout(6000)
+    });
+
+    if (!res.ok) return [];
+
+    const xml = await res.text();
+    const items = xml.split('<item>').slice(1).map(chunk => {
+      const title = cleanHtml(chunk.match(/<title>(.*?)<\/title>/)?.[1] || '');
+      const link = (chunk.match(/<link>(.*?)<\/link>/)?.[1] || '').trim();
+      const pubDate = (chunk.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || '').trim();
+      const description = cleanHtml(chunk.match(/<description>(.*?)<\/description>/)?.[1] || '');
+      return { title, link, pubDate, description, source: 'Bing News', sourceUrl: link };
+    });
+
+    return items;
+  } catch (err) {
+    return [];
+  }
+}
+
+// Keep backward compatibility
+const searchExamNews = searchGoogleNews;
+
+/**
+ * Filters and ranks articles by relevance, prioritizing deadline extension notices and rich descriptions
+ */
+function filterAndRankArticles(articles, examName) {
+  const keywords = (examName || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  
+  // Keep only relevant articles containing keywords
+  const relevant = articles.filter(a => {
+    const text = `${a.title} ${a.description || a.snippet || ''}`.toLowerCase();
+    return keywords.length === 0 || keywords.some(k => text.includes(k));
+  });
+
+  // Deduplicate keeping the version with the longest snippet/description
+  const map = new Map();
+  for (const item of relevant) {
+    const key = (item.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 35);
+    const existing = map.get(key);
+    const itemDesc = item.description || item.snippet || '';
+    const existDesc = existing?.description || existing?.snippet || '';
+    if (!existing || itemDesc.length > existDesc.length) {
+      map.set(key, item);
+    }
+  }
+
+  const uniqueList = Array.from(map.values());
+
+  const extensionArticles = [];
+  const deadlineArticles = [];
+  const scheduleArticles = [];
+  const otherArticles = [];
+
+  for (const item of uniqueList) {
+    const fullText = `${item.title} ${item.description || item.snippet || ''}`.toLowerCase();
+
+    if (/extended|extension|corrigendum|postponed|revised|late fee/i.test(fullText)) {
+      extensionArticles.push(item);
+    } else if (/last date|apply|deadline|registration/i.test(fullText)) {
+      deadlineArticles.push(item);
+    } else if (/exam date|admit card|schedule|prelims|mains|written test/i.test(fullText)) {
+      scheduleArticles.push(item);
+    } else {
+      otherArticles.push(item);
+    }
+  }
+
+  return [
+    ...extensionArticles.slice(0, 6),
+    ...deadlineArticles.slice(0, 4),
+    ...scheduleArticles.slice(0, 4),
+    ...otherArticles.slice(0, 2)
+  ].slice(0, 14);
 }
 
 /**
@@ -178,24 +263,24 @@ export async function scanWebForExam(examId) {
 
   console.log(`[WebIntelligence] Scanning web for Exam #${examId} (${exam.short_name || exam.name})...`);
 
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
+  const examLabel = exam.short_name || exam.name;
+
   const queries = [
-    `${exam.short_name || exam.name} 2026 recruitment notification exam date`,
-    `${exam.conducting_body} ${exam.short_name || ''} 2026 notification last date`
+    `${examLabel} registration last date extended till late fee`,
+    `${examLabel} last date to apply without late fee ${currentYear} ${nextYear}`,
+    `${examLabel} exam date schedule prelims ${currentYear} ${nextYear}`
   ];
 
-  let allItems = [];
+  const searchPromises = [];
   for (const q of queries) {
-    const items = await searchExamNews(q);
-    allItems = [...allItems, ...items];
+    searchPromises.push(searchBingNews(q));
+    searchPromises.push(searchGoogleNews(q));
   }
 
-  // Deduplicate by title
-  const seenTitles = new Set();
-  const uniqueItems = allItems.filter(item => {
-    if (!item.title || seenTitles.has(item.title)) return false;
-    seenTitles.add(item.title);
-    return true;
-  });
+  const allItems = (await Promise.all(searchPromises)).flat();
+  const uniqueItems = filterAndRankArticles(allItems, examLabel);
 
   const insertDiscovery = db.prepare(`
     INSERT INTO web_discoveries (
@@ -531,30 +616,35 @@ export async function analyzeCustomExamKeywords({ custom_exam_name, post_name, c
 export async function generateExamAiOverview({ examId = null, examName, conductingBody = '', existingDiscoveries = [] }) {
   if (!examName) return null;
 
-  // 1. Fetch live articles if existing discoveries are few
-  let articles = Array.isArray(existingDiscoveries) ? existingDiscoveries.slice(0, 8) : [];
-  if (articles.length < 3) {
-    const q1 = `${examName} last date to apply 2026 notification`;
-    const q2 = `${examName} prelims exam date 2026 admit card`;
-    const [res1, res2] = await Promise.all([
-      searchExamNews(q1),
-      searchExamNews(q2)
-    ]);
-    const merged = [...res1, ...res2];
-    const seen = new Set();
-    articles = merged.filter(item => {
-      const key = cleanHtml(item.title).toLowerCase();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).slice(0, 10);
+  const currentYear = new Date().getFullYear();
+  const nextYear = currentYear + 1;
+
+  // 1. Fetch live articles from both Bing News and Google News with targeted queries
+  const queries = [
+    `${examName} registration last date extended till late fee`,
+    `${examName} last date to apply without late fee ${currentYear} ${nextYear}`,
+    `${examName} exam date schedule prelims ${currentYear} ${nextYear}`
+  ];
+
+  const searchPromises = [];
+  for (const q of queries) {
+    searchPromises.push(searchBingNews(q));
+    searchPromises.push(searchGoogleNews(q));
   }
 
-  const cleanedArticles = articles.map(a => ({
+  const fetchedResults = await Promise.all(searchPromises);
+  const allArticles = [
+    ...fetchedResults.flat(),
+    ...(Array.isArray(existingDiscoveries) ? existingDiscoveries : [])
+  ];
+
+  const rankedArticles = filterAndRankArticles(allArticles, examName);
+
+  const cleanedArticles = rankedArticles.map(a => ({
     title: cleanHtml(a.title || a.source_title || ''),
     snippet: cleanHtml(a.description || a.snippet || ''),
-    source: a.source || a.source_domain || 'News Portal',
-    url: a.link || a.source_url || '',
+    source: a.source || a.source_domain || 'Online Media',
+    url: a.link || a.source_url || a.url || '',
     date: a.pubDate || a.pub_date || ''
   }));
 
@@ -564,38 +654,50 @@ export async function generateExamAiOverview({ examId = null, examName, conducti
   if (apiKey) {
     const ai = new GoogleGenAI({ apiKey });
     const prompt = `
-You are Google's AI Overview generator for Indian Government Examinations.
-Synthesize the provided real-time news articles into a structured AI Overview just like Google Search.
+You are Google's AI Overview date extraction engine for Indian government recruitment & entrance examinations.
+Target Exam: "${examName}"
+Conducting Body: "${conductingBody || 'Official Commission / Examination Authority'}"
 
-Target Exam: ${examName}
-Conducting Body: ${conductingBody || 'Official Government Commission'}
-Real-time News Reports:
+CRAWLED REAL-TIME ANNOUNCEMENTS & MEDIA HEADLINES:
 ${JSON.stringify(cleanedArticles, null, 2)}
 
-Instructions:
-1. "overview_summary": A clear 2-3 sentence overview like Google's AI Overview, stating when the application started, when the last date was/is (and if extended), and when the prelims/mains exams are scheduled.
-2. "apply_start_date": Date in "YYYY-MM-DD" or textual date (e.g. "1 September 2026") or null if unknown.
-3. "apply_last_date": Date in "YYYY-MM-DD" or textual date (e.g. "27 September 2026") or null if unknown.
-4. "is_extended": Boolean true if the last date was extended, false otherwise.
-5. "prelims_exam_date": Date in "YYYY-MM-DD" or textual range (e.g. "December 6, 12, and 13, 2026") or null if unknown.
-6. "mains_exam_date": Date in "YYYY-MM-DD" or textual date (e.g. "January 30, 2027") or null if unknown.
-7. "admit_card_date": Expected window (e.g. "Expected 8 to 10 days before exam" or specific date) or null.
-8. "vacancies": Total reported vacancies count (e.g. "8,183 Posts") or null.
-9. "source_links": Array of up to 3 links from the articles.
-10. "confidence": "Tentative / Reported Online (Awaiting Official Confirmation)"
+TASK:
+Extract the EXACT dates and categorize them clearly with NO EXTRA UNNECESSARY FLUFF.
+Follow these rules strictly:
+1. EXTENDED DATES PRIORITY (CRITICAL OVERRIDE RULE):
+   Carefully inspect titles and snippets for phrases like "extended till", "extended to", "deadline extended", "with late fee", "without late fee", "corrigendum".
+   - If an initial or regular deadline is stated (e.g. October 5, 2026 or September 21, 2026): set "apply_last_date".
+   - If an extended deadline or deadline WITH LATE FEE is stated (e.g. October 12, 2026 or September 27, 2026):
+     set "extended_last_date" and set "is_extended": true.
+   - "active_last_date": MUST be the final extended / late fee deadline (e.g. October 12, 2026 or September 27, 2026).
+2. "prelims_exam_date": Prelims / Tier-1 / Written exam date or date range (e.g. "February 2027" or "November 21-22, 2026") or null.
+3. "mains_exam_date": Mains or Tier-2 date if applicable or null.
+4. "admit_card_date": Expected or confirmed admit card date/window if present or null.
+5. "vacancies": Total posts if mentioned (e.g. "13,745 Posts") or null.
+6. "fee_deadline": Fee payment deadline if mentioned or null.
+7. "important_details": Array of 2 to 4 crisp key bullet points in format:
+   - "Regular Deadline (Without Late Fee): <Date>"
+   - "Extended Deadline (With Late Fee): <Date>"
+   - "Prelims Exam Date: <Date>"
+   - "Fee Payment Deadline: <Date>"
+8. "overview_summary": Maximum 2 clear, direct sentences stating the last date to apply (clarify if extended / with late fee) and the scheduled exam dates. NO conversational filler.
 
 Return ONLY valid JSON matching this schema:
 {
   "overview_summary": "...",
   "apply_start_date": "...",
   "apply_last_date": "...",
-  "is_extended": false,
+  "extended_last_date": "...",
+  "is_extended": true,
+  "active_last_date": "...",
   "prelims_exam_date": "...",
   "mains_exam_date": "...",
   "admit_card_date": "...",
   "vacancies": "...",
+  "fee_deadline": "...",
+  "important_details": ["...", "..."],
   "source_links": [...],
-  "confidence": "Tentative / Reported Online (Awaiting Official Confirmation)"
+  "confidence": "Tentative / Reported Online"
 }
 `;
 
@@ -650,14 +752,30 @@ Return ONLY valid JSON matching this schema:
       overview_summary: sentences.join(' '),
       apply_start_date: null,
       apply_last_date: bestApplyEnd,
+      extended_last_date: null,
       is_extended: false,
+      active_last_date: bestApplyEnd,
       prelims_exam_date: bestExamDate,
       mains_exam_date: null,
       admit_card_date: 'Expected 7-10 days before exam date',
       vacancies: bestVacancies ? `${bestVacancies} Posts` : null,
+      fee_deadline: null,
+      important_details: [
+        bestApplyEnd ? `Expected Deadline: ${bestApplyEnd}` : null,
+        bestExamDate ? `Tentative Exam Date: ${bestExamDate}` : null
+      ].filter(Boolean),
       source_links: cleanedArticles.slice(0, 3).map(a => ({ title: a.title, url: a.url, source: a.source })),
-      confidence: 'Tentative / Reported Online (Awaiting Official Confirmation)'
+      confidence: 'Tentative / Reported Online'
     };
+  }
+
+  // Ensure source links are populated
+  if (!aiData.source_links || aiData.source_links.length === 0) {
+    aiData.source_links = cleanedArticles.slice(0, 3).map(a => ({
+      title: a.title,
+      url: a.url,
+      source: a.source
+    }));
   }
 
   aiData.analyzed_at = new Date().toISOString();

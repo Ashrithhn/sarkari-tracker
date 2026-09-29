@@ -25,7 +25,8 @@ import {
   Briefcase, FileText, Youtube, CheckCircle, IndianRupee, 
   ShieldCheck, AlertTriangle, ExternalLink, Filter, TrendingUp,
   Image as ImageIcon, ZoomIn, X, Info, Award, Edit, Plus,
-  Globe, RefreshCw, Users, CheckCircle2, Upload, Trash2
+  Globe, RefreshCw, Users, CheckCircle2, Upload, Trash2,
+  Sparkles, Zap
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, 
@@ -564,6 +565,14 @@ const ExamDetail = () => {
                 <span className="bg-emerald-600/90 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                   <ShieldCheck className="w-3.5 h-3.5" /> Official Verified Schedule
                 </span>
+              ) : aiOverview?.is_extended ? (
+                <span className="bg-amber-400 text-slate-950 text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                  <Clock className="w-3.5 h-3.5 text-slate-950" /> Deadline Extended: {aiOverview.extended_last_date || aiOverview.active_last_date}
+                </span>
+              ) : (aiOverview?.active_last_date || aiOverview?.apply_last_date) ? (
+                <span className="bg-blue-600/90 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5" /> Google Reported Schedule
+                </span>
               ) : (
                 <span className="bg-amber-600/90 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                   <Clock className="w-3.5 h-3.5" /> Notice Awaited / Will be updated soon
@@ -622,7 +631,7 @@ const ExamDetail = () => {
                       🟡 TENTATIVE / EXPECTED DATE
                     </span>
                     <span className="text-xs text-amber-300 font-semibold">
-                      Candidate Target / Google News Info
+                      Candidate Target / Personal Tracker
                     </span>
                   </div>
                   <div className="text-lg sm:text-xl font-black text-amber-200">
@@ -631,6 +640,73 @@ const ExamDetail = () => {
                   <p className="text-xs text-slate-300">
                     Official notification is awaited. Personal study countdown enabled.
                   </p>
+                </div>
+              ) : aiOverview && (aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date || aiOverview.prelims_exam_date) ? (
+                <div className="space-y-2.5 w-full">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-400 text-slate-950 flex items-center gap-1 shadow-sm">
+                        <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" /> GOOGLE AI EXTRACTED DATES
+                      </span>
+                      <span className="text-xs text-amber-300 font-semibold">
+                        {aiOverview.is_extended ? '🔥 Application Deadline Extended' : 'Latest Web Grounding'}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleAdoptAiDates({
+                        last_date: aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date,
+                        exam_date: aiOverview.prelims_exam_date || aiOverview.mains_exam_date
+                      })}
+                      className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 transition-colors shadow-xs shrink-0 cursor-pointer inline-flex items-center gap-1"
+                    >
+                      <Zap className="w-3.5 h-3.5 fill-slate-950" /> ⚡ Use as My Target
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-0.5">
+                    {(aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date) && (
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
+                        <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                        <div>
+                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
+                            {aiOverview.is_extended ? 'Extended Deadline' : 'Last Date to Apply'}
+                          </span>
+                          <strong className="text-xs sm:text-sm font-extrabold text-white">
+                            {aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date}
+                          </strong>
+                        </div>
+                      </div>
+                    )}
+
+                    {aiOverview.prelims_exam_date && (
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
+                        <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
+                        <div>
+                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
+                            Expected Exam Date
+                          </span>
+                          <strong className="text-xs sm:text-sm font-extrabold text-white">
+                            {aiOverview.prelims_exam_date}
+                          </strong>
+                        </div>
+                      </div>
+                    )}
+
+                    {aiOverview.fee_deadline && (
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
+                        <Calendar className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div>
+                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
+                            Fee Payment Deadline
+                          </span>
+                          <strong className="text-xs sm:text-sm font-extrabold text-white">
+                            {aiOverview.fee_deadline}
+                          </strong>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-1">

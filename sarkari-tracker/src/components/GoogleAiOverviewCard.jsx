@@ -49,7 +49,7 @@ const GoogleAiOverviewCard = ({
   const handleAdopt = () => {
     if (onAdoptDates) {
       onAdoptDates({
-        last_date: overview.apply_last_date || null,
+        last_date: overview.extended_last_date || overview.active_last_date || overview.apply_last_date || null,
         exam_date: overview.prelims_exam_date || overview.mains_exam_date || null,
         admit_card_date: overview.admit_card_date || null
       });
@@ -136,20 +136,57 @@ const GoogleAiOverviewCard = ({
                 </div>
               )}
 
-              {/* Application Last Date (Extended / Concluded) */}
-              {overview.apply_last_date && (
-                <div className="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/90 dark:border-amber-900/60 shadow-xs flex items-start gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+              {/* Extended Deadline (Highlighted if active) */}
+              {(overview.extended_last_date || (overview.is_extended && (overview.active_last_date || overview.apply_last_date))) && (
+                <div className="p-3 rounded-xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/80 shadow-xs flex items-start gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                     <Clock className="w-3.5 h-3.5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300">
-                        {overview.is_extended ? 'Extended Last Date to Apply' : 'Last Date to Apply'}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                        Extended Deadline {overview.fee_deadline ? '(With Late Fee)' : ''}
+                      </span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 bg-amber-200 text-amber-900 dark:bg-amber-900/80 dark:text-amber-200 rounded">
+                        Active
                       </span>
                     </div>
-                    <strong className="text-xs sm:text-sm font-extrabold text-amber-950 dark:text-amber-100">
+                    <strong className="text-xs sm:text-sm font-black text-amber-950 dark:text-amber-100">
+                      {overview.extended_last_date || overview.active_last_date || overview.apply_last_date}
+                    </strong>
+                  </div>
+                </div>
+              )}
+
+              {/* Regular Application Last Date (Without Late Fee) */}
+              {overview.apply_last_date && (!overview.is_extended || (overview.extended_last_date && overview.extended_last_date !== overview.apply_last_date)) && (
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex items-start gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0 mt-0.5">
+                    <Clock className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-semibold text-slate-500 block">
+                      {overview.is_extended ? 'Regular Last Date (Without Late Fee)' : 'Last Date to Apply'}
+                    </span>
+                    <strong className="text-xs font-bold text-slate-900 dark:text-white">
                       {overview.apply_last_date}
+                    </strong>
+                  </div>
+                </div>
+              )}
+
+              {/* Fee Payment Deadline */}
+              {overview.fee_deadline && (
+                <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex items-start gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <Calendar className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-semibold text-slate-500 block">
+                      Fee Payment Deadline
+                    </span>
+                    <strong className="text-xs font-bold text-slate-900 dark:text-white">
+                      {overview.fee_deadline}
                     </strong>
                   </div>
                 </div>
@@ -163,7 +200,7 @@ const GoogleAiOverviewCard = ({
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-blue-800 dark:text-blue-300 block">
-                      Prelims Exam Date
+                      Prelims / Written Exam Date
                     </span>
                     <strong className="text-xs sm:text-sm font-extrabold text-blue-950 dark:text-blue-100">
                       {overview.prelims_exam_date}
@@ -214,7 +251,7 @@ const GoogleAiOverviewCard = ({
                   </div>
                   <div>
                     <span className="text-[10px] font-semibold text-slate-500 block">
-                      Expected Vacancies
+                      Total Vacancies
                     </span>
                     <strong className="text-xs font-bold text-slate-900 dark:text-white">
                       {overview.vacancies}
@@ -224,6 +261,24 @@ const GoogleAiOverviewCard = ({
               )}
 
             </div>
+
+            {/* Google AI Overview Style Important Details List */}
+            {overview.important_details && overview.important_details.length > 0 && (
+              <div className="mt-3 p-3.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-blue-100 dark:border-slate-700/70 shadow-2xs space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Important Details</span>
+                </div>
+                <ul className="space-y-1.5 text-xs text-slate-800 dark:text-slate-200 font-medium">
+                  {overview.important_details.map((detail, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-blue-600 dark:text-blue-400 font-bold shrink-0 mt-0.5">•</span>
+                      <span>{detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
