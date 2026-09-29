@@ -159,6 +159,11 @@ function formatApplication(app) {
       if (!app.web_analysis) return null;
       try { return JSON.parse(app.web_analysis); } catch (e) { return null; }
     })(),
+    ai_overview: (() => {
+      const raw = app.ai_overview || app.exam_ai_overview;
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch (e) { return null; }
+    })(),
     created_at: app.created_at
   };
 }
@@ -172,7 +177,8 @@ router.get('/', (req, res) => {
              e.short_name as exam_short_name, 
              e.conducting_body, 
              e.level, 
-             e.official_site
+             e.official_site,
+             e.ai_overview as exam_ai_overview
       FROM applications a
       LEFT JOIN exams e ON a.exam_id = e.id
       WHERE a.user_id = ?
@@ -637,6 +643,89 @@ router.delete('/:id/document/:docType', (req, res) => {
     res.json({
       success: true,
       message: `${docType} removed successfully`,
+      application: formatApplication(updated)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5d. Scan AI Overview on-demand for an application
+router.post('/:id/scan-ai', async (req, res) => {
+  try {
+    const app = db.prepare('SELECT a.*, e.name as exam_name, e.short_name as exam_short_name, e.conducting_body FROM applications a LEFT JOIN exams e ON a.exam_id = e.id WHERE a.id = ? AND a.user_id = ?').get(req.params.id, req.user.id);
+    if (!app) return res.status(404).json({ error: 'Application not found or unauthorized' });
+
+    const examTitle = app.custom_exam_name || app.exam_short_name || app.exam_name;
+    const { generateExamAiOverview } = await import('../services/webIntelligence.js');
+    const aiOverview = await generateExamAiOverview({
+      examId: app.exam_id || null,
+      examName: examTitle,
+      conductingBody: app.conducting_body
+    });
+
+    if (aiOverview) {
+      db.prepare('UPDATE applications SET ai_overview = ? WHERE id = ?').run(JSON.stringify(aiOverview), req.params.id);
+    }
+
+    const updated = db.prepare(`
+      SELECT a.*, e.name as exam_name, e.short_name as exam_short_name, e.conducting_body, e.level, e.official_site, e.ai_overview as exam_ai_overview
+      FROM applications a
+      LEFT JOIN exams e ON a.exam_id = e.id
+      WHERE a.id = ? AND a.user_id = ?
+    `).get(req.params.id, req.user.id);
+
+    res.json({
+      success: true,
+      message: 'AI Overview updated successfully',
+      ai_overview: aiOverview,
+      application: formatApplication(updated)
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5e. One-Click Adopt AI Overview Target Dates into candidate's personal dates
+router.post('/:id/adopt-dates', (req, res) => {
+  try {
+    const { last_date, exam_date, admit_card_date } = req.body;
+    const app = db.prepare('SELECT * FROM applications WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+    if (!app) return res.status(404).json({ error: 'Application not found or unauthorized' });
+
+    // Update candidate personal dates
+    db.prepare(`
+      UPDATE applications SET 
+        user_last_date = COALESCE(?, user_last_date),
+        user_exam_date = COALESCE(?, user_exam_date),
+        user_admit_card_date = COALESCE(?, user_admit_card_date),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ? AND user_id = ?
+    `).run(last_date || null, exam_date || null, admit_card_date || null, req.params.id, req.user.id);
+
+    // Upsert reminders
+    const titleName = app.custom_exam_name || 'Tracked Application';
+    if (last_date) {
+      db.prepare('DELETE FROM reminders WHERE application_id = ? AND type = "deadline"').run(app.id);
+      db.prepare('INSERT INTO reminders (user_id, application_id, title, reminder_date, type) VALUES (?, ?, ?, ?, "deadline")')
+        .run(req.user.id, app.id, `Application Deadline: ${titleName}`, last_date);
+    }
+    if (exam_date) {
+      db.prepare('DELETE FROM reminders WHERE application_id = ? AND type = "exam_date"').run(app.id);
+      db.prepare('INSERT INTO reminders (user_id, application_id, title, reminder_date, type) VALUES (?, ?, ?, ?, "exam_date")')
+        .run(req.user.id, app.id, `Exam Date: ${titleName}`, exam_date);
+    }
+
+    const updated = db.prepare(`
+      SELECT a.*, e.name as exam_name, e.short_name as exam_short_name, e.conducting_body, e.level, e.official_site, e.ai_overview as exam_ai_overview
+      FROM applications a
+      LEFT JOIN exams e ON a.exam_id = e.id
+      WHERE a.id = ? AND a.user_id = ?
+    `).get(req.params.id, req.user.id);
+
+    res.json({
+      success: true,
+      message: 'Adopted AI Overview dates as your personal target dates!',
       application: formatApplication(updated)
     });
   } catch (error) {

@@ -9,6 +9,7 @@ import {
   checkExamApplication,
   getWebDiscoveries,
   scanWebForExam,
+  scanExamAi,
   candidateUploadFile,
   candidateContributeExam
 } from '../utils/api';
@@ -16,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { formatDate } from '../utils/constants';
 import CategoryBadge from '../components/CategoryBadge';
 import DeadlineTimer from '../components/DeadlineTimer';
+import GoogleAiOverviewCard from '../components/GoogleAiOverviewCard';
 import { 
   Calendar, Clock, BookOpen, Link as LinkIcon, Download, Star, 
   Briefcase, FileText, Youtube, CheckCircle, IndianRupee, 
@@ -63,6 +65,7 @@ const ExamDetail = () => {
 
   // Web Intelligence State
   const [webDiscoveries, setWebDiscoveries] = useState([]);
+  const [aiOverview, setAiOverview] = useState(null);
   const [isScanningWeb, setIsScanningWeb] = useState(false);
   const [scanMessage, setScanMessage] = useState('');
   
@@ -86,10 +89,20 @@ const ExamDetail = () => {
     try {
       const data = await getExam(id);
       setExam(data || null);
+      if (data?.ai_overview) {
+        setAiOverview(data.ai_overview);
+      }
 
       // Load web intelligence discoveries
       getWebDiscoveries(id)
-        .then(disc => setWebDiscoveries(disc || []))
+        .then(res => {
+          if (Array.isArray(res)) {
+            setWebDiscoveries(res || []);
+          } else if (res && res.discoveries) {
+            setWebDiscoveries(res.discoveries || []);
+            if (res.ai_overview) setAiOverview(res.ai_overview);
+          }
+        })
         .catch(err => console.warn('Could not load web discoveries:', err));
     } catch (err) {
       console.error('Failed to load exam details:', err);
@@ -106,10 +119,16 @@ const ExamDetail = () => {
       const res = await scanWebForExam(id);
       if (res && res.discoveries) {
         setWebDiscoveries(res.discoveries);
+        if (res.ai_overview) setAiOverview(res.ai_overview);
         setScanMessage(res.message || 'Scanned web: updated with latest media reports & dates!');
       } else {
         const refreshed = await getWebDiscoveries(id);
-        setWebDiscoveries(refreshed || []);
+        if (Array.isArray(refreshed)) {
+          setWebDiscoveries(refreshed);
+        } else if (refreshed?.discoveries) {
+          setWebDiscoveries(refreshed.discoveries);
+          if (refreshed.ai_overview) setAiOverview(refreshed.ai_overview);
+        }
         setScanMessage('Web intelligence refreshed.');
       }
     } catch (err) {
@@ -117,6 +136,33 @@ const ExamDetail = () => {
     } finally {
       setIsScanningWeb(false);
     }
+  };
+
+  const handleRefreshAi = async () => {
+    setIsScanningWeb(true);
+    setScanMessage('');
+    try {
+      const res = await scanExamAi(id);
+      if (res && res.ai_overview) {
+        setAiOverview(res.ai_overview);
+        setScanMessage('✨ AI Overview successfully refreshed from live Google search!');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to refresh AI Overview');
+    } finally {
+      setIsScanningWeb(false);
+    }
+  };
+
+  const handleAdoptAiDates = (dates) => {
+    if (!user) {
+      alert('Please log in to apply these expected dates to your personal tracker.');
+      return;
+    }
+    if (dates.last_date) setTargetLastDate(dates.last_date);
+    if (dates.exam_date) setTargetExamDate(dates.exam_date);
+    setCandidateNotes(`[Adopted from Google AI Overview]: Last Date ${dates.last_date || 'Awaited'}, Exam Date ${dates.exam_date || 'Awaited'}`);
+    setIsExpectedDateModalOpen(true);
   };
 
   const handleAdoptExpectedDate = (discovery) => {
@@ -686,6 +732,16 @@ const ExamDetail = () => {
                     📡 <strong>Multi-Source Media Crawler:</strong> Scans real-time education reports, national news, and state commission circulars. Data is labeled <em>"Tentative"</em> until confirmed by administrative verification against official commission PDFs.
                   </p>
 
+                  {/* Google AI Overview Card with Highlighted Dates */}
+                  <GoogleAiOverviewCard
+                    aiOverview={aiOverview}
+                    examTitle={exam.short_name || exam.name}
+                    onAdoptDates={handleAdoptAiDates}
+                    onRefreshAi={handleRefreshAi}
+                    isRefreshing={isScanningWeb}
+                    showAdoptButton={true}
+                  />
+
                   {/* Discoveries List */}
                   {webDiscoveries.length === 0 ? (
                     <div className="p-6 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-2">
@@ -789,7 +845,7 @@ const ExamDetail = () => {
 
                           {disc.snippet && (
                             <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2">
-                              "{disc.snippet}"
+                              "{disc.snippet.replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/gi, ' ').replace(/^"+|"+$/g, '').trim()}"
                             </p>
                           )}
 

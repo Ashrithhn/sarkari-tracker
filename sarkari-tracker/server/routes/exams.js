@@ -56,6 +56,14 @@ function formatExamRecord(exam) {
   // Dates timeline from published dates module
   const publishedDates = modules['dates']?.payload || null;
 
+  // AI Overview parsed
+  let parsedAiOverview = null;
+  if (exam.ai_overview) {
+    try {
+      parsedAiOverview = JSON.parse(exam.ai_overview);
+    } catch (e) {}
+  }
+
   return {
     id: exam.id,
     name: exam.name,
@@ -75,6 +83,7 @@ function formatExamRecord(exam) {
     last_verified_at: exam.last_verified_at,
     verified_by: exam.verified_by,
     disclaimer: 'Always confirm on the official website.',
+    ai_overview: parsedAiOverview,
     
     // Published official modules (null if not yet published)
     dates: publishedDates,
@@ -158,7 +167,7 @@ router.get('/:id', (req, res) => {
 router.get('/:id/web-discoveries', async (req, res) => {
   try {
     const examId = req.params.id;
-    const { getWebDiscoveries, scanWebForExam } = await import('../services/webIntelligence.js');
+    const { getWebDiscoveries, scanWebForExam, generateExamAiOverview } = await import('../services/webIntelligence.js');
     let discoveries = getWebDiscoveries(examId);
 
     // If zero discoveries, trigger on-demand initial scan
@@ -170,7 +179,28 @@ router.get('/:id/web-discoveries', async (req, res) => {
       }
     }
 
-    res.json(discoveries || []);
+    // Get cached AI overview or generate if missing
+    let examRow = db.prepare('SELECT * FROM exams WHERE id = ?').get(examId);
+    let aiOverview = null;
+    if (examRow?.ai_overview) {
+      try { aiOverview = JSON.parse(examRow.ai_overview); } catch (e) {}
+    }
+
+    if (!aiOverview && examRow) {
+      try {
+        aiOverview = await generateExamAiOverview({
+          examId,
+          examName: examRow.short_name || examRow.name,
+          conductingBody: examRow.conducting_body,
+          existingDiscoveries: discoveries
+        });
+      } catch (e) {}
+    }
+
+    res.json({
+      discoveries: discoveries || [],
+      ai_overview: aiOverview
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -180,13 +210,48 @@ router.get('/:id/web-discoveries', async (req, res) => {
 router.post('/:id/scan-web', async (req, res) => {
   try {
     const examId = req.params.id;
-    const { scanWebForExam } = await import('../services/webIntelligence.js');
+    const { scanWebForExam, generateExamAiOverview } = await import('../services/webIntelligence.js');
     const discoveries = await scanWebForExam(examId);
+
+    const examRow = db.prepare('SELECT * FROM exams WHERE id = ?').get(examId);
+    let aiOverview = null;
+    try {
+      aiOverview = await generateExamAiOverview({
+        examId,
+        examName: examRow?.short_name || examRow?.name,
+        conductingBody: examRow?.conducting_body,
+        existingDiscoveries: discoveries
+      });
+    } catch (e) {}
+
     res.json({
       success: true,
       message: `Scanned web: found ${discoveries.length} online reports/updates`,
-      discoveries
+      discoveries,
+      ai_overview: aiOverview
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6. On-demand AI Overview generation
+router.post('/:id/scan-ai', async (req, res) => {
+  try {
+    const examId = req.params.id;
+    const examRow = db.prepare('SELECT * FROM exams WHERE id = ?').get(examId);
+    if (!examRow) return res.status(404).json({ error: 'Exam not found' });
+
+    const { generateExamAiOverview, getWebDiscoveries } = await import('../services/webIntelligence.js');
+    const existing = getWebDiscoveries(examId);
+    const aiOverview = await generateExamAiOverview({
+      examId,
+      examName: examRow.short_name || examRow.name,
+      conductingBody: examRow.conducting_body,
+      existingDiscoveries: existing
+    });
+
+    res.json({ success: true, ai_overview: aiOverview });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

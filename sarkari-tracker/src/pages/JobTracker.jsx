@@ -11,6 +11,8 @@ import {
   addChecklistItem,
   exportJobsCsv,
   analyzeJobKeywords,
+  scanJobAi,
+  adoptJobAiDates,
   triggerDailyExamChecks
 } from '../utils/api';
 import { EXAM_CATEGORIES, APPLICATION_STATUSES, KARNATAKA_CATEGORIES } from '../utils/constants';
@@ -23,6 +25,7 @@ import {
 import JobCard from '../components/JobCard';
 import DailyIntelligenceModal from '../components/DailyIntelligenceModal';
 import CandidateResourcesModal from '../components/CandidateResourcesModal';
+import GoogleAiOverviewCard from '../components/GoogleAiOverviewCard';
 
 const MODAL_EXAM_CATEGORIES = [
   { id: 'All', label: 'All Exams (160+)' },
@@ -89,6 +92,7 @@ const JobTracker = () => {
   const [activeAnalysisJob, setActiveAnalysisJob] = useState(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [analyzingJobId, setAnalyzingJobId] = useState(null);
+  const [scanningAiJobId, setScanningAiJobId] = useState(null);
 
   // Daily Question Intelligence Modal State
   const [activeIntelligenceJob, setActiveIntelligenceJob] = useState(null);
@@ -147,6 +151,38 @@ const JobTracker = () => {
       alert(err.message || 'Failed to analyze keywords');
     } finally {
       setAnalyzingJobId(null);
+    }
+  };
+
+  const handleRefreshJobAi = async (jobId) => {
+    setScanningAiJobId(jobId);
+    try {
+      const res = await scanJobAi(jobId);
+      if (res && res.application) {
+        setJobs(prev => prev.map(j => j.id === jobId ? res.application : j));
+        if (activeAnalysisJob && activeAnalysisJob.id === jobId) {
+          setActiveAnalysisJob(res.application);
+        }
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to refresh AI Overview');
+    } finally {
+      setScanningAiJobId(null);
+    }
+  };
+
+  const handleAdoptJobAiDates = async (jobId, dates) => {
+    try {
+      const res = await adoptJobAiDates(jobId, dates);
+      if (res && res.application) {
+        setJobs(prev => prev.map(j => j.id === jobId ? res.application : j));
+        if (activeAnalysisJob && activeAnalysisJob.id === jobId) {
+          setActiveAnalysisJob(res.application);
+        }
+        alert(res.message || 'Adopted dates successfully!');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to adopt target dates');
     }
   };
 
@@ -1345,6 +1381,16 @@ const JobTracker = () => {
                 </button>
               </div>
 
+              {/* Google AI Overview Card */}
+              <GoogleAiOverviewCard
+                aiOverview={activeAnalysisJob.ai_overview}
+                examTitle={activeAnalysisJob.custom_exam_name || activeAnalysisJob.name}
+                onAdoptDates={(dates) => handleAdoptJobAiDates(activeAnalysisJob.id, dates)}
+                onRefreshAi={() => handleRefreshJobAi(activeAnalysisJob.id)}
+                isRefreshing={scanningAiJobId === activeAnalysisJob.id}
+                showAdoptButton={true}
+              />
+
               {activeAnalysisJob.web_analysis ? (
                 <>
                   {/* Discovered Highlights Grid */}
@@ -1446,7 +1492,7 @@ const JobTracker = () => {
                             </div>
                             {src.snippet && (
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-                                {src.snippet}
+                                {src.snippet.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"')}
                               </p>
                             )}
                             {(src.detected_dates?.exam_date || src.detected_dates?.last_date) && (

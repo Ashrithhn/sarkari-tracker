@@ -127,6 +127,12 @@ export const deleteJob = (id) => apiCall(`/api/jobs/${id}`, { method: 'DELETE' }
 export const getJobStats = () => apiCall('/api/jobs/stats');
 export const checkExamApplication = (examId) => apiCall(`/api/jobs/check/${examId}`);
 export const analyzeJobKeywords = (id) => apiCall(`/api/jobs/${id}/analyze`, { method: 'POST' });
+export const scanJobAi = (id) => apiCall(`/api/jobs/${id}/scan-ai`, { method: 'POST' });
+export const adoptJobAiDates = (id, dates) => apiCall(`/api/jobs/${id}/adopt-dates`, { 
+  method: 'POST', 
+  body: JSON.stringify(dates) 
+});
+export const scanExamAi = (id) => apiCall(`/api/exams/${id}/scan-ai`, { method: 'POST' });
 
 // Notifications
 export const getNotifications = () => apiCall('/api/notifications');

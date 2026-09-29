@@ -300,6 +300,14 @@ try {
 } catch (e) {}
 
 try {
+  db.exec('ALTER TABLE applications ADD COLUMN ai_overview TEXT');
+} catch (e) {}
+
+try {
+  db.exec('ALTER TABLE exams ADD COLUMN ai_overview TEXT');
+} catch (e) {}
+
+try {
   db.prepare("UPDATE users SET is_admin = 0 WHERE email = 'ashrith.sringeri@gmail.com'").run();
 } catch (e) {}
 
