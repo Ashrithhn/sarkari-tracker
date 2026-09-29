@@ -5,29 +5,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        tavily: {
-          bg: '#0B0D10',
-          card: '#1F1E1E',
-          surface: '#15181E',
-          surfaceAlt: '#1A1D24',
-          border: 'rgba(255, 255, 255, 0.08)',
-          text: '#FFFFFF',
-          muted: '#A0A6B1',
-          mint: '#00E599',
-          purple: '#7C5CFF',
-          blue: '#3860BE',
-        },
         saffron: {
           50: '#fff7ed',
           100: '#ffedd5',
           200: '#fed7aa',
           300: '#fdba74',
           400: '#fb923c',
-          500: '#00E599', // Map primary saffron highlights to Tavily Mint Green!
-          600: '#00c985',
-          700: '#00aa70',
-          800: '#008c5c',
-          900: '#006d48',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
         },
         navy: {
           50: '#eff6ff',
@@ -35,12 +23,12 @@ export default {
           200: '#bfdbfe',
           300: '#93c5fd',
           400: '#60a5fa',
-          500: '#3860BE',
-          600: '#2c4da0',
-          700: '#1F1E1E',
-          800: '#15181E',
-          900: '#0B0D10', // Tavily Primary Background
-          950: '#060709',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e3a5f',
+          900: '#0f172a',
+          950: '#020617',
         },
       },
       fontFamily: {

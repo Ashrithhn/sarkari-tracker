@@ -34,12 +34,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <aside 
-      className={`fixed lg:static inset-y-0 left-0 z-20 w-64 bg-white/95 dark:bg-[#0B0D10]/95 backdrop-blur-xl border-r border-gray-200 dark:border-white/[0.08] transform transition-transform duration-300 ease-in-out lg:translate-x-0 pt-16 flex flex-col
+      className={`fixed lg:static inset-y-0 left-0 z-20 w-64 glass-card border-r border-white/20 dark:border-navy-700/50 transform transition-transform duration-300 ease-in-out lg:translate-x-0 pt-16 flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
     >
       <div className="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
         <nav className="space-y-1 mb-8">
-          <p className="px-3 text-xs font-semibold text-slate-400 dark:text-[#A0A6B1] uppercase tracking-wider mb-2">Main Menu</p>
+          <p className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Main Menu</p>
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -50,8 +50,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${
                     isActive
-                      ? 'bg-[#00E599]/15 text-[#00E599] border border-[#00E599]/30 font-semibold'
-                      : 'text-slate-600 dark:text-[#A0A6B1] hover:bg-slate-100 dark:hover:bg-[#14171D] hover:dark:text-white'
+                      ? 'bg-saffron-50 dark:bg-saffron-900/20 text-saffron-600 dark:text-saffron-400 font-medium'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
                   }`
                 }
               >

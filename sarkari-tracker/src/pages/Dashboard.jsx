@@ -221,34 +221,28 @@ const Dashboard = () => {
   return (
     <div className="w-full space-y-4 sm:space-y-8 animate-fade-in">
       {/* Welcome Banner */}
-      <div className="p-5 sm:p-7 rounded-2xl sm:rounded-3xl relative overflow-hidden bg-[#14171D] border border-white/[0.08] text-white shadow-xl shadow-black/40">
-        {/* Tavily Glow */}
-        <div 
-          className="absolute top-0 right-0 w-80 h-80 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20 opacity-20"
-          style={{ background: 'linear-gradient(135deg, #00E599, #7C5CFF)' }}
-        />
-
+      <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl relative overflow-hidden bg-gradient-to-br from-navy-800 via-navy-900 to-saffron-950 text-white shadow-lg">
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
               {isAuthenticated ? `Welcome back, ${user?.name || 'Aspirant'}! 👋` : 'SarkariTracker 🇮🇳'}
             </h1>
-            <p className="text-[#A0A6B1] text-xs sm:text-sm max-w-xl">
+            <p className="text-navy-100/80 text-xs sm:text-sm max-w-xl">
               Track government exam deadlines, syllabus, cutoffs, and your application dates in one place.
             </p>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto shrink-0">
             {isAuthenticated ? (
-              <Link to="/tracker" className="px-5 py-2.5 bg-[#00E599] hover:bg-[#00c985] text-[#0B0D10] font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#00E599]/20 transition-all flex items-center justify-center gap-1.5">
+              <Link to="/tracker" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-4 flex items-center gap-1.5 shadow-md">
                 <Plus size={16} /> Add Application
               </Link>
             ) : (
               <>
-                <Link to="/login" className="px-5 py-2.5 bg-[#00E599] hover:bg-[#00c985] text-[#0B0D10] font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-[#00E599]/20 transition-all flex items-center justify-center gap-1.5">
+                <Link to="/login" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-4 flex items-center gap-1.5 shadow-md">
                   <LogIn size={16} /> Sign In
                 </Link>
-                <Link to="/register" className="px-4 py-2.5 rounded-xl bg-[#1F1E1E] hover:bg-[#282727] text-white text-xs sm:text-sm font-semibold transition-all border border-white/[0.08] flex items-center justify-center gap-1.5">
+                <Link to="/register" className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/15 flex-1 sm:flex-initial text-center justify-center flex items-center gap-1.5">
                   <UserPlus size={16} /> Register
                 </Link>
               </>

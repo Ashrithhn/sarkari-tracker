@@ -178,13 +178,9 @@ const JobCard = ({
                 <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
                   🟢 Confirmed Official
                 </span>
-              ) : app.user_dates_source?.startsWith('Adopted from AI') ? (
-                <span className="text-[10px] text-teal-700 dark:text-teal-300 font-bold bg-teal-50 dark:bg-teal-950/40 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800 flex items-center gap-1 truncate max-w-[200px]" title={app.user_dates_source}>
-                  🤖 {app.user_dates_source}
-                </span>
               ) : (
                 <span className="text-[10px] text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800 flex items-center gap-1">
-                  🟡 User Target Date
+                  🟡 Expected (Google/Target)
                 </span>
               )}
             </div>

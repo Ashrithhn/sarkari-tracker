@@ -177,31 +177,20 @@ router.post('/exams', (req, res) => {
   }
 });
 
-// Delete exam from registry and clean up public modules without touching user private data
+// Delete exam from registry and clean up all associated records
 router.delete('/exams/:id', (req, res) => {
   try {
     const examId = req.params.id;
     const exam = db.prepare('SELECT * FROM exams WHERE id = ?').get(examId);
     if (!exam) return res.status(404).json({ error: 'Exam not found' });
 
-    // CRITICAL DATA PRESERVATION: NEVER delete user applications!
-    // Decouple candidate applications so users retain their tracked job, uploaded files, notes, and checklist
-    const examFallbackName = exam.name || exam.short_name || 'Archived Examination';
-    db.prepare(`
-      UPDATE applications 
-      SET custom_exam_name = COALESCE(custom_exam_name, ?),
-          exam_id = NULL
-      WHERE exam_id = ?
-    `).run(examFallbackName, examId);
-
-    // Also decouple candidate reminders
-    db.prepare('UPDATE reminders SET exam_id = NULL WHERE exam_id = ?').run(examId);
-
-    // Delete public registry modules only (content, cutoffs, pyqs, and public notifications)
+    // Delete content, cutoffs, pyqs, applications, notifications
     db.prepare('DELETE FROM exam_content WHERE exam_id = ?').run(examId);
     db.prepare('DELETE FROM exam_cutoffs WHERE exam_id = ?').run(examId);
     db.prepare('DELETE FROM exam_pyqs WHERE exam_id = ?').run(examId);
+    db.prepare('DELETE FROM applications WHERE exam_id = ?').run(examId);
     db.prepare('DELETE FROM notifications WHERE exam_id = ?').run(examId);
+    db.prepare('DELETE FROM reminders WHERE exam_id = ?').run(examId);
     db.prepare('DELETE FROM exams WHERE id = ?').run(examId);
 
     logAudit(req.user.id, 'DELETE_EXAM', 'exam', examId, { name: exam.name }, req);
@@ -209,7 +198,7 @@ router.delete('/exams/:id', (req, res) => {
     // On-demand ISR revalidation for Next.js public site
     triggerNextRevalidation(['/', '/sitemap.xml']);
 
-    res.json({ success: true, message: `Exam ${exam.name} removed from registry. Candidate private applications and documents preserved.` });
+    res.json({ success: true, message: `Exam ${exam.name} and all associated dates deleted successfully` });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -71,17 +71,6 @@ function normalizeDate(raw) {
   return toDDMMYYYY(raw);
 }
 
-export function parseDateToTimestamp(raw) {
-  if (!raw) return 0;
-  const dmy = toDDMMYYYY(raw);
-  if (!dmy) return 0;
-  const parts = dmy.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (parts) {
-    return new Date(Number(parts[3]), Number(parts[2]) - 1, Number(parts[1])).getTime();
-  }
-  return 0;
-}
-
 /**
  * Compares an application deadline with current date (2026-09-29)
  * Returns { isClosed, statusText, badgeText, daysLeft }
@@ -170,45 +159,36 @@ function extractExamDetailsFromText(title, description = '') {
   let expectedApplyEnd = null;
   let expectedApplyStart = null;
 
-  // Split into sentences for accurate local context extraction
-  const sentences = combined.split(/(?<=[.!?])\s+|\n+/);
-  for (const s of sentences) {
-    const datesInSentence = [...s.matchAll(fullDateRegex)].map(m => normalizeDate(m[1]));
-    if (datesInSentence.length === 0) continue;
+  // Contextual clues
+  const hasExamDateClue = /exam\s+date|examination\s+(?:on|date|schedule)|written\s+test|prelims\s+date|cbt\s+date/i.test(combined);
+  const hasDeadlineClue = /last\s+date|apply\s+online\s+till|deadline|registration\s+(?:closes|ends|last)/i.test(combined);
 
-    if (!expectedApplyEnd && /last\s+date|apply\s+online\s+till|deadline|registration\s+(?:closes|ends|last)|extended\s+till/i.test(s)) {
-      expectedApplyEnd = datesInSentence[0];
-    }
-    if (!expectedExamDate && /exam\s+date|examination\s+(?:on|date|schedule)|written\s+test|prelims\s+date|cbt\s+date|held\s+on/i.test(s)) {
-      expectedExamDate = datesInSentence[datesInSentence.length - 1];
-    }
-    if (!expectedApplyStart && /start(?:s|ing)?\s+(?:on|from)|apply\s+online\s+from/i.test(s)) {
-      expectedApplyStart = datesInSentence[0];
-    }
-  }
-
-  // Fallbacks using global matched dates if sentence extraction missed
-  if (!expectedApplyEnd && /last\s+date|deadline|registration/i.test(combined) && matchedDates.length > 0) {
+  if (hasDeadlineClue && matchedDates.length > 0) {
     expectedApplyEnd = matchedDates[0];
   }
-  if (!expectedExamDate && /exam|prelims|test|held/i.test(combined) && matchedDates.length > 0) {
-    expectedExamDate = matchedDates[matchedDates.length - 1];
+
+  if (hasExamDateClue && matchedDates.length > 0) {
+    const candidateExamDate = matchedDates[matchedDates.length - 1];
+    if (candidateExamDate !== expectedApplyEnd) {
+      expectedExamDate = candidateExamDate;
+    }
   }
 
-  // STRICT CHRONOLOGICAL INVARIANT: Application deadline is ALWAYS before the exam date!
-  if (expectedApplyEnd && expectedExamDate) {
-    if (expectedApplyEnd === expectedExamDate) {
-      expectedExamDate = null;
-    } else {
-      const applyT = parseDateToTimestamp(expectedApplyEnd);
-      const examT = parseDateToTimestamp(expectedExamDate);
-      if (applyT && examT && applyT > examT) {
-        // Dates were flipped in the text (e.g. "Exam on 11 Oct, registration closed 28 Aug")
-        const temp = expectedApplyEnd;
-        expectedApplyEnd = expectedExamDate;
-        expectedExamDate = temp;
-      }
+  if (combined.match(/start(?:s|ing)?|from/i) && matchedDates.length > 1) {
+    expectedApplyStart = matchedDates[0];
+  }
+
+  // Fallback ONLY when there are multiple distinct dates and no exam date assigned yet
+  if (!expectedExamDate && matchedDates.length > 1) {
+    const latestDate = matchedDates[matchedDates.length - 1];
+    if (latestDate !== expectedApplyEnd) {
+      expectedExamDate = latestDate;
     }
+  }
+
+  // Strict collision check: Exam date CANNOT be the same as the application deadline!
+  if (expectedExamDate && expectedApplyEnd && expectedExamDate === expectedApplyEnd) {
+    expectedExamDate = null;
   }
 
   // Eligibility snippets
@@ -803,217 +783,16 @@ export function cleanSearchQuery(examName) {
 }
 
 /**
- * Checks if a cached AI overview is fresh (updated within the last 24 hours) and contains valid dates.
- * Conserves free search limits on high-traffic sites.
+ * Generate Google AI Overview style structured dates and summary using Gemini
  */
-export function isAiOverviewFresh(overview) {
-  if (!overview || typeof overview !== 'object') return false;
-  if (!overview.analyzed_at) return false;
-  const analyzedTime = new Date(overview.analyzed_at).getTime();
-  if (isNaN(analyzedTime)) return false;
-
-  const hasUsefulData = Boolean(
-    overview.prelims_exam_date || 
-    overview.mains_exam_date || 
-    overview.apply_last_date || 
-    overview.active_last_date ||
-    overview.extended_last_date
-  );
-  if (!hasUsefulData) return false;
-
-  const ageMs = Date.now() - analyzedTime;
-  const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-  return ageMs < TWENTY_FOUR_HOURS;
-}
-
-/**
- * Searches live web data using Tavily AI Search API
- */
-export async function searchTavily(query) {
-  const apiKey = process.env.TAVILY_API_KEY;
-  if (!apiKey) return null;
-  try {
-    const res = await fetch('https://api.tavily.com/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        api_key: apiKey,
-        query,
-        search_depth: 'basic',
-        include_answer: true,
-        max_results: 6
-      }),
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (err) {
-    console.warn('[WebIntelligence] Tavily search error:', err.message);
-    return null;
-  }
-}
-
-/**
- * Strategy 1: The "Cross-Verifier" (Tavily Agent Setup)
- * Primary parser (Gemini) extracts dates; Cross-Verifier (Groq Llama 3 / Tavily Grounding)
- * double-checks accuracy against raw web text before publishing.
- */
-export async function crossVerifyExamDates({ examName, extractedData, rawEvidenceText, tavilyAnswer = '' }) {
-  const groqApiKey = process.env.GROQ_API_KEY;
-
-  if (groqApiKey) {
-    try {
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${groqApiKey}`
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are a strict data verification quality auditor for Indian government exam dates. Compare the extracted structured dates against the raw web evidence text. If they match the evidence, set "verified": true. If contradictory, set "verified": false and state discrepancy in "notes". Respond in JSON only: {"verified": true|false, "confidence": "high"|"medium"|"low", "notes": "..."}'
-            },
-            {
-              role: 'user',
-              content: `Exam: "${examName}"\nExtracted Dates:\n- Prelims: ${extractedData.prelims_exam_date || 'null'}\n- Mains: ${extractedData.mains_exam_date || 'null'}\n- Apply Last Date: ${extractedData.active_last_date || extractedData.apply_last_date || 'null'}\n- Vacancies: ${extractedData.vacancies || 'null'}\n\nRaw Evidence:\n${rawEvidenceText.slice(0, 3500)}`
-            }
-          ],
-          response_format: { type: 'json_object' }
-        }),
-        signal: AbortSignal.timeout(4500)
-      });
-
-      if (res.ok) {
-        const groqData = await res.json();
-        const audit = JSON.parse(groqData.choices[0].message.content);
-        return {
-          verified: Boolean(audit.verified),
-          verifier: 'Groq (Llama 3.3 70B Cross-Verifier)',
-          confidence: audit.verified ? 'High - Cross-Verified (Gemini + Groq)' : 'Flagged for Review',
-          notes: audit.notes || 'Cross-verified against live sources'
-        };
-      }
-    } catch (groqErr) {
-      console.warn('[WebIntelligence] Groq verification fallback:', groqErr.message);
-    }
-  }
-
-  // Built-in Cross-Verifier: Check consistency against Tavily Synthesized Answer & Tables
-  return {
-    verified: true,
-    verifier: tavilyAnswer ? 'Tavily AI Grounding + Gemini Validator' : 'Multi-Source Consistency Validator',
-    confidence: tavilyAnswer ? 'High - Cross-Verified (Tavily + Gemini)' : 'Reported Online / Multi-Source',
-    notes: 'Verified against authoritative portal schedule tables'
-  };
-}
-
-// Shared in-flight scans deduplication map (prevents parallel identical searches)
-const inFlightScans = new Map();
-// Per-exam forced refresh cooldown map (key: examId/cleanName, value: timestamp)
-const examScanCooldowns = new Map();
-const SCAN_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes minimum between forced web rescrapes per exam
-
-export const OFFICIAL_DOMAIN_SUFFIXES = [
-  'gov.in', 'nic.in', 'ibps.in', 'nta.ac.in', 'sbi.co.in', 'rbi.org.in',
-  'karnataka.gov.in', 'upsc.gov.in', 'ssc.gov.in', 'rrbcdg.gov.in', 'kea.kar.nic.in', 'kpsc.kar.nic.in'
-];
-
-export function getOfficialSourceDomain(urls = []) {
-  for (const u of urls) {
-    if (!u) continue;
-    try {
-      const host = new URL(u).hostname.toLowerCase().replace(/^www\./, '');
-      if (OFFICIAL_DOMAIN_SUFFIXES.some(s => host === s || host.endsWith('.' + s))) {
-        return host;
-      }
-    } catch (e) {}
-  }
-  return null;
-}
-
-/**
- * Generate Google AI Overview style structured dates and summary using Gemini + Tavily + Groq
- */
-export async function generateExamAiOverview({ examId = null, examName, conductingBody = '', existingDiscoveries = [], forceFresh = false }) {
+export async function generateExamAiOverview({ examId = null, examName, conductingBody = '', existingDiscoveries = [] }) {
   if (!examName) return null;
 
-  const cleanName = cleanSearchQuery(examName) || examName;
-  const scanKey = examId ? `exam_${examId}` : `name_${cleanName.toLowerCase()}`;
-
-  // 1. In-Flight Request Deduplication: If a scan is already running for this exam, join it
-  if (inFlightScans.has(scanKey)) {
-    console.log(`[WebIntelligence] Scan for "${cleanName}" is already in-flight. Joining active promise.`);
-    return inFlightScans.get(scanKey);
-  }
-
-  // 2. Check 24-Hour Database Cache first
-  if (!forceFresh && examId) {
-    try {
-      const cachedRow = db.prepare('SELECT ai_overview FROM exams WHERE id = ?').get(examId);
-      if (cachedRow?.ai_overview) {
-        const parsed = JSON.parse(cachedRow.ai_overview);
-        if (isAiOverviewFresh(parsed)) {
-          const ageHours = Math.round((Date.now() - new Date(parsed.analyzed_at).getTime()) / 3600000);
-          console.log(`[WebIntelligence] Served 24h cached AI overview for Exam #${examId} (${parsed.exam_name || examName}) [Age: ${ageHours}h]. 0 search API calls consumed.`);
-          return { ...parsed, is_cached: true, cache_age_hours: ageHours };
-        }
-      }
-    } catch (cacheErr) {
-      console.warn('[WebIntelligence] Cache check warning:', cacheErr.message);
-    }
-  }
-
-  // 3. Shared Per-Exam Cooldown on Forced Refresh: Prevent 50 users from exhausting search limits
-  if (forceFresh) {
-    const lastScanTime = examScanCooldowns.get(scanKey);
-    if (lastScanTime && (Date.now() - lastScanTime) < SCAN_COOLDOWN_MS) {
-      const remainingMins = Math.ceil((SCAN_COOLDOWN_MS - (Date.now() - lastScanTime)) / 60000);
-      console.log(`[WebIntelligence] Cooldown active for "${cleanName}". Last scanned ${Math.round((Date.now() - lastScanTime)/1000)}s ago. Remaining cooldown: ${remainingMins}m.`);
-      
-      // Attempt to return existing overview with cooldown metadata
-      if (examId) {
-        try {
-          const cachedRow = db.prepare('SELECT ai_overview FROM exams WHERE id = ?').get(examId);
-          if (cachedRow?.ai_overview) {
-            const parsed = JSON.parse(cachedRow.ai_overview);
-            return {
-              ...parsed,
-              is_cached: true,
-              cooldown_active: true,
-              cooldown_remaining_minutes: remainingMins,
-              message: `Exam was refreshed recently. Next live web search available in ${remainingMins} minutes.`
-            };
-          }
-        } catch (e) {}
-      }
-    }
-  }
-
-  // Launch scan with in-flight deduplication tracking
-  const scanPromise = (async () => {
-    try {
-      const result = await executeFreshExamScan({ examId, examName, cleanName, conductingBody, existingDiscoveries });
-      examScanCooldowns.set(scanKey, Date.now());
-      return result;
-    } finally {
-      inFlightScans.delete(scanKey);
-    }
-  })();
-
-  inFlightScans.set(scanKey, scanPromise);
-  return scanPromise;
-}
-
-async function executeFreshExamScan({ examId, examName, cleanName, conductingBody, existingDiscoveries }) {
   const currentYear = new Date().getFullYear();
   const nextYear = currentYear + 1;
+  const cleanName = cleanSearchQuery(examName) || examName;
 
-  console.log(`[WebIntelligence] Running fresh AI search grounding for "${cleanName}"...`);
-
-  // 2. Targeted live searches across Tavily AI Search, official portals, and news RSS
+  // 1. Targeted live searches across official exam schedules, portals and news
   const queries = [
     `"${cleanName}" exam date ${currentYear} prelims mains schedule`,
     `${cleanName} exam date ${currentYear} ${nextYear} prelims mains`,
@@ -1025,30 +804,15 @@ async function executeFreshExamScan({ examId, examName, cleanName, conductingBod
     queries.push(`${examName} exam date ${currentYear}`);
   }
 
-  const searchPromises = [
-    searchTavily(`${cleanName} exam date ${currentYear} prelims mains registration last date`)
-  ];
+  const searchPromises = [];
   for (const q of queries) {
     searchPromises.push(searchBingNews(q));
     searchPromises.push(searchGoogleNews(q));
   }
 
   const fetchedResults = await Promise.all(searchPromises);
-  const tavilyData = fetchedResults[0];
-  const newsResults = fetchedResults.slice(1).flat();
-
-  // Convert Tavily results into structured articles
-  const tavilyArticles = (tavilyData?.results || []).map(r => ({
-    title: r.title,
-    snippet: r.content,
-    source: new URL(r.url || 'https://google.com').hostname.replace(/^www\./, ''),
-    url: r.url,
-    date: new Date().toISOString()
-  }));
-
   const allArticles = [
-    ...tavilyArticles,
-    ...newsResults,
+    ...fetchedResults.flat(),
     ...(Array.isArray(existingDiscoveries) ? existingDiscoveries : [])
   ];
 
@@ -1068,7 +832,6 @@ async function executeFreshExamScan({ examId, examName, cleanName, conductingBod
   const extraSnippets = (await Promise.all(authorityPromises)).filter(Boolean);
 
   const cleanedArticles = [
-    ...tavilyArticles.slice(0, 4),
     ...extraSnippets,
     ...rankedArticles.map(a => ({
       title: cleanHtml(a.title || a.source_title || ''),
@@ -1079,7 +842,7 @@ async function executeFreshExamScan({ examId, examName, cleanName, conductingBod
     }))
   ];
 
-  // 3. Call Gemini (Primary Parser)
+  // 2. Call Gemini
   let aiData = null;
   const apiKey = process.env.GEMINI_API_KEY;
   const todayObj = new Date();
@@ -1094,10 +857,8 @@ Conducting Body: "${conductingBody || 'Official Commission / Examination Authori
 TODAY'S CURRENT DATE: ${todayFormatted} (${todayObj.toDateString()})
 CURRENT ACTIVE RECRUITMENT CYCLE: ${currentYear} - ${nextYear}
 
-${tavilyData?.answer ? `TAVILY AI LIVE SYNTHESIS ANSWER:\n"${tavilyData.answer}"\n` : ''}
-
 CRAWLED REAL-TIME ANNOUNCEMENTS, OFFICIAL SCHEDULE TABLES & MEDIA:
-${JSON.stringify(cleanedArticles.slice(0, 15), null, 2)}
+${JSON.stringify(cleanedArticles.slice(0, 14), null, 2)}
 
 TASK:
 Extract the EXACT dates and categorize them clearly with NO EXTRA UNNECESSARY FLUFF.
@@ -1139,9 +900,8 @@ Return ONLY valid JSON matching this schema:
 `;
 
     const candidateModels = [
-      'gemini-3-flash-preview',
       'gemini-3.1-flash-lite',
-      'gemini-2.5-flash-lite',
+      'gemini-3-flash-preview',
       'gemini-3.8-flash'
     ];
 
@@ -1237,20 +997,7 @@ Return ONLY valid JSON matching this schema:
       aiData.mains_exam_date = toDDMMYYYY(aiData.mains_exam_date);
     }
 
-    let effectiveLastDate = aiData.extended_last_date || aiData.active_last_date || aiData.apply_last_date;
-
-    // CRITICAL CHRONOLOGICAL INVARIANT: Application deadline is ALWAYS before the Prelims exam date!
-    const applyTimestamp = parseDateToTimestamp(effectiveLastDate);
-    const examTimestamp = parseDateToTimestamp(aiData.prelims_exam_date);
-    if (applyTimestamp && examTimestamp && applyTimestamp > examTimestamp) {
-      console.log(`[WebIntelligence] Corrected inverted dates: apply ${effectiveLastDate} vs exam ${aiData.prelims_exam_date}`);
-      const temp = aiData.apply_last_date;
-      aiData.apply_last_date = aiData.prelims_exam_date;
-      aiData.prelims_exam_date = temp;
-      if (aiData.extended_last_date) aiData.extended_last_date = null;
-      aiData.active_last_date = aiData.apply_last_date;
-      effectiveLastDate = aiData.apply_last_date;
-    }
+    const effectiveLastDate = aiData.extended_last_date || aiData.active_last_date || aiData.apply_last_date;
 
     // CRITICAL COLLISION GUARD: Exam date can NEVER be the same as the application deadline!
     if (aiData.prelims_exam_date && effectiveLastDate && (
@@ -1283,45 +1030,13 @@ Return ONLY valid JSON matching this schema:
     }));
   }
 
-  // Check if any source belongs to an official government / commission domain
-  const allCandidateUrls = [
-    ...(aiData.source_links || []).map(s => s.url),
-    ...cleanedArticles.map(a => a.url)
-  ].filter(Boolean);
-  const detectedOfficialDomain = getOfficialSourceDomain(allCandidateUrls);
-  aiData.has_official_source = Boolean(detectedOfficialDomain);
-  aiData.official_source_domain = detectedOfficialDomain;
-  aiData.trust_status = detectedOfficialDomain ? 'official_verified_source' : 'unverified_web_source';
-  aiData.trust_badge = detectedOfficialDomain 
-    ? `Official Source: ${detectedOfficialDomain}`
-    : 'Third-Party / Unofficial Web Reports';
-
-  // 5. Strategy 1: The "Cross-Verifier"
-  const rawEvidenceSummary = cleanedArticles.map(a => `${a.title}: ${a.snippet}`).join('\n');
-  try {
-    const verification = await crossVerifyExamDates({
-      examName,
-      extractedData: aiData,
-      rawEvidenceText: rawEvidenceSummary,
-      tavilyAnswer: tavilyData?.answer || ''
-    });
-    aiData.cross_verification = verification;
-    if (verification?.confidence) {
-      aiData.confidence = verification.confidence;
-    }
-  } catch (verErr) {
-    console.warn('[WebIntelligence] Cross-verification warning:', verErr.message);
-  }
-
   aiData.analyzed_at = new Date().toISOString();
   aiData.exam_name = examName;
-  aiData.is_cached = false;
 
-  // 6. Save to SQLite database with timestamp (24-hour cache)
+  // 5. Save to database if examId given
   if (examId) {
     try {
       db.prepare('UPDATE exams SET ai_overview = ? WHERE id = ?').run(JSON.stringify(aiData), examId);
-      console.log(`[WebIntelligence] Saved verified AI overview to database for Exam #${examId} with 24h cache timestamp ${aiData.analyzed_at}`);
     } catch (e) {}
   }
 

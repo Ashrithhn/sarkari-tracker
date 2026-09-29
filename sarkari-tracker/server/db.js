@@ -315,10 +315,6 @@ try {
 } catch (e) {}
 
 try {
-  db.exec('ALTER TABLE applications ADD COLUMN user_dates_source TEXT');
-} catch (e) {}
-
-try {
   db.exec('ALTER TABLE exams ADD COLUMN ai_overview TEXT');
 } catch (e) {}
 
