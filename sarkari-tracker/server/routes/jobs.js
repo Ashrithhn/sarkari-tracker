@@ -193,7 +193,7 @@ router.get('/', (req, res) => {
 });
 
 // 2. Track new application (Pick from registry OR custom job)
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const {
       exam_id,
@@ -213,17 +213,18 @@ router.post('/', (req, res) => {
     } = req.body;
 
     let validExamId = null;
+    let targetExam = null;
     if (exam_id) {
-      const examRow = db.prepare('SELECT id FROM exams WHERE id = ?').get(exam_id);
-      if (examRow) {
-        validExamId = examRow.id;
+      targetExam = db.prepare('SELECT * FROM exams WHERE id = ?').get(exam_id);
+      if (targetExam) {
+        validExamId = targetExam.id;
       }
     }
     if (!validExamId && (post_name || custom_exam_name)) {
-      const examByName = db.prepare('SELECT id FROM exams WHERE LOWER(short_name) = LOWER(?) OR LOWER(name) = LOWER(?) OR LOWER(short_name) = LOWER(?) OR LOWER(name) = LOWER(?) LIMIT 1')
+      targetExam = db.prepare('SELECT * FROM exams WHERE LOWER(short_name) = LOWER(?) OR LOWER(name) = LOWER(?) OR LOWER(short_name) = LOWER(?) OR LOWER(name) = LOWER(?) LIMIT 1')
         .get(post_name || '', post_name || '', custom_exam_name || '', custom_exam_name || '');
-      if (examByName) {
-        validExamId = examByName.id;
+      if (targetExam) {
+        validExamId = targetExam.id;
       }
     }
 
@@ -277,7 +278,7 @@ router.post('/', (req, res) => {
     }
 
     // Schedule personal reminders if dates entered
-    const titleName = custom_exam_name || 'Tracked Application';
+    const titleName = custom_exam_name || (targetExam ? (targetExam.short_name || targetExam.name) : 'Tracked Application');
     if (user_last_date) {
       db.prepare(`
         INSERT INTO reminders (user_id, application_id, title, reminder_date, type)
@@ -291,20 +292,86 @@ router.post('/', (req, res) => {
       `).run(req.user.id, applicationId, `Exam Date: ${titleName}`, user_exam_date);
     }
 
-    const created = db.prepare(`
-      SELECT a.*, e.name as exam_name, e.short_name as exam_short_name, e.conducting_body, e.level, e.official_site
-      FROM applications a
-      LEFT JOIN exams e ON a.exam_id = e.id
-      WHERE a.id = ?
-    `).get(applicationId);
+    // REAL-TIME GEMINI AI EXTRACTION ON APPLICATION TRACK
+    // Takes ~3-5 seconds to crawl live announcements and extract dates.
+    // If Gemini fails (API error, quota, timeout), it gracefully falls back to normal tracking.
+    let aiFetched = false;
+    let aiOverview = null;
 
-    // Auto-search web for latest expected dates and news in the background when applied
-    if (exam_id) {
+    try {
+      const examName = targetExam ? targetExam.name : (custom_exam_name || post_name);
+      const conducting = targetExam ? targetExam.conducting_body : (req.body.custom_conducting_body || '');
+
+      console.log(`[POST /api/jobs] Real-time Gemini scan triggered for "${examName}" on application track...`);
+
+      const webIntel = await import('../services/webIntelligence.js');
+
+      // 8-second safety timeout so candidate never gets stuck
+      aiOverview = await Promise.race([
+        webIntel.generateExamAiOverview({
+          examId: validExamId || null,
+          examName,
+          conductingBody: conducting
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('AI scan timeout')), 8000))
+      ]);
+
+      if (aiOverview && (aiOverview.overview_summary || aiOverview.active_last_date || aiOverview.prelims_exam_date)) {
+        aiFetched = true;
+        const overviewJson = JSON.stringify(aiOverview);
+
+        // Store in applications table
+        db.prepare('UPDATE applications SET ai_overview = ? WHERE id = ?')
+          .run(overviewJson, applicationId);
+
+        // Store in exams table if official exam
+        if (validExamId) {
+          db.prepare('UPDATE exams SET ai_overview = ? WHERE id = ?')
+            .run(overviewJson, validExamId);
+        }
+
+        // Auto-adopt dates if candidate didn't specify manual dates
+        let updatedLastDate = user_last_date;
+        let updatedExamDate = user_exam_date;
+
+        const effectiveAiLastDate = aiOverview.active_last_date || aiOverview.extended_last_date || aiOverview.apply_last_date;
+        if (!user_last_date && effectiveAiLastDate) {
+          updatedLastDate = effectiveAiLastDate;
+          db.prepare('UPDATE applications SET user_last_date = ? WHERE id = ?')
+            .run(updatedLastDate, applicationId);
+        }
+
+        if (!user_exam_date && aiOverview.prelims_exam_date) {
+          updatedExamDate = aiOverview.prelims_exam_date;
+          db.prepare('UPDATE applications SET user_exam_date = ? WHERE id = ?')
+            .run(updatedExamDate, applicationId);
+        }
+
+        // Schedule auto-reminders for candidate if newly populated
+        if (updatedLastDate && !user_last_date) {
+          db.prepare(`
+            INSERT INTO reminders (user_id, application_id, title, reminder_date, type)
+            VALUES (?, ?, ?, ?, 'deadline')
+          `).run(req.user.id, applicationId, `Application Deadline: ${titleName}`, updatedLastDate);
+        }
+        if (updatedExamDate && !user_exam_date) {
+          db.prepare(`
+            INSERT INTO reminders (user_id, application_id, title, reminder_date, type)
+            VALUES (?, ?, ?, ?, 'exam_date')
+          `).run(req.user.id, applicationId, `Exam Date: ${titleName}`, updatedExamDate);
+        }
+      }
+    } catch (aiErr) {
+      console.warn(`[POST /api/jobs] Real-time Gemini scan on track encountered an issue (${aiErr.message}), falling back to normal tracking.`);
+      // Gracefully continue as normal!
+    }
+
+    // Secondary background enrichment for RSS / custom keyword review if AI was not available
+    if (exam_id && !aiFetched) {
       import('../services/webIntelligence.js')
         .then(m => m.scanWebForExam(exam_id))
-        .catch(err => console.warn(`[WebIntelligence] Auto-scan background error for Exam #${exam_id}:`, err.message));
-    } else if (custom_exam_name) {
-      // Analyze unlisted / custom exam keywords from web
+        .catch(err => console.warn(`[WebIntelligence] Background scan fallback error for Exam #${exam_id}:`, err.message));
+    } else if (custom_exam_name && !aiFetched) {
       import('../services/webIntelligence.js')
         .then(async (m) => {
           const analysis = await m.analyzeCustomExamKeywords({
@@ -315,43 +382,24 @@ router.post('/', (req, res) => {
           if (analysis) {
             db.prepare('UPDATE applications SET web_analysis = ? WHERE id = ?')
               .run(JSON.stringify(analysis), applicationId);
-
-            // If user did not supply custom dates, auto-apply discovered dates
-            if (!user_exam_date && analysis.expected_exam_date) {
-              db.prepare('UPDATE applications SET user_exam_date = ? WHERE id = ?')
-                .run(analysis.expected_exam_date, applicationId);
-            }
-            if (!user_last_date && analysis.expected_apply_end) {
-              db.prepare('UPDATE applications SET user_last_date = ? WHERE id = ?')
-                .run(analysis.expected_apply_end, applicationId);
-            }
-
-            // Queue for admin verification as unlisted candidate-tracked job
-            const diffSummary = `Unlisted Job Keywords: ${analysis.keywords} | Expected Exam: ${analysis.expected_exam_date || 'Awaited'} | Vacancies: ${analysis.expected_vacancies || 'Awaited'}`;
-            db.prepare(`
-              INSERT INTO review_queue (
-                exam_id, event_type, raw_extracted_data, proposed_changes,
-                diff_summary, confidence, failure_reason, source_pdf_url, status
-              ) VALUES (0, 'UNLISTED_CUSTOM_JOB', ?, ?, ?, 0.70, 'UNLISTED_JOB_CANDIDATE_TRACKED', ?, 'pending')
-            `).run(
-              JSON.stringify(analysis),
-              JSON.stringify({
-                name: custom_exam_name,
-                post_name,
-                exam_date: analysis.expected_exam_date,
-                apply_end: analysis.expected_apply_end,
-                vacancies: analysis.expected_vacancies,
-                fee: analysis.expected_fee
-              }),
-              diffSummary,
-              analysis.sources[0]?.link || 'https://google.com'
-            );
           }
         })
-        .catch(err => console.warn(`[WebIntelligence] Custom job keyword analysis error for App #${applicationId}:`, err.message));
+        .catch(err => console.warn(`[WebIntelligence] Custom keyword analysis error:`, err.message));
     }
 
-    res.status(201).json(formatApplication(created));
+    const created = db.prepare(`
+      SELECT a.*, e.name as exam_name, e.short_name as exam_short_name, e.conducting_body, e.level, e.official_site, e.ai_overview as exam_ai_overview
+      FROM applications a
+      LEFT JOIN exams e ON a.exam_id = e.id
+      WHERE a.id = ?
+    `).get(applicationId);
+
+    const formatted = formatApplication(created);
+    res.status(201).json({
+      ...formatted,
+      ai_fetched: aiFetched,
+      ai_overview: aiOverview || formatted.ai_overview
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

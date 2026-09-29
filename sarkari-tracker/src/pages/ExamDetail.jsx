@@ -199,16 +199,28 @@ const ExamDetail = () => {
       return;
     }
     setActionLoading(true);
+    setScanMessage('🤖 Activating Gemini AI... Fetching real-time exam dates and announcements (takes ~3s)...');
     try {
-      await applyToExam(exam.id);
+      const res = await applyToExam(exam.id);
       await checkApplicationStatus();
+      if (res?.ai_overview) {
+        setAiOverview(res.ai_overview);
+      }
       // Also refresh discoveries after apply
       getWebDiscoveries(id).then(d => setWebDiscoveries(d || [])).catch(() => {});
-      alert('Application tracked successfully! Reminders and notifications are now enabled.');
+
+      if (res?.ai_fetched && res?.ai_overview) {
+        const lastDate = res.ai_overview.active_last_date || res.ai_overview.extended_last_date || res.ai_overview.apply_last_date;
+        const examDate = res.ai_overview.prelims_exam_date;
+        alert(`✨ Application tracked with real-time Gemini AI intelligence!\n\n• Application Deadline: ${lastDate || 'Notice Awaited'}\n• Exam Date: ${examDate || 'Notice Awaited'}\n\n${res.ai_overview.overview_summary || ''}`);
+      } else {
+        alert('✓ Application tracked successfully! (Saved with standard schedule)');
+      }
     } catch (e) {
       alert(e.message || 'Failed to apply');
     } finally {
       setActionLoading(false);
+      setScanMessage('');
     }
   };
 
@@ -765,10 +777,19 @@ const ExamDetail = () => {
               <button 
                 onClick={handleApply} 
                 disabled={actionLoading}
-                className="bg-saffron-500 hover:bg-saffron-600 disabled:opacity-50 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-saffron-500/30 transition-all flex items-center justify-center gap-2"
+                className="bg-saffron-500 hover:bg-saffron-600 disabled:opacity-75 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-saffron-500/30 transition-all flex items-center justify-center gap-2"
               >
-                <CheckCircle className="w-5 h-5" /> 
-                {actionLoading ? 'Tracking...' : 'Track Application'}
+                {actionLoading ? (
+                  <>
+                    <Sparkles className="w-5 h-5 animate-spin text-amber-200" />
+                    <span>Fetching via Gemini AI...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5" /> 
+                    <span>Track Application</span>
+                  </>
+                )}
               </button>
             )}
 

@@ -56,6 +56,7 @@ const JobTracker = () => {
 
   // Add Application Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isTrackingSubmitting, setIsTrackingSubmitting] = useState(false);
   const [addMode, setAddMode] = useState('registry'); // 'registry' or 'custom'
   const [examSearch, setExamSearch] = useState('');
   const [modalCategory, setModalCategory] = useState('All');
@@ -317,8 +318,10 @@ const JobTracker = () => {
       );
     }
 
+    setIsTrackingSubmitting(true);
+
     try {
-      await applyToExam(targetExam ? targetExam.id : null, {
+      const res = await applyToExam(targetExam ? targetExam.id : null, {
         custom_exam_name: examName,
         post_name: formData.post_name || (targetExam ? (targetExam.short_name || targetExam.name) : examName),
         custom_conducting_body: formData.custom_conducting_body || (targetExam ? targetExam.conducting_body : ''),
@@ -335,9 +338,19 @@ const JobTracker = () => {
         notes: formData.notes
       });
       setIsAddModalOpen(false);
-      fetchJobs();
+      await fetchJobs();
+
+      if (res?.ai_fetched && res?.ai_overview) {
+        const lastDate = res.ai_overview.active_last_date || res.ai_overview.extended_last_date || res.ai_overview.apply_last_date;
+        const examDate = res.ai_overview.prelims_exam_date;
+        alert(`✨ Application tracked with real-time Gemini AI intelligence!\n\n• Application Deadline: ${lastDate || 'Notice Awaited'}\n• Exam Date: ${examDate || 'Notice Awaited'}\n\n${res.ai_overview.overview_summary || ''}`);
+      } else {
+        alert('✓ Application tracked successfully! (Saved with standard schedule)');
+      }
     } catch (err) {
       alert(err.message || 'Failed to track application');
+    } finally {
+      setIsTrackingSubmitting(false);
     }
   };
 
@@ -782,12 +795,47 @@ const JobTracker = () => {
                 </label>
               </div>
 
+              {isTrackingSubmitting && (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-saffron-50 via-amber-50 to-orange-50 dark:from-saffron-950/40 dark:via-amber-950/40 dark:to-orange-950/40 border border-saffron-200 dark:border-saffron-800/80 text-xs flex items-center gap-3 animate-pulse">
+                  <div className="w-8 h-8 rounded-xl bg-saffron-500 text-white flex items-center justify-center shrink-0 shadow-sm animate-spin">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-saffron-950 dark:text-saffron-200">
+                      Gemini AI is fetching real-time exam dates...
+                    </p>
+                    <p className="text-[11px] text-saffron-800/80 dark:text-saffron-300/80">
+                      Analyzing live official notifications & deadlines. If AI is unavailable, standard tracking will apply automatically.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2.5">
-                <button type="button" onClick={() => setIsAddModalOpen(false)} className="btn-secondary text-xs py-2 px-4">
+                <button 
+                  type="button" 
+                  disabled={isTrackingSubmitting}
+                  onClick={() => setIsAddModalOpen(false)} 
+                  className="btn-secondary text-xs py-2 px-4 disabled:opacity-50"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary text-xs py-2 px-5 font-bold flex items-center gap-1.5">
-                  <Plus className="w-4 h-4" /> Track Application
+                <button 
+                  type="submit" 
+                  disabled={isTrackingSubmitting}
+                  className="btn-primary text-xs py-2 px-5 font-bold flex items-center gap-1.5 disabled:opacity-75"
+                >
+                  {isTrackingSubmitting ? (
+                    <>
+                      <Sparkles className="w-4 h-4 animate-spin text-amber-200" />
+                      <span>Fetching via Gemini AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      <span>Track Application</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>

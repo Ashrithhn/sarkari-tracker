@@ -91,6 +91,11 @@ const JobCard = ({
             <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${statusObj.badgeClass || 'bg-slate-100 text-slate-800'}`}>
               {statusObj.label}
             </span>
+            {app.ai_overview && (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-300 flex items-center gap-1 border border-violet-200 dark:border-violet-800">
+                <Sparkles className="w-3 h-3 text-violet-600 dark:text-violet-400" /> AI Synced
+              </span>
+            )}
             {isCustomJob ? (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">
                 Custom Job
@@ -187,6 +192,14 @@ const JobCard = ({
           </div>
         )}
 
+        {/* Gemini AI Overview summary snippet if available */}
+        {app.ai_overview?.overview_summary && (
+          <div className="p-2.5 rounded-xl bg-violet-50/80 dark:bg-violet-950/30 border border-violet-200/80 dark:border-violet-900/40 text-[11px] text-violet-950 dark:text-violet-200 mb-3 flex items-start gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 shrink-0 mt-0.5" />
+            <span className="line-clamp-2"><strong className="font-semibold text-violet-800 dark:text-violet-300">Live AI Update:</strong> {app.ai_overview.overview_summary}</span>
+          </div>
+        )}
+
         {/* Candidate Google / News Notes if provided */}
         {app.notes && (
           <div className="p-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 text-[11px] text-amber-900 dark:text-amber-200 mb-3 flex items-start gap-1.5">
@@ -246,8 +259,8 @@ const JobCard = ({
           </span>
         </button>
 
-        {/* Web Keyword Intelligence (For custom jobs or analyzed jobs) */}
-        {app.web_analysis ? (
+        {/* Real-time AI Overview & Keyword Intelligence */}
+        {(app.ai_overview || app.web_analysis) ? (
           <button
             type="button"
             onClick={() => onOpenAnalysis && onOpenAnalysis(app)}
@@ -255,10 +268,10 @@ const JobCard = ({
           >
             <span className="flex items-center gap-1.5 font-bold">
               <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 group-hover:rotate-12 transition-transform" />
-              <span>Keyword Intelligence</span>
+              <span>Real-Time AI Overview</span>
             </span>
             <span className="text-[10px] bg-purple-200/80 dark:bg-purple-800/80 text-purple-800 dark:text-purple-100 px-2 py-0.5 rounded-full font-bold">
-              View Insights →
+              Live Dates & Details →
             </span>
           </button>
         ) : isCustomJob ? (
