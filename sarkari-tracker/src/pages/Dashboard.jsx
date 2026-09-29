@@ -240,10 +240,10 @@ const Dashboard = () => {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pill-tab px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+            className={`px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
               activeTab === tab 
-                ? 'pill-tab-active bg-neutral-950 dark:bg-white text-white dark:text-black shadow-sm' 
-                : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'pill-tab-active bg-neutral-950 dark:bg-white text-white dark:text-black hover:text-white dark:hover:text-black shadow-sm' 
+                : 'pill-tab text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {tab}

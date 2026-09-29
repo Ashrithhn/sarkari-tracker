@@ -502,15 +502,15 @@ const JobTracker = () => {
         </div>
 
         {/* Single Efficient Search Bar for Applied Jobs */}
-        <div className="glass-card p-3.5 sm:p-4 rounded-2xl flex items-center justify-between gap-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+        <div className="p-2 sm:p-2.5 px-4 rounded-full flex items-center justify-between gap-3 border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-[#121212] shadow-xs">
           <div className="flex items-center gap-2.5 flex-1">
-            <Search className="w-4 h-4 text-slate-400 shrink-0" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-neutral-500 shrink-0" />
             <input 
               type="text" 
               placeholder="Search your tracked applications by exam, post, or commission..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="bg-transparent border-none outline-none text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 w-full"
+              className="bg-transparent border-none outline-none text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 w-full"
             />
             {search && (
               <button 
@@ -523,7 +523,7 @@ const JobTracker = () => {
               </button>
             )}
           </div>
-          <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
+          <div className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400 whitespace-nowrap shrink-0">
             {filteredJobs.length} {filteredJobs.length === 1 ? 'application' : 'applications'}
           </div>
         </div>
@@ -538,11 +538,11 @@ const JobTracker = () => {
 
         {/* Applications List / Empty State */}
         {loading ? (
-          <div className="flex justify-center p-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-saffron-500"></div>
+          <div className="flex justify-center p-12">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-saffron-500"></div>
           </div>
         ) : filteredJobs.length > 0 ? (
-          <div className={view === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'flex flex-col gap-4'}>
+          <div className={view === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6' : 'flex flex-col gap-4'}>
             {filteredJobs.map(job => (
               <JobCard 
                 key={job.id} 
@@ -560,18 +560,18 @@ const JobTracker = () => {
             ))}
           </div>
         ) : (
-          <div className="glass-card flex flex-col items-center justify-center p-16 rounded-3xl text-center border border-dashed border-slate-300 dark:border-slate-800">
-            <div className="w-20 h-20 bg-saffron-50 dark:bg-saffron-950/30 rounded-full flex items-center justify-center mb-4 text-saffron-500">
-              <FileCheck className="w-10 h-10" />
+          <div className="bg-white dark:bg-[#121212] border border-slate-200/80 dark:border-neutral-800 rounded-3xl p-5 sm:p-7 text-center max-w-md mx-auto my-3 shadow-xs flex flex-col items-center justify-center">
+            <div className="w-11 h-11 bg-saffron-50 dark:bg-saffron-950/30 text-saffron-600 dark:text-saffron-400 rounded-2xl flex items-center justify-center mb-3">
+              <FileCheck className="w-5 h-5 stroke-[2]" />
             </div>
-            <h3 className="text-xl font-bold mb-1 text-slate-900 dark:text-white">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1" style={{ fontFamily: 'Sora, sans-serif' }}>
               {jobs.length === 0 ? "You haven't tracked any applications yet" : "No applications match your filter"}
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-md">
-              Start tracking government job applications across Central SSC/UPSC, Banking, Railways, PSUs, and Karnataka State boards (KEA/KPSC).
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mb-4 max-w-xs sm:max-w-sm leading-relaxed">
+              Track Central SSC, Banking, Railways, UPSC & Karnataka State exams with verified date alerts.
             </p>
-            <button onClick={openAddModal} className="btn-primary text-sm flex items-center gap-2">
-              <Plus className="w-4 h-4" /> Track First Application
+            <button onClick={openAddModal} className="btn-primary text-xs sm:text-sm py-2 px-5 flex items-center gap-2 rounded-full shadow-sm hover:scale-102 active:scale-98 transition-all">
+              <Plus className="w-4 h-4 stroke-[2.5]" /> Track First Application
             </button>
           </div>
         )}
@@ -583,15 +583,15 @@ const JobTracker = () => {
       {/* ========================================================= */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-fade-in-up border border-slate-200 dark:border-slate-800 my-8">
+          <div className="bg-white dark:bg-[#121212] rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl animate-fade-in-up border border-slate-200 dark:border-neutral-800 my-8">
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/60">
+            <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-neutral-800 flex justify-between items-center bg-slate-50 dark:bg-[#161616]">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Plus className="w-5 h-5 text-saffron-500" />
                   <span>Track Application</span>
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
                   Type any exam or post name to track your application directly.
                 </p>
               </div>
@@ -638,8 +638,8 @@ const JobTracker = () => {
 
                 {/* Autocomplete Dropdown */}
                 {customSuggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/50">
-                    <div className="p-1.5 bg-slate-50 dark:bg-slate-900 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                  <div className="absolute top-full left-0 right-0 z-30 mt-1 bg-white dark:bg-[#181818] border border-slate-200 dark:border-neutral-800 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-100 dark:divide-neutral-800">
+                    <div className="p-1.5 bg-slate-50 dark:bg-[#141414] text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
                       <span>Matching Official Exams</span>
                       <span>Click to autofill</span>
                     </div>
@@ -731,7 +731,7 @@ const JobTracker = () => {
               </div>
 
               {/* Personal Target Dates */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-2.5">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#161616] border border-slate-200/80 dark:border-neutral-800 space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                     Important Dates (Optional)
@@ -793,7 +793,7 @@ const JobTracker = () => {
                 </div>
               )}
 
-              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2.5">
+              <div className="pt-3 border-t border-slate-200 dark:border-neutral-800 flex justify-end gap-2.5">
                 <button 
                   type="button" 
                   disabled={isTrackingSubmitting}
@@ -830,8 +830,8 @@ const JobTracker = () => {
       {/* ========================================================= */}
       {editingJob && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in-up border border-slate-200 dark:border-slate-800">
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/60">
+          <div className="bg-white dark:bg-[#121212] rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in-up border border-slate-200 dark:border-neutral-800">
+            <div className="p-6 border-b border-slate-200 dark:border-neutral-800 flex justify-between items-center bg-slate-50 dark:bg-[#161616]">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">Edit Application Details</h2>
               <button onClick={() => setEditingJob(null)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5"/></button>
             </div>
@@ -920,8 +920,8 @@ const JobTracker = () => {
       {/* ========================================================= */}
       {activeChecklistJob && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-fade-in-up border border-slate-200 dark:border-slate-800">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/60">
+          <div className="bg-white dark:bg-[#121212] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-fade-in-up border border-slate-200 dark:border-neutral-800">
+            <div className="p-5 border-b border-slate-200 dark:border-neutral-800 flex justify-between items-center bg-slate-50 dark:bg-[#161616]">
               <div>
                 <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <FileCheck className="w-5 h-5 text-saffron-500" /> Document Checklist
@@ -954,7 +954,7 @@ const JobTracker = () => {
               </div>
 
               {/* Add Custom Item */}
-              <form onSubmit={handleAddCustomChecklistItem} className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <form onSubmit={handleAddCustomChecklistItem} className="flex gap-2 pt-2 border-t border-slate-100 dark:border-neutral-800">
                 <input
                   type="text"
                   placeholder="Add document requirement..."
@@ -976,9 +976,9 @@ const JobTracker = () => {
       {/* ========================================================= */}
       {isAnalysisModalOpen && activeAnalysisJob && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-fade-in-up border border-slate-200 dark:border-slate-800 my-8 max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-[#121212] rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-fade-in-up border border-slate-200 dark:border-neutral-800 my-8 max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-gradient-to-r from-purple-50 via-slate-50 to-indigo-50 dark:from-purple-950/40 dark:via-slate-900 dark:to-indigo-950/40">
+            <div className="p-6 border-b border-slate-200 dark:border-neutral-800 flex justify-between items-center bg-gradient-to-r from-purple-50 via-slate-50 to-indigo-50 dark:from-[#181420] dark:via-[#141414] dark:to-[#141620]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-purple-600 dark:bg-purple-500 text-white flex items-center justify-center shadow-md">
                   <Sparkles className="w-5 h-5" />
@@ -988,11 +988,11 @@ const JobTracker = () => {
                     <h3 className="font-bold text-slate-900 dark:text-white text-base sm:text-lg">
                       Web Keyword Intelligence
                     </h3>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300">
                       Live Search
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
                     Real-time web crawl analysis for unlisted custom recruitment keywords.
                   </p>
                 </div>
@@ -1008,7 +1008,7 @@ const JobTracker = () => {
             {/* Scrollable Body */}
             <div className="p-6 overflow-y-auto space-y-5 flex-1">
               {/* Exam & Post Title banner */}
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#161616] border border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h4 className="text-base font-bold text-slate-900 dark:text-white">
                     {activeAnalysisJob.custom_exam_name || activeAnalysisJob.name}
@@ -1098,11 +1098,11 @@ const JobTracker = () => {
 
                   {/* Clean Structured Summary */}
                   {activeAnalysisJob.web_analysis.summary && (
-                    <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-xs">
+                    <div className="p-4 rounded-2xl bg-white dark:bg-[#181818] border border-slate-200 dark:border-neutral-800 shadow-xs">
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5 uppercase tracking-wider">
                         <span>📋</span> Keyword Intelligence Summary
                       </h4>
-                      <div className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                      <div className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-line leading-relaxed bg-slate-50 dark:bg-[#121212] p-3 rounded-xl border border-slate-100 dark:border-neutral-800">
                         {activeAnalysisJob.web_analysis.summary}
                       </div>
                     </div>
@@ -1124,7 +1124,7 @@ const JobTracker = () => {
                         {activeAnalysisJob.web_analysis.sources.map((src, idx) => (
                           <div 
                             key={idx} 
-                            className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
+                            className="p-3 rounded-xl bg-slate-50 dark:bg-[#181818] border border-slate-200/60 dark:border-neutral-800 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <h5 className="text-xs font-bold text-slate-800 dark:text-slate-100 line-clamp-1">
@@ -1148,7 +1148,7 @@ const JobTracker = () => {
                               </p>
                             )}
                             {(src.detected_dates?.exam_date || src.detected_dates?.last_date) && (
-                              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/40 dark:border-slate-700/40 text-[10px]">
+                              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200/40 dark:border-neutral-800 text-[10px]">
                                 {src.detected_dates?.exam_date && (
                                   <span className="px-1.5 py-0.5 rounded bg-amber-100/70 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-semibold">
                                     Exam: {src.detected_dates.exam_date}
@@ -1191,7 +1191,7 @@ const JobTracker = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-5 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-slate-800/60">
+            <div className="p-5 border-t border-slate-200 dark:border-neutral-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50 dark:bg-[#161616]">
               {activeAnalysisJob.web_analysis?.expected_exam_date || activeAnalysisJob.web_analysis?.expected_apply_end ? (
                 <button
                   type="button"

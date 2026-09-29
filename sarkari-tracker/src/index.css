@@ -126,7 +126,7 @@
 
   /* Segmented Pill Tabs */
   .pill-tab-active {
-    @apply rounded-full bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 px-5 py-2 text-sm font-bold shadow-sm transition-all;
+    @apply rounded-full bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 hover:text-white dark:hover:text-neutral-950 px-5 py-2 text-sm font-bold shadow-sm transition-all;
   }
 
   .pill-tab {
