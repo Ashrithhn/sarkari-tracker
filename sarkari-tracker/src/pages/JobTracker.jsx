@@ -79,7 +79,8 @@ const JobTracker = () => {
     user_exam_date: '',
     user_admit_card_date: '',
     user_result_date: '',
-    notes: ''
+    notes: '',
+    status: 'Need to Apply'
   });
 
   // Edit Modal State
@@ -280,7 +281,8 @@ const JobTracker = () => {
       user_exam_date: '',
       user_admit_card_date: '',
       user_result_date: '',
-      notes: ''
+      notes: '',
+      status: 'Need to Apply'
     });
 
     try {
@@ -335,7 +337,8 @@ const JobTracker = () => {
         user_exam_date: formData.user_exam_date || null,
         user_admit_card_date: formData.user_admit_card_date || null,
         user_result_date: formData.user_result_date || null,
-        notes: formData.notes
+        notes: formData.notes,
+        status: formData.status || 'Need to Apply'
       });
       setIsAddModalOpen(false);
       await fetchJobs();
@@ -764,6 +767,46 @@ const JobTracker = () => {
                 </div>
               </div>
 
+              {/* Application Status Choice: Need to Apply vs Already Applied */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-xs font-bold text-slate-800 dark:text-neutral-200">
+                  Tracking Mode / Application Status
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, status: 'Need to Apply' })}
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-start gap-2.5 cursor-pointer transition-all ${
+                      formData.status === 'Need to Apply'
+                        ? 'bg-amber-500/15 border-amber-500 text-amber-800 dark:text-amber-300 shadow-2xs ring-1 ring-amber-500/50'
+                        : 'bg-slate-50 dark:bg-[#161616] border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-neutral-400 hover:border-slate-300'
+                    }`}
+                  >
+                    <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                    <div className="text-left">
+                      <span className="block leading-tight font-bold">Need to Apply</span>
+                      <span className="text-[10px] font-normal text-slate-500 dark:text-neutral-400">Remind me before last date</span>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, status: 'Applied' })}
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-start gap-2.5 cursor-pointer transition-all ${
+                      formData.status === 'Applied'
+                        ? 'bg-emerald-500/15 border-emerald-500 text-emerald-800 dark:text-emerald-300 shadow-2xs ring-1 ring-emerald-500/50'
+                        : 'bg-slate-50 dark:bg-[#161616] border-slate-200 dark:border-neutral-800 text-slate-600 dark:text-neutral-400 hover:border-slate-300'
+                    }`}
+                  >
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <div className="text-left">
+                      <span className="block leading-tight font-bold">Already Applied</span>
+                      <span className="text-[10px] font-normal text-slate-500 dark:text-neutral-400">Application form submitted</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -934,12 +977,12 @@ const JobTracker = () => {
             </div>
 
             <div className="p-5 space-y-4">
-              <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-64 overflow-y-auto">
+              <div className="divide-y divide-slate-100 dark:divide-neutral-800 max-h-64 overflow-y-auto">
                 {(activeChecklistJob.checklist || []).map(item => (
                   <div 
                     key={item.id} 
                     onClick={() => handleToggleChecklist(item.id, item.is_completed)}
-                    className="py-3 flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 px-2 rounded-xl transition-colors"
+                    className="py-3 flex items-center gap-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#181818] px-2 rounded-xl transition-colors"
                   >
                     {item.is_completed ? (
                       <CheckSquare className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />

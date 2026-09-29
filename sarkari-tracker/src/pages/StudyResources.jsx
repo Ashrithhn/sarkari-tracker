@@ -4,7 +4,7 @@ import { BookOpen, Clock, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
 const StudyResources = () => {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-6 pt-24 text-slate-800 dark:text-slate-200">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0c0c0c] p-6 pt-24 text-slate-800 dark:text-slate-200">
       <div className="max-w-4xl mx-auto space-y-8">
         
         {/* Navigation Breadcrumb */}
@@ -18,7 +18,7 @@ const StudyResources = () => {
         </div>
 
         {/* Coming Soon Hero Card */}
-        <div className="glass-card p-8 sm:p-12 rounded-3xl text-center space-y-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl">
+        <div className="glass-card p-8 sm:p-12 rounded-3xl text-center space-y-6 bg-white dark:bg-[#121212] border border-slate-200 dark:border-neutral-800 shadow-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-saffron-100 dark:bg-saffron-950/60 text-saffron-800 dark:text-saffron-300 text-xs font-bold border border-saffron-300 dark:border-saffron-800 mx-auto">
             <Clock className="w-3.5 h-3.5" />
             <span>Coming Soon</span>
@@ -38,7 +38,7 @@ const StudyResources = () => {
 
           {/* Planned Features Preview */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left max-w-2xl mx-auto pt-4">
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-1.5">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#161616] border border-slate-200/80 dark:border-neutral-800 space-y-1.5">
               <span className="text-xs font-bold text-saffron-600 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Standard Books
               </span>
@@ -47,7 +47,7 @@ const StudyResources = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-1.5">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#161616] border border-slate-200/80 dark:border-neutral-800 space-y-1.5">
               <span className="text-xs font-bold text-purple-600 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> PYQ Archives
               </span>
@@ -56,7 +56,7 @@ const StudyResources = () => {
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-1.5">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#161616] border border-slate-200/80 dark:border-neutral-800 space-y-1.5">
               <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Syllabus Breakdowns
               </span>

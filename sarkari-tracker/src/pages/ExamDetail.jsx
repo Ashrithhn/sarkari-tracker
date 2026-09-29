@@ -68,6 +68,7 @@ const ExamDetail = () => {
 
   // Web Intelligence State
   const [webDiscoveries, setWebDiscoveries] = useState([]);
+  const [showAllDiscoveries, setShowAllDiscoveries] = useState(false);
   const [aiOverview, setAiOverview] = useState(null);
   const [isScanningWeb, setIsScanningWeb] = useState(false);
   const [scanMessage, setScanMessage] = useState('');
@@ -198,7 +199,7 @@ const ExamDetail = () => {
     }
   };
 
-  const handleApply = async () => {
+  const handleApply = async (statusToApply = 'Applied') => {
     if (!user) {
       alert('Please log in to track this exam application.');
       return;
@@ -206,7 +207,7 @@ const ExamDetail = () => {
     setActionLoading(true);
     setScanMessage('🤖 Activating Gemini AI... Fetching real-time exam dates and announcements (takes ~3s)...');
     try {
-      const res = await applyToExam(exam.id);
+      const res = await applyToExam(exam.id, { status: statusToApply });
       await checkApplicationStatus();
       if (res?.ai_overview) {
         setAiOverview(res.ai_overview);
@@ -214,7 +215,9 @@ const ExamDetail = () => {
       // Also refresh discoveries after apply
       getWebDiscoveries(id).then(d => setWebDiscoveries(d || [])).catch(() => {});
 
-      if (res?.ai_fetched && res?.ai_overview) {
+      if (statusToApply === 'Need to Apply') {
+        alert('⏰ Added to your tracker as "Need to Apply"!\n\nWe will track deadlines and notify you so you submit before the last date.');
+      } else if (res?.ai_fetched && res?.ai_overview) {
         const lastDate = res.ai_overview.active_last_date || res.ai_overview.extended_last_date || res.ai_overview.apply_last_date;
         const examDate = res.ai_overview.prelims_exam_date;
         alert(`✨ Application tracked with real-time Gemini AI intelligence!\n\n• Application Deadline: ${lastDate || 'Notice Awaited'}\n• Exam Date: ${examDate || 'Notice Awaited'}\n\n${res.ai_overview.overview_summary || ''}`);
@@ -226,6 +229,20 @@ const ExamDetail = () => {
     } finally {
       setActionLoading(false);
       setScanMessage('');
+    }
+  };
+
+  const handleUpdateStatus = async (newStatus) => {
+    if (!application) return;
+    setActionLoading(true);
+    try {
+      await updateJob(application.id, { status: newStatus });
+      await checkApplicationStatus();
+      alert(`Status updated to "${newStatus}"!`);
+    } catch (e) {
+      alert(e.message || 'Failed to update status');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -534,7 +551,7 @@ const ExamDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center items-center bg-slate-50 dark:bg-slate-900">
+      <div className="min-h-screen flex justify-center items-center bg-slate-50 dark:bg-[#0c0c0c]">
         <div className="animate-spin rounded-full h-14 w-14 border-b-4 border-saffron-500"></div>
       </div>
     );
@@ -754,17 +771,48 @@ const ExamDetail = () => {
             {/* ACTION BUTTONS (Responsive compact layout for mobile/small/medium viewports) */}
             <div className="flex flex-col sm:flex-col md:flex-col gap-2 w-full md:w-auto md:min-w-[210px] shrink-0">
               {application ? (
-                <div className="bg-emerald-950/30 border border-emerald-500/30 p-2.5 sm:p-3.5 rounded-2xl text-center space-y-1">
-                  <div className="flex items-center justify-center gap-1.5 text-emerald-400 text-xs sm:text-sm font-bold">
-                    <CheckCircle className="w-3.5 h-3.5" /> Application Tracked
+                <div className={`p-2.5 sm:p-3 rounded-2xl text-center space-y-1 ${
+                  application.status === 'Need to Apply' || application.status === 'need_to_apply'
+                    ? 'bg-amber-950/25 border border-amber-500/30'
+                    : 'bg-emerald-950/30 border border-emerald-500/30'
+                }`}>
+                  <div className={`flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold ${
+                    application.status === 'Need to Apply' || application.status === 'need_to_apply'
+                      ? 'text-amber-400'
+                      : 'text-emerald-400'
+                  }`}>
+                    {application.status === 'Need to Apply' || application.status === 'need_to_apply' ? (
+                      <>
+                        <Clock className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Need to Apply (Tracked)</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Application Tracked</span>
+                      </>
+                    )}
                   </div>
                   <div className="text-[11px] sm:text-xs text-neutral-300">
-                    Status: <span className="font-semibold text-white uppercase">{application.status}</span>
+                    Status: <span className={`font-semibold uppercase ${
+                      application.status === 'Need to Apply' || application.status === 'need_to_apply' ? 'text-amber-300' : 'text-white'
+                    }`}>{application.status}</span>
                   </div>
-                  <div className="flex items-center justify-center gap-2 pt-0.5 text-[11px]">
-                    <Link to="/tracker" className="text-saffron-400 hover:underline font-semibold">
-                      Manage →
-                    </Link>
+                  <div className="flex items-center justify-center gap-2 pt-1 text-[11px]">
+                    {application.status === 'Need to Apply' || application.status === 'need_to_apply' ? (
+                      <button 
+                        onClick={() => handleUpdateStatus('Applied')}
+                        disabled={actionLoading}
+                        className="px-2.5 py-0.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-bold transition-all cursor-pointer"
+                        title="Mark that you have submitted your application"
+                      >
+                        ✓ Mark as Applied
+                      </button>
+                    ) : (
+                      <Link to="/tracker" className="text-saffron-400 hover:underline font-semibold">
+                        Manage →
+                      </Link>
+                    )}
                     <span className="text-neutral-600">•</span>
                     <button 
                       onClick={handleRemoveTracking}
@@ -776,23 +824,35 @@ const ExamDetail = () => {
                   </div>
                 </div>
               ) : (
-                <button 
-                  onClick={handleApply} 
-                  disabled={actionLoading}
-                  className="rounded-full bg-white hover:bg-neutral-100 disabled:opacity-75 text-neutral-950 font-bold py-2.5 px-5 shadow-sm transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer hover:scale-101 w-full"
-                >
-                  {actionLoading ? (
-                    <>
-                      <Sparkles className="w-4 h-4 animate-spin text-neutral-600" />
-                      <span>Fetching via AI...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" /> 
-                      <span>Track Application</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex flex-col gap-1.5 w-full">
+                  <button 
+                    onClick={() => handleApply('Applied')} 
+                    disabled={actionLoading}
+                    className="rounded-full bg-white hover:bg-neutral-100 disabled:opacity-75 text-neutral-950 font-bold py-2 px-4 shadow-sm transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer hover:scale-101 w-full"
+                  >
+                    {actionLoading ? (
+                      <>
+                        <Sparkles className="w-4 h-4 animate-spin text-neutral-600" />
+                        <span>Tracking...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 text-emerald-600" /> 
+                        <span>Track as Applied</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button 
+                    onClick={() => handleApply('Need to Apply')} 
+                    disabled={actionLoading}
+                    className="rounded-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-bold py-2 px-3 transition-all flex items-center justify-center gap-1.5 text-xs cursor-pointer w-full"
+                    title="Track as Need to Apply so SarkariTracker reminds you before the deadline"
+                  >
+                    <Clock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Need to Apply (Remind Later)</span>
+                  </button>
+                </div>
               )}
 
               <div className="grid grid-cols-2 md:flex md:flex-col gap-2 w-full">
@@ -856,12 +916,12 @@ const ExamDetail = () => {
                 />
 
                 {/* Official Notification Quick Callout */}
-                <div className="glass-card p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <span className="text-xs font-bold text-saffron-600 dark:text-saffron-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <FileText className="w-4 h-4" /> Official Recruitment Notification
+                <div className="p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-bold text-saffron-600 dark:text-saffron-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5" /> Official Recruitment Notification
                     </span>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
                       {exam.short_name} Official PDF & Guidelines
                     </h3>
                   </div>
@@ -871,7 +931,7 @@ const ExamDetail = () => {
                       href={notificationPdfUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="btn-primary text-xs flex items-center gap-1.5 shrink-0"
+                      className="btn-primary text-xs py-1.5 px-3.5 flex items-center gap-1.5 shrink-0"
                     >
                       <Download className="w-3.5 h-3.5" /> Download Notification PDF
                     </a>
@@ -884,22 +944,22 @@ const ExamDetail = () => {
 
                 {/* Candidate's Personal Uploaded Notification */}
                 {application?.notification_file ? (
-                  <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold shrink-0">
-                        <FileText className="w-5 h-5" />
+                  <div className="p-3 sm:p-3.5 rounded-2xl bg-blue-50/70 dark:bg-[#141414] border border-blue-200/80 dark:border-neutral-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-[#1f1f1f] text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold shrink-0">
+                        <FileText className="w-4 h-4" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
                             Your Uploaded Notification PDF
                           </h4>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/70 dark:text-blue-300">
-                            Available Only To You
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-[#1a2234] dark:text-blue-300">
+                            Personal
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          Personal copy saved to your account. No waiting for admin verification.
+                        <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-neutral-400">
+                          Personal copy saved to your account.
                         </p>
                       </div>
                     </div>
@@ -910,7 +970,7 @@ const ExamDetail = () => {
                         rel="noreferrer"
                         className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
                       >
-                        <Download className="w-3.5 h-3.5" /> View / Download
+                        <Download className="w-3.5 h-3.5" /> View
                       </a>
                       <label className="btn-secondary text-xs py-1.5 px-2.5 flex items-center gap-1 cursor-pointer">
                         <Upload className="w-3 h-3" />
@@ -933,16 +993,16 @@ const ExamDetail = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
+                  <div className="p-3 rounded-2xl bg-slate-50/60 dark:bg-[#141414] border border-slate-200/80 dark:border-neutral-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-slate-400 shrink-0" />
-                      <span className="text-xs text-slate-600 dark:text-slate-300">
-                        Have the official circular or advertisement PDF? Upload it to keep it handy in your account.
+                      <span className="text-xs text-slate-600 dark:text-neutral-300">
+                        Have official circular PDF? Keep it saved to your account.
                       </span>
                     </div>
                     <label className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 cursor-pointer">
                       <Upload className="w-3 h-3" />
-                      <span>{uploadingDocType === 'notification' ? 'Uploading...' : 'Upload My PDF'}</span>
+                      <span>{uploadingDocType === 'notification' ? 'Uploading...' : 'Upload PDF'}</span>
                       <input
                         type="file"
                         accept=".pdf,.png,.jpg,.jpeg"
@@ -955,48 +1015,48 @@ const ExamDetail = () => {
                 )}
 
                 {/* REAL-TIME WEB INTELLIGENCE & EXPECTED UPDATES */}
-                <div className="glass-card p-6 rounded-2xl border border-sky-300 dark:border-sky-800/70 bg-gradient-to-br from-sky-50/40 via-white to-blue-50/20 dark:from-slate-900 dark:to-slate-800/90 shadow-sm space-y-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-sky-100 dark:border-slate-800">
-                    <div className="space-y-1">
+                <div className="p-3.5 sm:p-5 rounded-2xl border border-sky-500/30 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] shadow-xs space-y-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 pb-2.5 border-b border-sky-100 dark:border-neutral-800">
+                    <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-600 text-white flex items-center gap-1">
-                          <Globe className="w-3.5 h-3.5" /> Web Intelligence Tracker
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-600 text-white flex items-center gap-1">
+                          <Globe className="w-3 h-3" /> Web Intelligence
                         </span>
-                        <span className="text-xs text-sky-700 dark:text-sky-300 font-medium">
-                          {webDiscoveries.length} Online Reports / Sources
+                        <span className="text-[11px] text-sky-700 dark:text-sky-300 font-medium">
+                          {webDiscoveries.length} Sources Reported
                         </span>
                       </div>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                        Web-Reported Expected Dates, Fees & Media Updates
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                        Web-Reported Expected Dates & Updates
                       </h3>
                     </div>
 
                     <button
                       onClick={handleScanWeb}
                       disabled={isScanningWeb}
-                      className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0 border-sky-200 dark:border-sky-900 text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/40 cursor-pointer"
+                      className="btn-secondary text-xs py-1 px-2.5 flex items-center gap-1.5 shrink-0 border-sky-200 dark:border-neutral-800 text-sky-700 dark:text-sky-300 hover:bg-sky-50 dark:hover:bg-[#1a1a1a] cursor-pointer"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${isScanningWeb ? 'animate-spin' : ''}`} />
-                      {isScanningWeb ? 'Scanning Web News...' : '🔄 Scan Web for Latest News'}
+                      {isScanningWeb ? 'Scanning...' : 'Scan Web News'}
                     </button>
                   </div>
 
                   {scanMessage && (
-                    <div className="p-2.5 rounded-xl bg-sky-100/70 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900 text-xs text-sky-800 dark:text-sky-200 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-sky-600 shrink-0" />
+                    <div className="p-2 rounded-xl bg-sky-100/70 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900 text-xs text-sky-800 dark:text-sky-200 flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sky-600 shrink-0" />
                       <span>{scanMessage}</span>
                     </div>
                   )}
 
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    📡 <strong>Multi-Source Media Crawler:</strong> Scans real-time education reports, national news, and state commission circulars. Data is labeled <em>"Tentative"</em> until confirmed by administrative verification against official commission PDFs.
+                  <p className="text-[11px] text-slate-500 dark:text-neutral-400">
+                    📡 Scans education circulars and news reports. Labeled <em>"Tentative"</em> until confirmed by commission PDF.
                   </p>
 
                   {/* Discoveries List */}
                   {webDiscoveries.length === 0 ? (
-                    <div className="p-6 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700 text-center space-y-2">
-                      <Globe className="w-8 h-8 text-sky-400 mx-auto" />
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                    <div className="p-4 sm:p-5 rounded-xl bg-slate-50/60 dark:bg-[#141414] border border-dashed border-slate-200 dark:border-neutral-800 text-center space-y-1.5">
+                      <Globe className="w-6 h-6 text-sky-400 mx-auto" />
+                      <p className="text-xs text-slate-600 dark:text-neutral-400">
                         No online media reports crawled yet for {exam.short_name || exam.name}.
                       </p>
                       <button
@@ -1009,15 +1069,15 @@ const ExamDetail = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar">
-                      {webDiscoveries.map(disc => (
+                    <div className="space-y-2.5">
+                      {(showAllDiscoveries ? webDiscoveries : webDiscoveries.slice(0, 2)).map(disc => (
                         <div
                           key={disc.id}
-                          className="p-4 rounded-xl bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 hover:border-sky-300 dark:hover:border-sky-700 transition-all space-y-2.5 shadow-xs"
+                          className="p-3 rounded-xl bg-slate-50/60 dark:bg-[#141414] border border-slate-200/80 dark:border-neutral-800 hover:border-sky-300 dark:hover:border-neutral-700 transition-all space-y-2 shadow-2xs"
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-[#1f1f1f] text-slate-700 dark:text-neutral-300 border border-slate-200 dark:border-neutral-700">
                                 📰 {disc.source_domain || 'News Portal'}
                               </span>
                               {disc.pub_date && (
@@ -1027,12 +1087,12 @@ const ExamDetail = () => {
                               )}
                             </div>
 
-                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                               disc.status === 'confirmed_by_admin'
                                 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
                                 : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
                             }`}>
-                              {disc.status === 'confirmed_by_admin' ? '✓ Admin Confirmed Official' : 'Tentative / Reported Online'}
+                              {disc.status === 'confirmed_by_admin' ? '✓ Admin Confirmed' : 'Tentative Online'}
                             </span>
                           </div>
 
@@ -1042,51 +1102,51 @@ const ExamDetail = () => {
                             rel="noreferrer"
                             className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white hover:text-sky-600 dark:hover:text-sky-400 transition-colors flex items-center gap-1.5"
                           >
-                            <span>{disc.source_title}</span>
+                            <span className="line-clamp-1">{disc.source_title}</span>
                             <ExternalLink className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           </a>
 
                           {/* Highlights Grid */}
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] pt-1">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[10px]">
                             {disc.expected_exam_date && (
-                              <div className="p-2 rounded-lg bg-sky-50/60 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/40">
-                                <span className="text-[10px] text-slate-500 block flex items-center gap-1">
-                                  <Calendar className="w-3 h-3 text-sky-500" /> Expected Exam:
+                              <div className="p-1.5 rounded-lg bg-sky-50/60 dark:bg-[#1a1a1a] border border-sky-100 dark:border-neutral-800">
+                                <span className="text-[9px] text-slate-500 dark:text-neutral-400 block flex items-center gap-1">
+                                  <Calendar className="w-2.5 h-2.5 text-sky-500" /> Exam Date:
                                 </span>
-                                <strong className="text-slate-800 dark:text-slate-200">
+                                <strong className="text-slate-800 dark:text-slate-200 text-[11px]">
                                   {formatDate(disc.expected_exam_date)}
                                 </strong>
                               </div>
                             )}
 
                             {disc.expected_apply_end && (
-                              <div className="p-2 rounded-lg bg-amber-50/60 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/40">
-                                <span className="text-[10px] text-slate-500 block flex items-center gap-1">
-                                  <Clock className="w-3 h-3 text-amber-500" /> Expected Last Date:
+                              <div className="p-1.5 rounded-lg bg-amber-50/60 dark:bg-[#1a1a1a] border border-amber-100 dark:border-neutral-800">
+                                <span className="text-[9px] text-slate-500 dark:text-neutral-400 block flex items-center gap-1">
+                                  <Clock className="w-2.5 h-2.5 text-amber-500" /> Last Date:
                                 </span>
-                                <strong className="text-slate-800 dark:text-slate-200">
+                                <strong className="text-slate-800 dark:text-slate-200 text-[11px]">
                                   {formatDate(disc.expected_apply_end)}
                                 </strong>
                               </div>
                             )}
 
                             {disc.expected_fee && (
-                              <div className="p-2 rounded-lg bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40">
-                                <span className="text-[10px] text-slate-500 block flex items-center gap-1">
-                                  <IndianRupee className="w-3 h-3 text-emerald-500" /> Expected Fee:
+                              <div className="p-1.5 rounded-lg bg-emerald-50/60 dark:bg-[#1a1a1a] border border-emerald-100 dark:border-neutral-800">
+                                <span className="text-[9px] text-slate-500 dark:text-neutral-400 block flex items-center gap-1">
+                                  <IndianRupee className="w-2.5 h-2.5 text-emerald-500" /> Fee:
                                 </span>
-                                <strong className="text-slate-800 dark:text-slate-200">
+                                <strong className="text-slate-800 dark:text-slate-200 text-[11px]">
                                   {disc.expected_fee}
                                 </strong>
                               </div>
                             )}
 
                             {disc.expected_vacancies && (
-                              <div className="p-2 rounded-lg bg-purple-50/60 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40">
-                                <span className="text-[10px] text-slate-500 block flex items-center gap-1">
-                                  <Users className="w-3 h-3 text-purple-500" /> Expected Vacancies:
+                              <div className="p-1.5 rounded-lg bg-purple-50/60 dark:bg-[#1a1a1a] border border-purple-100 dark:border-neutral-800">
+                                <span className="text-[9px] text-slate-500 dark:text-neutral-400 block flex items-center gap-1">
+                                  <Users className="w-2.5 h-2.5 text-purple-500" /> Vacancies:
                                 </span>
-                                <strong className="text-slate-800 dark:text-slate-200">
+                                <strong className="text-slate-800 dark:text-slate-200 text-[11px]">
                                   {disc.expected_vacancies}
                                 </strong>
                               </div>
@@ -1094,13 +1154,13 @@ const ExamDetail = () => {
                           </div>
 
                           {disc.snippet && (
-                            <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2">
+                            <p className="text-[10px] sm:text-[11px] text-slate-600 dark:text-neutral-400 line-clamp-1">
                               "{disc.snippet.replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/gi, ' ').replace(/^"+|"+$/g, '').trim()}"
                             </p>
                           )}
 
                           {/* Quick Adopt CTA */}
-                          <div className="pt-1 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                          <div className="pt-1 flex items-center justify-between border-t border-slate-100 dark:border-neutral-800 text-[10px] sm:text-[11px]">
                             <span className="text-[10px] text-slate-400">
                               Source: <a href={disc.source_url} target="_blank" rel="noreferrer" className="underline hover:text-sky-500">{disc.source_domain}</a>
                             </span>
@@ -1108,53 +1168,65 @@ const ExamDetail = () => {
                               onClick={() => handleAdoptExpectedDate(disc)}
                               className="text-sky-600 dark:text-sky-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                             >
-                              + Use as My Target Date →
+                              + Use Target Date →
                             </button>
                           </div>
                         </div>
                       ))}
+
+                      {webDiscoveries.length > 2 && (
+                        <div className="pt-1 text-center">
+                          <button
+                            type="button"
+                            onClick={() => setShowAllDiscoveries(!showAllDiscoveries)}
+                            className="text-xs font-bold text-sky-600 dark:text-sky-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            {showAllDiscoveries ? '↑ Show Fewer Reports' : `↓ View All ${webDiscoveries.length} Web Reports & Sources`}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
 
                 {/* Candidate Expected Schedule & Notes Card */}
-                <div className="glass-card p-6 rounded-2xl border border-saffron-300 dark:border-saffron-800/80 bg-gradient-to-br from-saffron-50/50 via-white to-amber-50/30 dark:from-slate-900 dark:to-slate-800 shadow-sm space-y-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-saffron-200/60 dark:border-slate-800">
+                <div className="p-3.5 sm:p-5 rounded-2xl border border-saffron-500/30 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] shadow-xs space-y-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 pb-2.5 border-b border-saffron-200/60 dark:border-neutral-800">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-saffron-500 text-white">
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-saffron-500 text-white">
                           Candidate Target Schedule
                         </span>
-                        <span className="text-xs text-slate-500 font-medium">Personal Reference & News Info</span>
+                        <span className="text-xs text-slate-500 dark:text-neutral-400 font-medium">Personal Reference & News Info</span>
                       </div>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mt-0.5">
                         Your Target Dates & Google / News Notes
                       </h3>
                     </div>
                     <button
                       onClick={handleOpenExpectedDateModal}
-                      className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 shrink-0"
+                      className="btn-secondary text-xs py-1 px-3 flex items-center gap-1.5 shrink-0"
                     >
                       <Edit className="w-3.5 h-3.5" />
-                      {application?.user_exam_date || application?.notes ? 'Edit Target Date / Notes' : '+ Add Target Date / Notes'}
+                      {application?.user_exam_date || application?.notes ? 'Edit Target / Notes' : '+ Add Target Date'}
                     </button>
                   </div>
 
                   {application?.user_exam_date ? (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                        <span className="font-bold text-slate-800 dark:text-neutral-200">
                           Target / Expected Exam Date: {formatDate(application.user_exam_date)}
                         </span>
                         <span className="text-[10px] text-saffron-600 font-bold bg-saffron-100 dark:bg-saffron-950 px-2 py-0.5 rounded">
                           Candidate Sourced
                         </span>
                       </div>
-                      <DeadlineTimer targetDate={application.user_exam_date} />
+                      <DeadlineTimer targetDate={application.user_exam_date} size="small" />
                     </div>
                   ) : (
-                    <div className="text-xs text-slate-600 dark:text-slate-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <p>Found expected dates on Google, newspapers, or education minister statements? Add your target date here for personal countdowns and reminders.</p>
+                    <div className="text-xs text-slate-600 dark:text-neutral-400 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <p>Found expected dates on Google or newspapers? Add your target date here for personal countdowns.</p>
                       <button onClick={handleOpenExpectedDateModal} className="text-xs font-bold text-saffron-600 dark:text-saffron-400 hover:underline shrink-0">
                         + Set Target Date →
                       </button>
@@ -1162,21 +1234,21 @@ const ExamDetail = () => {
                   )}
 
                   {application?.notes && (
-                    <div className="p-3 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-saffron-200/60 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1">
-                      <strong className="block text-[11px] text-saffron-700 dark:text-saffron-400 font-bold">Candidate Notes / Google Info:</strong>
+                    <div className="p-2.5 rounded-xl bg-slate-50/60 dark:bg-[#141414] border border-saffron-200/50 dark:border-neutral-800 text-xs text-slate-700 dark:text-neutral-300 space-y-0.5">
+                      <strong className="block text-[11px] text-saffron-600 dark:text-saffron-400 font-bold">Notes / Google Info:</strong>
                       <p className="leading-relaxed">{application.notes}</p>
                     </div>
                   )}
                 </div>
 
                 {/* Important Dates Timeline */}
-                <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80">
-                  <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <h2 className="text-lg font-bold flex items-center gap-2 text-navy-950 dark:text-white">
-                      <Calendar className="w-5 h-5 text-saffron-500"/> Official Important Dates Timeline
+                <div className="p-3.5 sm:p-5 rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] shadow-xs">
+                  <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-slate-100 dark:border-neutral-800">
+                    <h2 className="text-base sm:text-lg font-bold flex items-center gap-2 text-slate-900 dark:text-white">
+                      <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-saffron-500"/> Official Important Dates Timeline
                     </h2>
                     {exam.data_status === 'verified' ? (
-                      <span className="text-xs text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded">
+                      <span className="text-xs text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded">
                         ✓ Verified Schedule
                       </span>
                     ) : (
@@ -1187,24 +1259,24 @@ const ExamDetail = () => {
                   </div>
 
                   {exam.timeline && Object.keys(exam.timeline).length > 0 ? (
-                    <div className="relative border-l-2 border-slate-200 dark:border-slate-700 ml-4 space-y-7 pb-2">
+                    <div className="relative border-l-2 border-slate-200 dark:border-neutral-800 ml-3 sm:ml-4 space-y-4 sm:space-y-5 pb-1">
                       {Object.entries(exam.timeline).map(([key, date]) => {
                         if (!date) return null;
                         const isPast = new Date(date) < new Date();
                         return (
-                          <div key={key} className="relative pl-8">
-                            <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 ${
-                              isPast ? 'bg-emerald-500' : 'bg-saffron-500 ring-4 ring-saffron-100 dark:ring-saffron-900/40'
+                          <div key={key} className="relative pl-6 sm:pl-8">
+                            <div className={`absolute -left-[7px] sm:-left-[9px] top-1 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-white dark:border-[#0c0c0c] ${
+                              isPast ? 'bg-emerald-500' : 'bg-saffron-500 ring-2 ring-saffron-100 dark:ring-saffron-900/40'
                             }`}></div>
-                            <h4 className="font-bold text-sm capitalize text-slate-800 dark:text-slate-100">
+                            <h4 className="font-bold text-xs sm:text-sm capitalize text-slate-800 dark:text-slate-100">
                               {key.replace(/([A-Z])/g, ' $1').trim()}
                             </h4>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-neutral-400 font-medium mt-0.5">
                               {formatDate(date)}
                             </p>
                             {!isPast && (
-                              <div className="mt-2.5 inline-block">
-                                <DeadlineTimer targetDate={date} />
+                              <div className="mt-1.5 inline-block">
+                                <DeadlineTimer targetDate={date} size="small" />
                               </div>
                             )}
                           </div>
@@ -1212,20 +1284,22 @@ const ExamDetail = () => {
                       })}
                     </div>
                   ) : (
-                    <div className="p-8 text-center rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 space-y-3">
-                      <Clock className="w-8 h-8 mx-auto text-amber-500" />
-                      <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">
+                    <div className="p-4 sm:p-5 text-center rounded-xl bg-slate-50/60 dark:bg-[#141414] border border-dashed border-slate-200 dark:border-neutral-800 space-y-2">
+                      <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm">
                         Will be updated soon
                       </h4>
-                      <p className="text-xs text-slate-500 max-w-md mx-auto">
-                        Official commission dates for this cycle have not been announced yet. Track this exam to be notified immediately when dates are verified, or enter your personal shift / Google news date.
+                      <p className="text-[11px] sm:text-xs text-slate-500 dark:text-neutral-400 max-w-md mx-auto leading-relaxed">
+                        Official commission dates for this cycle are awaited. Track to get notified when announced, or save personal notes.
                       </p>
                       <button
                         onClick={handleOpenExpectedDateModal}
-                        className="btn-primary text-xs mx-auto flex items-center gap-1.5"
+                        className="btn-primary text-xs py-1.5 px-3.5 mx-auto flex items-center gap-1.5"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        {application ? 'Add Expected Date / Notes from Google' : 'Track & Add Expected Date from Google'}
+                        <span>{application ? 'Add Target Date / Notes' : 'Track & Add Date'}</span>
                       </button>
                     </div>
                   )}
@@ -1235,31 +1309,31 @@ const ExamDetail = () => {
 
             {/* ADMIT CARD TAB */}
             {activeTab === 'admit-card' && (
-              <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 space-y-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-700">
+              <div className="p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] space-y-4 sm:space-y-6 shadow-xs">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 sm:pb-6 border-b border-slate-200 dark:border-neutral-800">
                   <div>
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-navy-950 dark:text-white">
+                    <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
                       <FileText className="w-5 h-5 text-saffron-500" /> Admit Card / Hall Ticket Status
                     </h2>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1">
                       Direct release alerts and official commission login portal links.
                     </p>
                   </div>
 
                   <div>
                     {exam.admit_card_url ? (
-                      <span className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 font-bold text-xs flex items-center gap-1.5">
+                      <span className="px-3.5 py-1.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-xs flex items-center gap-1.5">
                         <CheckCircle className="w-4 h-4" /> Live / Released
                       </span>
                     ) : (
-                      <span className="px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 font-bold text-xs">
+                      <span className="px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-xs">
                         Will be updated soon
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3">
+                <div className="p-4 rounded-2xl bg-slate-50/60 dark:bg-[#141414] border border-slate-200/80 dark:border-neutral-800 space-y-3">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                       <h4 className="font-bold text-sm text-slate-900 dark:text-white">Commission Admit Card Download Server</h4>
@@ -1305,13 +1379,13 @@ const ExamDetail = () => {
 
             {/* PYQS TAB */}
             {activeTab === 'pyqs' && (
-              <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 space-y-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-700">
+              <div className="p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] space-y-4 sm:space-y-6 shadow-xs">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 sm:pb-6 border-b border-slate-200 dark:border-neutral-800">
                   <div>
-                    <h2 className="text-xl font-bold flex items-center gap-2 text-navy-950 dark:text-white">
+                    <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 text-slate-900 dark:text-white">
                       <BookOpen className="w-5 h-5 text-saffron-500" /> Previous Year Question Papers (PYQs)
                     </h2>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1">
                       Verified official master question papers and answer keys.
                     </p>
                   </div>
@@ -1329,20 +1403,20 @@ const ExamDetail = () => {
                 </div>
 
                 {filteredPyqs.length > 0 ? (
-                  <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <div className="divide-y divide-slate-100 dark:divide-neutral-800">
                     {filteredPyqs.map(paper => (
-                      <div key={paper.id} className="py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div key={paper.id} className="py-3.5 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="font-bold px-2 py-0.5 bg-navy-100 text-navy-800 dark:bg-navy-900 dark:text-saffron-300 rounded">
+                            <span className="font-bold px-2 py-0.5 bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-saffron-300 rounded">
                               {paper.cycle_year}
                             </span>
-                            <span className="font-semibold text-slate-600 dark:text-slate-300">
+                            <span className="font-semibold text-slate-600 dark:text-neutral-300">
                               {paper.stage_name} {paper.shift ? `• ${paper.shift}` : ''}
                             </span>
                           </div>
                           <h4 className="font-bold text-sm text-slate-900 dark:text-white">{paper.subject}</h4>
-                          <p className="text-[11px] text-slate-500">Source: {paper.attribution || 'Official Commission'}</p>
+                          <p className="text-[11px] text-slate-500 dark:text-neutral-400">Source: {paper.attribution || 'Official Commission'}</p>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
@@ -1369,10 +1443,10 @@ const ExamDetail = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-8 text-center rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 space-y-1.5">
-                    <BookOpen className="w-8 h-8 mx-auto text-slate-400" />
+                  <div className="p-6 text-center rounded-xl bg-slate-50/60 dark:bg-[#141414] border border-dashed border-slate-200 dark:border-neutral-800 space-y-1.5">
+                    <BookOpen className="w-7 h-7 mx-auto text-slate-400" />
                     <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">Will be updated soon</h4>
-                    <p className="text-xs text-slate-500">Master question papers for this cycle are currently being verified.</p>
+                    <p className="text-xs text-slate-500 dark:text-neutral-400">Master question papers for this cycle are currently being verified.</p>
                   </div>
                 )}
               </div>
@@ -1380,8 +1454,8 @@ const ExamDetail = () => {
 
             {/* CUTOFFS TAB */}
             {activeTab === 'cutoffs' && (
-              <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 space-y-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-700">
+              <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] space-y-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-neutral-800">
                   <div>
                     <h2 className="text-xl font-bold flex items-center gap-2 text-navy-950 dark:text-white">
                       <TrendingUp className="w-5 h-5 text-saffron-500" /> Official Cutoffs & Scorecards
@@ -1453,7 +1527,7 @@ const ExamDetail = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-neutral-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
                       <TrendingUp className="w-4 h-4 text-amber-500 shrink-0" />
                       <span className="text-xs text-slate-600 dark:text-slate-300">
@@ -1476,7 +1550,7 @@ const ExamDetail = () => {
 
                 {/* Sub-section 1: Official Cutoff Scorecard Photo (if uploaded by admin) */}
                 {cutoffPhotoUrl && (
-                  <div className="p-4 rounded-2xl border border-saffron-200 dark:border-saffron-900/40 bg-saffron-50/40 dark:bg-slate-900/60 space-y-3">
+                  <div className="p-4 rounded-2xl border border-saffron-200 dark:border-saffron-900/40 bg-saffron-50/40 dark:bg-[#141414] space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-saffron-800 dark:text-saffron-300 flex items-center gap-1.5">
                         <ImageIcon className="w-4 h-4" /> Official Cutoff Scorecard Document
@@ -1491,12 +1565,12 @@ const ExamDetail = () => {
 
                     <div 
                       onClick={() => setPhotoZoomModal(true)}
-                      className="cursor-pointer max-h-72 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm group relative"
+                      className="cursor-pointer max-h-72 overflow-hidden rounded-xl border border-slate-200 dark:border-neutral-800 shadow-sm group relative"
                     >
                       <img 
                         src={cutoffPhotoUrl} 
                         alt="Official Cutoff Document" 
-                        className="w-full object-contain bg-white dark:bg-slate-950 group-hover:scale-[1.01] transition-transform"
+                        className="w-full object-contain bg-white dark:bg-[#0c0c0c] group-hover:scale-[1.01] transition-transform"
                       />
                       <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <span className="px-3 py-1.5 bg-black/75 text-white text-xs font-bold rounded-lg backdrop-blur-sm">Click to Zoom</span>
@@ -1535,7 +1609,7 @@ const ExamDetail = () => {
                   <div className="overflow-x-auto mt-4">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
-                        <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                        <tr className="bg-slate-100 dark:bg-[#141414] text-slate-700 dark:text-slate-300 font-bold">
                           <th className="p-3 rounded-l-lg">Cycle Year</th>
                           <th className="p-3">Stage</th>
                           <th className="p-3">Category</th>
@@ -1544,9 +1618,9 @@ const ExamDetail = () => {
                           <th className="p-3 rounded-r-lg">Source Document</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
                         {filteredCutoffs.map(item => (
-                          <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-[#181818]">
                             <td className="p-3 font-semibold text-slate-900 dark:text-white">{item.cycle_year}</td>
                             <td className="p-3 text-slate-600 dark:text-slate-300">{item.stage_name}</td>
                             <td className="p-3 font-bold text-slate-800 dark:text-slate-200">{item.category}</td>
@@ -1563,7 +1637,7 @@ const ExamDetail = () => {
                     </table>
                   </div>
                 ) : !cutoffPhotoUrl ? (
-                  <div className="p-8 text-center rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 space-y-1.5">
+                  <div className="p-8 text-center rounded-xl bg-slate-50 dark:bg-[#121212] border border-dashed border-slate-200 dark:border-neutral-800 space-y-1.5">
                     <TrendingUp className="w-8 h-8 mx-auto text-slate-400" />
                     <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">Will be updated soon</h4>
                     <p className="text-xs text-slate-500">Official cutoffs for this recruitment cycle have not been published yet.</p>
@@ -1574,8 +1648,8 @@ const ExamDetail = () => {
 
             {/* SYLLABUS TAB */}
             {activeTab === 'syllabus' && (
-              <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
+              <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] space-y-6">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-neutral-800">
                   <h2 className="text-xl font-bold flex items-center gap-2 text-navy-950 dark:text-white">
                     <BookOpen className="w-5 h-5 text-saffron-500"/> Official Exam Pattern & Syllabus
                   </h2>
@@ -1637,7 +1711,7 @@ const ExamDetail = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-neutral-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
                       <BookOpen className="w-4 h-4 text-purple-500 shrink-0" />
                       <span className="text-xs text-slate-600 dark:text-slate-300">
@@ -1661,8 +1735,8 @@ const ExamDetail = () => {
                 {exam.syllabus && exam.syllabus.length > 0 ? (
                   <div className="space-y-4">
                     {exam.syllabus.map((subject, idx) => (
-                      <div key={idx} className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-xs">
-                        <div className="bg-slate-100/70 dark:bg-slate-800 px-5 py-3 font-bold text-sm border-b border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                      <div key={idx} className="border border-slate-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-xs">
+                        <div className="bg-slate-100/70 dark:bg-[#141414] px-5 py-3 font-bold text-sm border-b border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white">
                           {subject.subject}
                         </div>
                         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -1677,7 +1751,7 @@ const ExamDetail = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-8 text-center rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 space-y-1.5">
+                  <div className="p-8 text-center rounded-xl bg-slate-50 dark:bg-[#121212] border border-dashed border-slate-200 dark:border-neutral-800 space-y-1.5">
                     <BookOpen className="w-8 h-8 mx-auto text-slate-400" />
                     <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">Will be updated soon</h4>
                     <p className="text-xs text-slate-500">Official syllabus document will be uploaded with verified chapter topics.</p>
@@ -1688,11 +1762,11 @@ const ExamDetail = () => {
 
             {/* STUDY RESOURCES TAB */}
             {activeTab === 'resources' && (
-              <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 space-y-6">
+              <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] space-y-6">
                 <h2 className="text-xl font-bold flex items-center gap-2 text-navy-950 dark:text-white">
                   <BookOpen className="w-5 h-5 text-saffron-500"/> Recommended Study Resources
                 </h2>
-                <div className="p-8 text-center rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-dashed border-slate-200 dark:border-slate-800 space-y-1.5">
+                <div className="p-8 text-center rounded-xl bg-slate-50 dark:bg-[#121212] border border-dashed border-slate-200 dark:border-neutral-800 space-y-1.5">
                   <BookOpen className="w-8 h-8 mx-auto text-slate-400" />
                   <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm">Will be updated soon</h4>
                   <p className="text-xs text-slate-500">Standard reference book lists and verified lecture resources will be updated soon.</p>
@@ -1706,7 +1780,7 @@ const ExamDetail = () => {
           <div className="space-y-6">
             
             {/* Quick Links Card */}
-            <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
+            <div className="glass-card p-6 rounded-2xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#0c0c0c] shadow-sm space-y-4">
               <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
                 <LinkIcon className="w-4 h-4 text-saffron-500" /> Official Commission Portals
               </h3>
@@ -1716,7 +1790,7 @@ const ExamDetail = () => {
                   href={officialPortal} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors border border-slate-100 dark:border-slate-800"
+                  className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-[#181818] text-slate-700 dark:text-slate-300 transition-colors border border-slate-100 dark:border-neutral-800"
                 >
                   <span className="flex items-center gap-2">
                     <ExternalLink className="w-3.5 h-3.5 text-saffron-500"/> Commission Website
@@ -1729,7 +1803,7 @@ const ExamDetail = () => {
                     href={notificationPdfUrl} 
                     target="_blank" 
                     rel="noreferrer"
-                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors border border-slate-100 dark:border-slate-800"
+                    className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-[#181818] text-slate-700 dark:text-slate-300 transition-colors border border-slate-100 dark:border-neutral-800"
                   >
                     <span className="flex items-center gap-2">
                       <Download className="w-3.5 h-3.5 text-saffron-500"/> Official Notification
@@ -1755,7 +1829,7 @@ const ExamDetail = () => {
         </div>
 
         {/* FOOTER MANDATORY DISCLAIMER */}
-        <div className="mt-12 pt-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
+        <div className="mt-12 pt-6 border-t border-slate-200 dark:border-neutral-800 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
           <p className="font-semibold text-slate-700 dark:text-slate-300">
             ⚠️ Disclaimer: Always confirm on the official website.
           </p>
@@ -1770,9 +1844,9 @@ const ExamDetail = () => {
       {/* CANDIDATE EXPECTED DATES & NOTES MODAL */}
       {isExpectedDateModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-fade-in">
+          <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#121212] shadow-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden animate-fade-in">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between bg-slate-50/50 dark:bg-[#181818]">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-saffron-100 dark:bg-saffron-950/60 text-saffron-600">
                   <Calendar className="w-5 h-5" />
@@ -1788,7 +1862,7 @@ const ExamDetail = () => {
               </div>
               <button 
                 onClick={() => setIsExpectedDateModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e1e1e] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1844,7 +1918,7 @@ const ExamDetail = () => {
                 </p>
               </div>
 
-              <div className="pt-3 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="pt-3 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-neutral-800">
                 {application?.user_exam_date ? (
                   <button
                     type="button"
@@ -1884,7 +1958,7 @@ const ExamDetail = () => {
           onClick={() => setPhotoZoomModal(false)}
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-zoom-out"
         >
-          <div className="relative max-w-4xl max-h-[90vh] overflow-auto rounded-2xl bg-white dark:bg-slate-900 p-2 shadow-2xl">
+          <div className="relative max-w-4xl max-h-[90vh] overflow-auto rounded-2xl bg-white dark:bg-[#121212] p-2 shadow-2xl">
             <button 
               onClick={() => setPhotoZoomModal(false)}
               className="absolute top-4 right-4 p-2 bg-black/60 hover:bg-black text-white rounded-full transition-colors z-10"
@@ -1903,8 +1977,8 @@ const ExamDetail = () => {
       {/* CANDIDATE SELF-UPLOAD & CONTRIBUTION MODAL (No need to wait for admin) */}
       {isContributeModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-xl rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-fade-in max-h-[90vh] flex flex-col">
-            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="relative w-full max-w-xl rounded-3xl bg-white dark:bg-[#121212] shadow-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden animate-fade-in max-h-[90vh] flex flex-col">
+            <div className="p-5 border-b border-slate-100 dark:border-neutral-800 flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">
                   Direct Candidate Upload
@@ -1915,7 +1989,7 @@ const ExamDetail = () => {
               </div>
               <button 
                 onClick={() => setIsContributeModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-[#1e1e1e] text-slate-400"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1941,7 +2015,7 @@ const ExamDetail = () => {
                       className={`p-2.5 rounded-xl text-xs font-bold text-center border transition-all ${
                         contribType === t.id
                           ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                          : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          : 'bg-slate-50 dark:bg-[#181818] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-neutral-800 hover:bg-slate-100'
                       }`}
                     >
                       {t.label}
@@ -1966,7 +2040,7 @@ const ExamDetail = () => {
 
               {/* Specific Fields for Cutoffs */}
               {contribType === 'cutoffs' && (
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#181818] border border-slate-200 dark:border-neutral-800 space-y-3">
                   <h4 className="text-xs font-bold text-slate-900 dark:text-white">Cutoff Marks Details</h4>
                   <div className="grid grid-cols-2 gap-2 text-xs">
                     <div>
@@ -2024,7 +2098,7 @@ const ExamDetail = () => {
 
               {/* Specific Fields for Dates */}
               {contribType === 'dates' && (
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#181818] border border-slate-200 dark:border-neutral-800 space-y-3">
                   <h4 className="text-xs font-bold text-slate-900 dark:text-white">Exam Schedule Dates</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                     <div>
@@ -2096,7 +2170,7 @@ const ExamDetail = () => {
                 ✓ Once submitted, your contribution is published immediately for all aspirants. No need to wait for admin approval!
               </p>
 
-              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="pt-3 flex items-center justify-end gap-2 border-t border-slate-100 dark:border-neutral-800">
                 <button
                   type="button"
                   onClick={() => setIsContributeModalOpen(false)}

@@ -131,11 +131,11 @@ const CandidateResourcesModal = ({ isOpen, onClose, application, onApplicationUp
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+      <div className="bg-white dark:bg-[#121212] border border-slate-200 dark:border-neutral-800 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden animate-slide-up">
         
         {/* Header */}
-        <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between gap-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900 dark:to-slate-800/80">
+        <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-neutral-800 flex items-start justify-between gap-4 bg-gradient-to-r from-slate-50 to-white dark:from-[#141414] dark:to-[#181818]">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-saffron-500/10 text-saffron-600 dark:text-saffron-400 flex items-center justify-center shrink-0 mt-0.5 border border-saffron-500/20">
               <FolderArchive className="w-5 h-5" />
@@ -156,7 +156,7 @@ const CandidateResourcesModal = ({ isOpen, onClose, application, onApplicationUp
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+            className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-[#1e1e1e] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -189,8 +189,8 @@ const CandidateResourcesModal = ({ isOpen, onClose, application, onApplicationUp
                 key={resType.key}
                 className={`p-4 rounded-2xl border transition-all ${
                   hasFile 
-                    ? 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/80 shadow-xs' 
-                    : 'bg-white dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800'
+                    ? 'bg-slate-50/70 dark:bg-[#181818] border-slate-200 dark:border-neutral-800 shadow-xs' 
+                    : 'bg-white dark:bg-[#141414] border-slate-200/80 dark:border-neutral-800'
                 }`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -211,7 +211,7 @@ const CandidateResourcesModal = ({ isOpen, onClose, application, onApplicationUp
                             Uploaded
                           </span>
                         ) : (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 shrink-0">
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-[#222] dark:text-slate-400 shrink-0">
                             Not Uploaded
                           </span>
                         )}
@@ -244,7 +244,7 @@ const CandidateResourcesModal = ({ isOpen, onClose, application, onApplicationUp
                           href={currentFileUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+                          className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-[#222] dark:hover:bg-[#2a2a2a] text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
                           title="Open or Download File"
                         >
                           <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
@@ -254,7 +254,7 @@ const CandidateResourcesModal = ({ isOpen, onClose, application, onApplicationUp
                         <button 
                           onClick={() => fileInputRefs.current[resType.key]?.click()}
                           disabled={isProcessing}
-                          className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                          className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 dark:bg-[#141414] dark:hover:bg-[#1e1e1e] border border-slate-200 dark:border-neutral-700 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
                           title="Replace File"
                         >
                           {isProcessing ? (
@@ -296,13 +296,13 @@ const CandidateResourcesModal = ({ isOpen, onClose, application, onApplicationUp
         </div>
 
         {/* Footer */}
-        <div className="px-5 sm:px-6 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 flex items-center justify-between">
+        <div className="px-5 sm:px-6 py-3 border-t border-slate-100 dark:border-neutral-800 bg-slate-50/50 dark:bg-[#141414] flex items-center justify-between">
           <p className="text-[11px] text-slate-400 dark:text-slate-500">
             🔒 Files are stored privately for your account and can be updated anytime.
           </p>
           <button 
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-colors"
+            className="px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-[#222] dark:hover:bg-[#2a2a2a] text-slate-800 dark:text-slate-200 text-xs font-semibold transition-colors"
           >
             Close
           </button>

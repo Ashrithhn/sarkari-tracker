@@ -19,7 +19,7 @@ const GoogleAiOverviewCard = ({
   if (!aiOverview && !isRefreshing) {
     if (!onRefreshAi) return null;
     return (
-      <div className="rounded-2xl border border-dashed border-blue-300 dark:border-blue-900/60 bg-blue-50/40 dark:bg-slate-900/40 p-5 text-center space-y-2">
+      <div className="rounded-2xl border border-dashed border-blue-300 dark:border-blue-900/60 bg-blue-50/40 dark:bg-[#121212] p-5 text-center space-y-2">
         <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 mx-auto flex items-center justify-center">
           <Sparkles className="w-4 h-4" />
         </div>

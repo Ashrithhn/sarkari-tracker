@@ -51,10 +51,11 @@ const JobCard = ({
   let nextDate = null;
   let nextDateLabel = '';
   const now = new Date();
+  const isNeedToApply = statusKey === 'Need to Apply' || statusKey === 'need_to_apply';
 
-  if (effectiveLastDate && new Date(effectiveLastDate) >= now && statusKey === 'applied') {
+  if (effectiveLastDate && new Date(effectiveLastDate) >= now && (statusKey === 'applied' || statusKey === 'Applied' || isNeedToApply)) {
     nextDate = effectiveLastDate;
-    nextDateLabel = 'Apply Last Date';
+    nextDateLabel = isNeedToApply ? 'Last Date to Apply (Action Needed)' : 'Apply Last Date';
   } else if (effectiveAdmitCardDate && new Date(effectiveAdmitCardDate) >= now && statusKey !== 'appeared') {
     nextDate = effectiveAdmitCardDate;
     nextDateLabel = 'Admit Card Expected';
@@ -73,9 +74,15 @@ const JobCard = ({
 
   // Next status in flow
   const statusFlow = [
+    { key: 'Need to Apply', next: 'Applied', label: 'Mark as Applied ✓' },
+    { key: 'need_to_apply', next: 'applied', label: 'Mark as Applied ✓' },
     { key: 'applied', next: 'admit_card', label: 'Mark Admit Card' },
+    { key: 'Applied', next: 'Admit Card Downloaded', label: 'Mark Admit Card Ready' },
+    { key: 'Admit Card Downloaded', next: 'Appeared', label: 'Mark Appeared' },
     { key: 'admit_card', next: 'appeared', label: 'Mark Appeared' },
     { key: 'appeared', next: 'result', label: 'Result Declared' },
+    { key: 'Appeared', next: 'Result Awaited', label: 'Result Awaited' },
+    { key: 'Result Awaited', next: 'Selected', label: 'Selected! 🎉' },
     { key: 'result', next: 'selected', label: 'Selected! 🎉' }
   ];
   const nextStep = statusFlow.find(s => s.key === statusKey);

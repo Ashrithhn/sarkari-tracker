@@ -79,11 +79,11 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
   });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+      <div className="bg-white dark:bg-[#121212] w-full max-w-3xl rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-neutral-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Header */}
-        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50 flex items-start justify-between gap-4">
+        <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-neutral-800 bg-slate-50/80 dark:bg-[#181818] flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-saffron-100 dark:bg-saffron-950/60 text-saffron-800 dark:text-saffron-300 text-[11px] font-bold">
               <Sparkles className="w-3.5 h-3.5" />
@@ -101,7 +101,7 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="p-2 rounded-xl border border-slate-200 dark:border-neutral-700 hover:bg-white dark:hover:bg-[#1e1e1e] text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Re-check Latest Answers"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
@@ -109,7 +109,7 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#1e1e1e] transition-colors"
             >
               <X size={18} />
             </button>
@@ -117,13 +117,13 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
         </div>
 
         {/* Filters */}
-        <div className="px-4 sm:px-6 py-3 border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-900 flex items-center gap-2 overflow-x-auto text-xs">
+        <div className="px-4 sm:px-6 py-3 border-b border-slate-100 dark:border-neutral-800 bg-white dark:bg-[#121212] flex items-center gap-2 overflow-x-auto text-xs">
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1 rounded-xl font-semibold transition-colors ${
               filter === 'all'
                 ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                : 'bg-slate-100 dark:bg-[#181818] text-slate-600 dark:text-slate-400 hover:bg-slate-200'
             }`}
           >
             All Questions ({answerEntries.length})
@@ -133,7 +133,7 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
             className={`px-3 py-1 rounded-xl font-semibold transition-colors ${
               filter === 'found'
                 ? 'bg-saffron-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                : 'bg-slate-100 dark:bg-[#181818] text-slate-600 dark:text-slate-400 hover:bg-slate-200'
             }`}
           >
             Confirmed & Active Updates
@@ -168,8 +168,8 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
                   key={key}
                   className={`p-3.5 rounded-2xl border transition-all ${
                     isFound 
-                      ? 'bg-slate-50/80 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/80' 
-                      : 'bg-slate-50/40 dark:bg-slate-800/20 border-slate-100 dark:border-slate-800/60 opacity-80'
+                      ? 'bg-slate-50/80 dark:bg-[#181818] border-slate-200 dark:border-neutral-800' 
+                      : 'bg-slate-50/40 dark:bg-[#141414] border-slate-100 dark:border-neutral-800 opacity-80'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -185,7 +185,7 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
                             <CheckCircle2 className="w-3 h-3" /> Confirmed
                           </span>
                         ) : (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center gap-1">
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-200 dark:bg-[#222] text-slate-600 dark:text-slate-300 flex items-center gap-1">
                             <HelpCircle className="w-3 h-3" /> Not Announced
                           </span>
                         )}
@@ -218,7 +218,7 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
 
                       {/* Quote snippet if any */}
                       {a.quote && (
-                        <p className="text-[11px] text-slate-500 italic border-l-2 border-slate-300 dark:border-slate-600 pl-2 mt-1">
+                        <p className="text-[11px] text-slate-500 italic border-l-2 border-slate-300 dark:border-neutral-600 pl-2 mt-1">
                           "{a.quote}"
                         </p>
                       )}
@@ -230,7 +230,7 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
                         href={a.source_url}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 transition-colors shrink-0"
+                        className="p-1.5 rounded-xl border border-slate-200 dark:border-neutral-700 hover:bg-slate-200 dark:hover:bg-[#222] text-slate-500 dark:text-slate-300 transition-colors shrink-0"
                         title="View Official Source"
                       >
                         <ExternalLink size={14} />
@@ -254,11 +254,11 @@ const DailyIntelligenceModal = ({ isOpen, onClose, application }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 text-[11px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="p-3 sm:p-4 border-t border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-[#181818] text-[11px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>AI queries cross-reference official state/central gazettes daily.</span>
           <button
             onClick={onClose}
-            className="w-full sm:w-auto px-4 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-white font-semibold transition-colors"
+            className="w-full sm:w-auto px-4 py-1.5 rounded-xl bg-slate-200 dark:bg-[#252525] hover:bg-slate-300 dark:hover:bg-[#333] text-slate-800 dark:text-white font-semibold transition-colors"
           >
             Close
           </button>

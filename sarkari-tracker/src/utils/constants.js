@@ -13,6 +13,7 @@ export const EXAM_CATEGORIES = [
 ];
 
 export const APPLICATION_STATUS_FLOW = [
+  'Need to Apply',
   'Applied',
   'Admit Card Downloaded',
   'Appeared',
@@ -22,12 +23,20 @@ export const APPLICATION_STATUS_FLOW = [
 ];
 
 export const APPLICATION_STATUSES = {
+  'Need to Apply': { label: 'Need to Apply', color: 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-700/60 font-semibold', icon: 'Clock' },
+  'need_to_apply': { label: 'Need to Apply', color: 'bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-700/60 font-semibold', icon: 'Clock' },
   'Applied': { label: 'Applied', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-300', icon: 'FileText' },
+  'applied': { label: 'Applied', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border-blue-300', icon: 'FileText' },
   'Admit Card Downloaded': { label: 'Admit Card Ready', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border-purple-300', icon: 'Ticket' },
+  'admit_card': { label: 'Admit Card Ready', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border-purple-300', icon: 'Ticket' },
   'Appeared': { label: 'Exam Appeared', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-300', icon: 'CheckSquare' },
+  'appeared': { label: 'Exam Appeared', color: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-300', icon: 'CheckSquare' },
   'Result Awaited': { label: 'Result Awaited', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-300', icon: 'Clock' },
+  'result': { label: 'Result Awaited', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border-orange-300', icon: 'Clock' },
   'Selected': { label: 'Selected / Qualified 🎉', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-400 font-bold', icon: 'Award' },
-  'Not Selected': { label: 'Not Selected', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border-slate-300', icon: 'XCircle' }
+  'selected': { label: 'Selected / Qualified 🎉', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-400 font-bold', icon: 'Award' },
+  'Not Selected': { label: 'Not Selected', color: 'bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-400 border-slate-300', icon: 'XCircle' },
+  'not_selected': { label: 'Not Selected', color: 'bg-slate-100 text-slate-700 dark:bg-neutral-800 dark:text-neutral-400 border-slate-300', icon: 'XCircle' }
 };
 
 export const CANDIDATE_CATEGORIES = [
