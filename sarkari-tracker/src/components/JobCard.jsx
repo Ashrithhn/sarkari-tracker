@@ -82,7 +82,7 @@ const JobCard = ({
   const officialPortal = app.official_portal_link || examDetails.official_site || examDetails.careers_url;
 
   return (
-    <div className="glass-card-hover p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between transition-all bg-white dark:bg-slate-900 shadow-sm relative">
+    <div className="p-5 sm:p-6 rounded-[28px] sm:rounded-[32px] border border-slate-200/80 dark:border-slate-800 flex flex-col justify-between transition-all bg-white dark:bg-[#121c2d] shadow-2xs hover:shadow-md relative">
       <div>
         {/* Top Badges */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">

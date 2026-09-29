@@ -9,7 +9,7 @@ const Layout = ({ darkMode, toggleDarkMode }) => {
   const location = useLocation();
   const mainRef = useRef(null);
 
-  // Automatically scroll viewport to top whenever navigating to any page (e.g. Disclaimer, Privacy, etc.)
+  // Automatically scroll viewport to top whenever navigating to any page
   useEffect(() => {
     if (mainRef.current) {
       mainRef.current.scrollTo({ top: 0, behavior: 'instant' });
@@ -18,30 +18,40 @@ const Layout = ({ darkMode, toggleDarkMode }) => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-navy-900 transition-colors duration-300 flex flex-col font-sans text-slate-800 dark:text-slate-200">
-      <Navbar 
-        darkMode={darkMode} 
-        toggleDarkMode={toggleDarkMode} 
-        toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
-      />
+    <div className="min-h-screen bg-[#9bb0a4] dark:bg-[#070b12] p-2 sm:p-4 lg:p-6 flex font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
       
-      <div className="flex flex-1 overflow-hidden pt-14 sm:pt-16">
-        {/* Mobile sidebar backdrop */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 z-20 bg-black/50 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Outer Shell Rounded Container */}
+      <div className="flex-1 bg-white dark:bg-[#0d1522] rounded-[34px] sm:rounded-[44px] lg:rounded-[52px] overflow-hidden flex shadow-2xl border border-slate-300/60 dark:border-slate-800/90 relative p-2 sm:p-3.5 gap-2 sm:gap-3.5">
         
+        {/* Floating Capsule Sidebar */}
         <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
         
-        <main ref={mainRef} className="flex-1 overflow-y-auto w-full flex flex-col justify-between">
-          <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex-1">
-            <Outlet />
-          </div>
-          <Footer />
-        </main>
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative rounded-[28px] sm:rounded-[38px] bg-slate-50/40 dark:bg-[#090f1a] border border-slate-100 dark:border-slate-800/60">
+          
+          {/* Navbar inline at top */}
+          <Navbar 
+            darkMode={darkMode} 
+            toggleDarkMode={toggleDarkMode} 
+            toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
+          />
+          
+          {/* Main scrollable content */}
+          <main ref={mainRef} className="flex-1 overflow-y-auto w-full flex flex-col justify-between custom-scrollbar px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
+            <div className="w-full max-w-7xl mx-auto flex-1">
+              <Outlet />
+            </div>
+            <Footer />
+          </main>
+        </div>
       </div>
     </div>
   );

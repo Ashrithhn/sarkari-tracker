@@ -5,12 +5,9 @@ import {
   Clock, ShieldCheck, ExternalLink, ArrowRight, Search,
   Building2, LogIn, UserPlus, CheckCircle2, AlertCircle, Sparkles, Filter, X
 } from 'lucide-react';
-import { 
-  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend 
-} from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { getJobStats, getNotifications, getJobs, getExams } from '../utils/api';
-import { EXAM_CATEGORIES, formatDate, getPublicPortalUrl } from '../utils/constants';
+import { EXAM_CATEGORIES, formatDate } from '../utils/constants';
 import { checkAndDispatchDailyReminders } from '../utils/browserNotifications';
 import StatCard from '../components/StatCard';
 import DeadlineTimer from '../components/DeadlineTimer';
@@ -18,25 +15,25 @@ import JobCard from '../components/JobCard';
 import { EXAM_SUGGESTIONS } from '../data/examSuggestions';
 
 const POPULAR_KARNATAKA_SUGGESTIONS = [
-  { label: 'KEA Village Admin Officer (VAO)', query: 'KEA Village Administrative Officer' },
-  { label: 'KPSC KAS Probationers', query: 'KPSC KAS' },
-  { label: 'Karnataka Police SI (PSI)', query: 'Karnataka Police Sub-Inspector' },
-  { label: 'Karnataka Police Constable', query: 'Karnataka Police Constable' },
-  { label: 'KPTCL Assistant Engineer (AE)', query: 'KPTCL Assistant Engineer' },
+  { label: 'KEA Village Admin (VAO)', query: 'KEA Village Administrative Officer' },
+  { label: 'KPSC KAS', query: 'KPSC KAS' },
+  { label: 'Karnataka PSI', query: 'Karnataka Police Sub-Inspector' },
+  { label: 'Police Constable', query: 'Karnataka Police Constable' },
+  { label: 'KPTCL AE', query: 'KPTCL Assistant Engineer' },
   { label: 'BESCOM Assistant', query: 'BESCOM' },
-  { label: 'Karnataka High Court', query: 'Karnataka High Court' },
-  { label: 'Karnataka FDA / SDA', query: 'Karnataka FDA' }
+  { label: 'High Court', query: 'Karnataka High Court' },
+  { label: 'FDA / SDA', query: 'Karnataka FDA' }
 ];
 
 const POPULAR_CENTRAL_SUGGESTIONS = [
-  { label: 'UPSC Civil Services (CSE)', query: 'UPSC Civil Services' },
-  { label: 'SSC CGL 2026', query: 'SSC CGL' },
-  { label: 'SSC CHSL 10+2', query: 'SSC CHSL' },
-  { label: 'IBPS Probationary Officer (PO)', query: 'IBPS PO' },
-  { label: 'SBI Clerk / Junior Associate', query: 'SBI Clerk' },
-  { label: 'RRB NTPC Railways', query: 'RRB NTPC' },
-  { label: 'UPSC CDS Defence', query: 'UPSC CDS' },
-  { label: 'ISRO / DRDO Tech', query: 'ISRO' }
+  { label: 'UPSC CSE', query: 'UPSC Civil Services' },
+  { label: 'SSC CGL', query: 'SSC CGL' },
+  { label: 'SSC CHSL', query: 'SSC CHSL' },
+  { label: 'IBPS PO', query: 'IBPS PO' },
+  { label: 'SBI Clerk', query: 'SBI Clerk' },
+  { label: 'RRB NTPC', query: 'RRB NTPC' },
+  { label: 'UPSC CDS', query: 'UPSC CDS' },
+  { label: 'ISRO / DRDO', query: 'ISRO' }
 ];
 
 const Dashboard = () => {
@@ -48,6 +45,9 @@ const Dashboard = () => {
   const [exams, setExams] = useState(EXAM_SUGGESTIONS);
   const [loading, setLoading] = useState(true);
 
+  // Tab State
+  const [activeTab, setActiveTab] = useState('Overview');
+
   // Exam Search & Filter on Dashboard
   const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'All');
@@ -55,9 +55,15 @@ const Dashboard = () => {
 
   useEffect(() => {
     const qSearch = searchParams.get('search');
-    if (qSearch !== null) setSearchTerm(qSearch);
+    if (qSearch !== null) {
+      setSearchTerm(qSearch);
+      setActiveTab('Exam Directory');
+    }
     const qCat = searchParams.get('category');
-    if (qCat !== null) setSelectedCategory(qCat);
+    if (qCat !== null) {
+      setSelectedCategory(qCat);
+      setActiveTab('Exam Directory');
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -68,7 +74,6 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        // Always fetch public exams & official notifications
         const [examsData, notifsData] = await Promise.all([
           getExams().catch(() => []),
           getNotifications().catch(() => [])
@@ -77,12 +82,10 @@ const Dashboard = () => {
         const notifList = Array.isArray(notifsData) ? notifsData : [];
         setNotifications(notifList.slice(0, 6));
 
-        // Dispatch device native daily reminders if permission granted
         if (notifList.length > 0) {
           checkAndDispatchDailyReminders(notifList);
         }
 
-        // If authenticated, also fetch user's personal tracking records
         if (user) {
           const [statsData, jobsData] = await Promise.all([
             getJobStats().catch(() => ({ totalApplied: 0, upcomingExams: 0, admitCardsAvailable: 0, resultsPending: 0 })),
@@ -104,12 +107,11 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [user]);
 
-  // Compute upcoming deadlines: ONLY from user's tracked applications if logged in; from registry if guest
+  // Compute upcoming deadlines
   const upcomingDeadlines = useMemo(() => {
     const now = new Date();
     const list = [];
 
-    // 1. Authenticated User: ONLY show deadlines for currently tracked applications
     if (isAuthenticated) {
       if (jobs && jobs.length > 0) {
         jobs.forEach(job => {
@@ -119,7 +121,7 @@ const Dashboard = () => {
             const daysLeft = Math.ceil((new Date(lastDate) - now) / (1000 * 60 * 60 * 24));
             list.push({
               id: `last_${job.id}`,
-              title: `${examName} - Application Deadline`,
+              title: `${examName} - Deadline`,
               targetDate: lastDate,
               type: 'deadline',
               daysRemaining: daysLeft,
@@ -141,11 +143,9 @@ const Dashboard = () => {
           }
         });
       }
-      // If user has 0 tracked applications or no upcoming dates, return empty list (do NOT fall back to public exams)
       return list.sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate)).slice(0, 4);
     }
 
-    // 2. Guest User (Not logged in): pull upcoming deadlines from public verified registry
     if (exams && exams.length > 0) {
       exams.forEach(ex => {
         const exName = ex.short_name || ex.name;
@@ -175,23 +175,6 @@ const Dashboard = () => {
     return list.sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate)).slice(0, 4);
   }, [jobs, exams, isAuthenticated]);
 
-  // Status distribution for PieChart
-  const statusDistributionData = useMemo(() => {
-    if (!jobs || jobs.length === 0) return [];
-    const counts = {};
-    jobs.forEach(j => {
-      const s = j.status || 'applied';
-      counts[s] = (counts[s] || 0) + 1;
-    });
-    return Object.entries(counts).map(([name, value]) => ({
-      name: name.replace('_', ' ').toUpperCase(),
-      value
-    }));
-  }, [jobs]);
-
-  const pieColors = ['#F97316', '#3B82F6', '#10B981', '#6366F1', '#8B5CF6', '#EF4444'];
-
-  // Filtered public exams with intelligent multi-token search
   const filteredExams = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
     const tokens = term ? term.split(/\s+/).filter(Boolean) : [];
@@ -209,462 +192,435 @@ const Dashboard = () => {
     });
   }, [exams, searchTerm, selectedCategory]);
 
-  if (authLoading || !isAuthenticated) {
+  if (authLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
         <div className="w-8 h-8 border-3 border-saffron-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs text-slate-500 font-medium">Redirecting to official portal...</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Loading portal data...</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-4 sm:space-y-8 animate-fade-in">
-      {/* Welcome Banner */}
-      <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl relative overflow-hidden bg-gradient-to-br from-navy-800 via-navy-900 to-saffron-950 text-white shadow-lg">
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-              {isAuthenticated ? `Welcome back, ${user?.name || 'Aspirant'}! 👋` : 'SarkariTracker 🇮🇳'}
-            </h1>
-            <p className="text-navy-100/80 text-xs sm:text-sm max-w-xl">
-              Track government exam deadlines, syllabus, cutoffs, and your application dates in one place.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto shrink-0">
-            {isAuthenticated ? (
-              <Link to="/tracker" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-4 flex items-center gap-1.5 shadow-md">
-                <Plus size={16} /> Add Application
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" className="btn-primary text-xs sm:text-sm flex-1 sm:flex-initial text-center justify-center py-2 sm:py-2.5 px-4 flex items-center gap-1.5 shadow-md">
-                  <LogIn size={16} /> Sign In
-                </Link>
-                <Link to="/register" className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold transition-all border border-white/15 flex-1 sm:flex-initial text-center justify-center flex items-center gap-1.5">
-                  <UserPlus size={16} /> Register
-                </Link>
-              </>
-            )}
-          </div>
+    <div className="w-full space-y-6 sm:space-y-8 animate-fade-in max-w-6xl mx-auto pb-10">
+      
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-1">
+        <div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
+            Managing Applications & Schedules
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 text-xs sm:text-sm font-medium">
+            {isAuthenticated 
+              ? `Welcome back, ${user?.name || 'Candidate'}! Real-time recruitment milestones.`
+              : 'SarkariTracker 🇮🇳 — Verified commission exam tracking across India & Karnataka.'}
+          </p>
         </div>
-      </div>
-
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-5">
-        <StatCard 
-          title="My Applications" 
-          value={isAuthenticated ? jobs.length : 0} 
-          icon={FileText} 
-          color="bg-saffron-100 text-saffron-600 dark:bg-saffron-900/30 dark:text-saffron-400"
-          subtitle={isAuthenticated ? `${jobs.length} active application${jobs.length === 1 ? '' : 's'}` : "Sign in to track jobs"}
-        />
-        <StatCard 
-          title="Upcoming Test Dates" 
-          value={isAuthenticated 
-            ? jobs.filter(j => {
-                const d = j.effectiveExamDate || j.user_exam_date;
-                return d && !isNaN(new Date(d).getTime()) && new Date(d) >= new Date();
-              }).length
-            : upcomingDeadlines.length} 
-          icon={Calendar} 
-          color="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-          subtitle={isAuthenticated ? "From tracked apps" : "Scheduled commission tests"}
-        />
-      </div>
-
-      {/* Main Grid: Left 2 Cols (Applications / Directory), Right 1 Col (Deadlines & Alerts) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8">
         
-        {/* Left 2 Columns */}
-        <div className="lg:col-span-2 space-y-5 sm:space-y-8">
+        {isAuthenticated ? (
+          <Link 
+            to="/tracker" 
+            className="rounded-full bg-navy-950 hover:bg-navy-900 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-navy-950 py-2.5 px-6 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm transition-all shrink-0 hover:scale-102 active:scale-98"
+          >
+            <Plus size={16} className="stroke-[2.5]" /> Add Application
+          </Link>
+        ) : (
+          <Link 
+            to="/login" 
+            className="rounded-full bg-navy-950 hover:bg-navy-900 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-navy-950 py-2.5 px-6 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm transition-all shrink-0 hover:scale-102 active:scale-98"
+          >
+            <LogIn size={16} /> Sign In
+          </Link>
+        )}
+      </div>
+
+      {/* Pill Tab Navigation */}
+      <div className="pill-tab-track flex items-center gap-1.5 bg-slate-100/90 dark:bg-[#121c2d] p-1.5 rounded-full w-max border border-slate-200/80 dark:border-slate-800/90 overflow-x-auto max-w-full shadow-2xs">
+        {['Overview', 'Exam Directory'].concat(isAuthenticated ? ['My Applications'] : []).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`pill-tab px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
+              activeTab === tab 
+                ? 'pill-tab-active bg-navy-950 dark:bg-white text-white dark:text-slate-950 shadow-sm' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* --- OVERVIEW TAB --- */}
+      {activeTab === 'Overview' && (
+        <div className="space-y-8">
           
-          {/* If user is logged in: Show personal active applications */}
-          {isAuthenticated && (
-            <div className="glass-card p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-saffron-500" /> My Applications
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Your personal government recruitment pipeline.</p>
-                </div>
-                <Link to="/tracker" className="text-xs font-bold text-saffron-600 hover:text-saffron-700 dark:text-saffron-400 flex items-center gap-1">
-                  Manage All ({jobs.length}) <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+          {/* Stats Row (Rounded [32px] with Prominent Battery Progress Bars) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            <StatCard 
+              title="My Applications" 
+              value={isAuthenticated ? jobs.length : 0} 
+              maxValue={10}
+              icon={FileText} 
+              subtitle={isAuthenticated ? `${jobs.length} active application${jobs.length === 1 ? '' : 's'}` : "Sign in to track jobs"}
+            />
+            <StatCard 
+              title="Upcoming Test Dates" 
+              value={isAuthenticated 
+                ? jobs.filter(j => {
+                    const d = j.effectiveExamDate || j.user_exam_date;
+                    return d && !isNaN(new Date(d).getTime()) && new Date(d) >= new Date();
+                  }).length
+                : upcomingDeadlines.length} 
+              maxValue={6}
+              icon={Calendar} 
+              subtitle="Scheduled commission tests"
+            />
+            <div className="sm:col-span-2 lg:col-span-1">
+              <StatCard 
+                title="AI Intelligence" 
+                value={isAuthenticated ? "Real-time" : "Verified"}
+                icon={Sparkles} 
+                subtitle="Google AI Overview synced schedules."
+                accent={true}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+            {/* Left: Quick Suggestions Sections */}
+            <div className="lg:col-span-2 space-y-6">
               
-              {jobs.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {jobs.slice(0, 4).map(job => (
-                    <JobCard key={job.id} application={job} />
+              {/* Karnataka State Suggestions */}
+              <div className="p-5 sm:p-6 rounded-[28px] sm:rounded-[34px] bg-white dark:bg-[#121c2d] border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                    Karnataka State Recruitment
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">65+ State Exams</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {POPULAR_KARNATAKA_SUGGESTIONS.map((item, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setActiveTab('Exam Directory');
+                        setSearchTerm(item.query);
+                      }}
+                      className="px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-red-400 dark:hover:border-red-400 text-slate-700 dark:text-slate-200 transition-all hover:scale-102"
+                    >
+                      {item.label}
+                    </button>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-10 px-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-300 dark:border-slate-700 space-y-3">
-                  <FileText className="w-10 h-10 mx-auto text-slate-400" />
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">No Applications Added Yet</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Pick any exam from the directory below or add a custom job post to track dates and checklists.
-                  </p>
-                  <Link to="/tracker" className="btn-primary inline-flex text-xs py-2 px-4">
-                    <Plus className="w-3.5 h-3.5 mr-1" /> Add First Application
+              </div>
+
+              {/* All-India Central Suggestions */}
+              <div className="p-5 sm:p-6 rounded-[28px] sm:rounded-[34px] bg-white dark:bg-[#121c2d] border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+                    All-India Recruitment
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">95+ Central Exams</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {POPULAR_CENTRAL_SUGGESTIONS.map((item, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setActiveTab('Exam Directory');
+                        setSearchTerm(item.query);
+                      }}
+                      className="px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-blue-400 dark:hover:border-blue-400 text-slate-700 dark:text-slate-200 transition-all hover:scale-102"
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Browse CTA Banner */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-[26px] bg-slate-100/70 dark:bg-[#121c2d]/60 border border-slate-200/80 dark:border-slate-800 text-xs">
+                <p className="text-slate-600 dark:text-slate-300 text-center sm:text-left font-medium">
+                  💡 <strong>Search or select any examination</strong> to inspect syllabus, official commission portals, or track application deadlines.
+                </p>
+                <button
+                  onClick={() => {
+                    setActiveTab('Exam Directory');
+                    setSearchTerm('');
+                  }}
+                  className="rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold py-2.5 px-5 whitespace-nowrap shrink-0 transition-all shadow-2xs"
+                >
+                  Browse All 160+ Exams
+                </button>
+              </div>
+
+            </div>
+
+            {/* Right: Deadlines & Notifications */}
+            <div className="space-y-6">
+              
+              {/* Upcoming Deadlines Card */}
+              <div className="bg-white dark:bg-[#121c2d] rounded-[28px] sm:rounded-[34px] border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-rose-500" /> Upcoming Deadlines
+                </h2>
+                <div className="space-y-3">
+                  {upcomingDeadlines.length > 0 ? (
+                    upcomingDeadlines.map(item => (
+                      <div key={item.id} className="flex flex-col justify-between gap-2 p-3.5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
+                        <div className="flex justify-between items-start gap-2">
+                          <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">{item.title}</h4>
+                          {item.daysRemaining !== undefined && (
+                            <span className={`shrink-0 text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                              item.daysRemaining <= 3 
+                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 animate-pulse'
+                                : item.daysRemaining <= 7
+                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                            }`}>
+                              {item.daysRemaining === 0 ? 'Today!' : `${item.daysRemaining}d left`}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{formatDate(item.targetDate)}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-400 text-center py-6 font-medium">No immediate deadlines.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Important Updates Card */}
+              <div className="bg-white dark:bg-[#121c2d] rounded-[28px] sm:rounded-[34px] border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-saffron-500" /> Important Updates
+                  </h2>
+                  <Link to="/notifications" className="text-xs font-bold text-saffron-600 dark:text-saffron-400 hover:underline">
+                    View All
                   </Link>
                 </div>
+                <div className="space-y-3">
+                  {notifications.length > 0 ? (
+                    notifications.map((notif) => (
+                      <div key={notif.id} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 text-xs space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-bold text-slate-900 dark:text-white line-clamp-1">{notif.title}</span>
+                        </div>
+                        <p className="text-slate-500 dark:text-slate-400 line-clamp-2 text-[11px] leading-relaxed">
+                          {notif.message}
+                        </p>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 block pt-0.5">
+                          {formatDate(notif.created_at || notif.date || Date.now())}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-400 text-center py-6 font-medium">No new commission updates.</p>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- EXAM DIRECTORY TAB --- */}
+      {activeTab === 'Exam Directory' && (
+        <div className="space-y-6">
+          {/* Hero Band with Deep Navy & Large Rounded Corners */}
+          <div className="bg-[#0a121e] dark:bg-[#060b13] border border-slate-800/80 rounded-[32px] sm:rounded-[42px] py-10 px-6 text-center relative mt-2 shadow-md">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 tracking-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
+              Search Government Examinations
+            </h2>
+            <p className="text-slate-300 dark:text-slate-400 text-xs sm:text-sm font-medium">160+ official Indian & Karnataka commission notifications</p>
+          </div>
+          
+          {/* Overlapping Pill Search Bar */}
+          <div className="max-w-2xl mx-auto -mt-10 relative z-10 px-4">
+            <div className="relative group">
+              <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-saffron-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Search exam or commission (KEA, KPSC, Police, UPSC)..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-10 py-3.5 text-xs sm:text-sm rounded-full bg-white dark:bg-[#121c2d] shadow-xl border border-slate-200 dark:border-slate-700/80 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400"
+              />
+              {searchTerm && (
+                <button 
+                  type="button" 
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 bg-slate-100 dark:bg-slate-800 rounded-full"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               )}
             </div>
-          )}
+          </div>
+          
+          {/* Category Filter Chips */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 pt-2 no-scrollbar text-xs sm:text-sm px-1">
+            <button
+              onClick={() => setSelectedCategory('All')}
+              className={`px-4 py-2 rounded-full font-bold shrink-0 transition-all whitespace-nowrap ${
+                selectedCategory === 'All'
+                  ? 'bg-navy-950 dark:bg-white text-white dark:text-navy-950 shadow-sm'
+                  : 'bg-slate-100 dark:bg-[#121c2d] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+              }`}
+            >
+              All Exams ({exams.length})
+            </button>
+            {EXAM_CATEGORIES.map(cat => {
+              const count = exams.filter(e => cat.id === 'Karnataka' ? (e.category === 'Karnataka' || e.state === 'Karnataka' || e.level === 'state') : e.category === cat.id).length;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => { setSelectedCategory(cat.id); setVisibleCount(12); }}
+                  className={`px-4 py-2 rounded-full font-bold shrink-0 transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                    selectedCategory === cat.id
+                      ? 'bg-navy-950 dark:bg-white text-white dark:text-navy-950 shadow-sm'
+                      : 'bg-slate-100 dark:bg-[#121c2d] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <span>{cat.name}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    selectedCategory === cat.id ? 'bg-white/25 text-white dark:bg-navy-950/20 dark:text-navy-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-          {/* Search Indian & Karnataka Government Examinations */}
-          <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Search className="w-5 h-5 text-saffron-500 shrink-0" /> Search Government Examinations
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Explore 160+ official Indian & Karnataka recruitment exams (UPSC, SSC, Banking, Railways, KEA, KPSC).
-                </p>
-              </div>
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1 pt-1 font-medium">
+            <span>
+              Found <strong>{filteredExams.length}</strong> matching examinations
+              {searchTerm.trim() ? ` for "${searchTerm.trim()}"` : ''}
+              {selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}
+            </span>
+          </div>
 
-              {/* Search Input Box */}
-              <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input 
-                  type="text" 
-                  placeholder="Search exam or commission (KEA, KPSC, Police, UPSC)..." 
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-8 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-800 dark:text-slate-200"
-                />
-                {searchTerm && (
-                  <button 
-                    type="button" 
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Category Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 no-scrollbar text-xs touch-pan-x -mx-1 px-1">
-              <button
-                onClick={() => setSelectedCategory('All')}
-                className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition-colors whitespace-nowrap ${
-                  selectedCategory === 'All'
-                    ? 'bg-saffron-500 text-white font-bold'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                }`}
-              >
-                All Exams ({exams.length})
-              </button>
-              {EXAM_CATEGORIES.map(cat => {
-                const count = exams.filter(e => cat.id === 'Karnataka' ? (e.category === 'Karnataka' || e.state === 'Karnataka' || e.level === 'state') : e.category === cat.id).length;
+          {/* Exam List Cards with High-Contrast Rounded Corners */}
+          {filteredExams.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {filteredExams.slice(0, visibleCount).map(exam => {
+                const isKarnataka = exam.category === 'Karnataka' || exam.state === 'Karnataka' || exam.level === 'state';
                 return (
-                  <button
-                    key={cat.id}
-                    onClick={() => { setSelectedCategory(cat.id); setVisibleCount(12); }}
-                    className={`px-3 py-1.5 rounded-xl font-medium shrink-0 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                      selectedCategory === cat.id
-                        ? 'bg-saffron-500 text-white font-bold'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                    }`}
+                  <div 
+                    key={exam.id || exam.short_name}
+                    className="bg-white dark:bg-[#121c2d] rounded-[26px] sm:rounded-[32px] border border-slate-200/80 dark:border-slate-800 p-5 flex flex-col justify-between shadow-2xs hover:border-saffron-400 dark:hover:border-saffron-500 transition-all"
                   >
-                    <span>{cat.name}</span>
-                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                      selectedCategory === cat.id ? 'bg-white/25 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                    }`}>
-                      {count}
-                    </span>
-                  </button>
+                    <div>
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                          isKarnataka 
+                            ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/50 dark:border-rose-900/40' 
+                            : 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900/40'
+                        }`}>
+                          {isKarnataka ? 'Karnataka' : (exam.category || 'Central')}
+                        </span>
+                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3" /> Official
+                        </span>
+                      </div>
+                      
+                      <h3 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 mb-1">
+                        {exam.short_name} - {exam.name}
+                      </h3>
+                      <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-4 font-medium">
+                        {exam.conducting_body} {exam.state ? `• ${exam.state}` : ''}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                      <Link
+                        to={`/tracker?add=1&exam=${encodeURIComponent(exam.short_name)}`}
+                        className="flex-1 text-center py-2 px-3 rounded-full bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> Track
+                      </Link>
+                      <Link
+                        to={`/exams/${exam.id}`}
+                        className="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors"
+                      >
+                        Syllabus
+                      </Link>
+                    </div>
+                  </div>
                 );
               })}
             </div>
+          ) : (
+            <div className="text-center py-12 px-4 rounded-[28px] border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+              <Search className="w-8 h-8 text-slate-400 mx-auto" />
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                {searchTerm ? `No exams found for "${searchTerm}"` : 'No exams found in this category'}
+              </h4>
+              <button 
+                onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
+                className="mt-2 text-xs font-bold px-5 py-2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 transition-colors"
+              >
+                Clear Search
+              </button>
+            </div>
+          )}
 
-            {/* DEFAULT VIEW: Quick Suggestions Hub when not searching */}
-            {!searchTerm.trim() && selectedCategory === 'All' ? (
-              <div className="space-y-6 pt-2">
-                {/* Karnataka Highlights */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-500/5 via-saffron-500/5 to-amber-500/5 border border-red-200/50 dark:border-red-950/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-red-900 dark:text-red-300 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                      Karnataka State Recruitment (KEA, KPSC, Police, ESCOMs)
-                    </span>
-                    <span className="text-[11px] text-slate-500">65+ State Exams</span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {POPULAR_KARNATAKA_SUGGESTIONS.map((item, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSearchTerm(item.query)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-red-200 dark:border-slate-700 hover:border-red-400 dark:hover:border-red-500 text-slate-800 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 transition-all shadow-2xs flex items-center gap-1"
-                      >
-                        <Search className="w-3 h-3 text-red-500" />
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Central, Banking, Railways & Defence Highlights */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/5 via-indigo-500/5 to-purple-500/5 border border-blue-200/50 dark:border-blue-950/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                      All-India Recruitment (UPSC, SSC, Banking, Railways, Defence)
-                    </span>
-                    <span className="text-[11px] text-slate-500">95+ Central Exams</span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {POPULAR_CENTRAL_SUGGESTIONS.map((item, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSearchTerm(item.query)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 border border-blue-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-all shadow-2xs flex items-center gap-1"
-                      >
-                        <Search className="w-3 h-3 text-blue-500" />
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Instructions banner */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-xs">
-                  <p className="text-slate-600 dark:text-slate-400 text-center sm:text-left">
-                    💡 <strong>Search or click any suggestion above</strong> to view official commission portals or track personal application dates.
-                  </p>
-                  <button
-                    onClick={() => setSearchTerm(' ')}
-                    className="btn-secondary text-xs py-2 px-4 whitespace-nowrap shrink-0"
-                  >
-                    Browse All 160+ Exams
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* SEARCH RESULTS: Displayed when user enters search or chooses a category */
-              <div className="space-y-4 pt-1">
-                <div className="flex items-center justify-between text-xs text-slate-500 px-1">
-                  <span>
-                    Found <strong>{filteredExams.length}</strong> matching examinations
-                    {searchTerm.trim() ? ` for "${searchTerm.trim()}"` : ''}
-                    {selectedCategory !== 'All' ? ` in ${selectedCategory}` : ''}
-                  </span>
-                  <button 
-                    onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
-                    className="text-saffron-600 dark:text-saffron-400 font-semibold hover:underline"
-                  >
-                    Reset Search
-                  </button>
-                </div>
-
-                {filteredExams.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    {filteredExams.slice(0, visibleCount).map(exam => {
-                      const isKarnataka = exam.category === 'Karnataka' || exam.state === 'Karnataka' || exam.level === 'state';
-                      return (
-                        <div 
-                          key={exam.id || exam.short_name}
-                          className="p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 hover:border-saffron-400 dark:hover:border-saffron-600 transition-all flex flex-col justify-between space-y-3"
-                        >
-                          <div>
-                            <div className="flex items-start justify-between gap-2 mb-2">
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                                isKarnataka 
-                                  ? 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200/50' 
-                                  : 'bg-saffron-100 text-saffron-800 dark:bg-saffron-950/60 dark:text-saffron-300'
-                              }`}>
-                                {isKarnataka ? 'Karnataka' : (exam.category || 'Central')}
-                              </span>
-                              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                                <ShieldCheck className="w-3 h-3" /> Official
-                              </span>
-                            </div>
-
-                            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
-                              {exam.short_name} - {exam.name}
-                            </h3>
-                            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
-                              {exam.conducting_body} {exam.state ? `• ${exam.state}` : ''}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
-                            <Link
-                              to={`/tracker?add=1&exam=${encodeURIComponent(exam.short_name)}`}
-                              className="btn-primary text-xs py-1.5 px-3 flex-1 text-center justify-center rounded-xl font-semibold flex items-center gap-1"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                              <span>Track Application</span>
-                            </Link>
-
-                            <Link
-                              to={`/exams/${exam.id}`}
-                              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors"
-                            >
-                              Syllabus
-                            </Link>
-
-                            {exam.official_site && (
-                              <a
-                                href={exam.official_site}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors shrink-0"
-                                title="Open Official Commission Portal"
-                              >
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 px-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-2.5">
-                    <Search className="w-8 h-8 text-slate-400 mx-auto" />
-                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                      {searchTerm ? `No exams found for "${searchTerm}"` : 'No exams found in this category'}
-                    </h4>
-                    <p className="text-xs text-slate-500 max-w-md mx-auto">
-                      Try searching for keywords like "KPSC", "KEA", "Police", "Railway", "Clerk", "FDA", "High Court", or "UPSC".
-                    </p>
-                    <button 
-                      onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
-                      className="mt-1 text-xs font-semibold px-4 py-2 rounded-xl bg-saffron-500 text-white hover:bg-saffron-600 transition-colors"
-                    >
-                      Clear Search & View Suggestions
-                    </button>
-                  </div>
-                )}
-
-                {filteredExams.length > visibleCount && (
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-4">
-                    <button 
-                      onClick={() => setVisibleCount(prev => prev + 12)}
-                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-xs"
-                    >
-                      Load More (+12 Exams)
-                    </button>
-                    <button 
-                      onClick={() => setVisibleCount(filteredExams.length)}
-                      className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-saffron-50 dark:bg-saffron-950/40 text-saffron-700 dark:text-saffron-300 hover:bg-saffron-100 border border-saffron-200 dark:border-saffron-800 text-xs font-bold transition-all"
-                    >
-                      Show All ({filteredExams.length} Exams)
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {filteredExams.length > visibleCount && (
+            <div className="flex justify-center pt-4">
+              <button 
+                onClick={() => setVisibleCount(prev => prev + 12)}
+                className="px-6 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-xs"
+              >
+                Load More (+12 Exams)
+              </button>
+            </div>
+          )}
         </div>
+      )}
 
-        {/* Right Column: Deadlines & Notifications */}
-        <div className="space-y-5 sm:space-y-8">
-          
-          {/* Upcoming Deadlines (Countdown Timers) */}
-          <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-3 sm:mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-red-500 shrink-0" /> Upcoming Deadlines
+      {/* --- MY APPLICATIONS TAB --- */}
+      {activeTab === 'My Applications' && isAuthenticated && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <FileText className="w-5 h-5 text-saffron-500" /> My Applications
             </h2>
-            
-            <div className="space-y-2.5 sm:space-y-3">
-              {upcomingDeadlines.length > 0 ? (
-                upcomingDeadlines.map(item => (
-                  <div 
-                    key={item.id} 
-                    className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-red-50/70 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <h4 className="font-bold text-xs text-slate-900 dark:text-white line-clamp-1">{item.title}</h4>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {item.daysRemaining !== undefined && (
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                            item.daysRemaining <= 3 
-                              ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 animate-pulse'
-                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                          }`}>
-                            {item.daysRemaining === 0 ? 'Today!' : `${item.daysRemaining}d left`}
-                          </span>
-                        )}
-                        {item.isUserJob && (
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
-                            My Application
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <DeadlineTimer targetDate={item.targetDate} size="small" />
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-6 sm:py-8 text-xs text-slate-500 space-y-2">
-                  <Clock className="w-7 h-7 sm:w-8 sm:h-8 mx-auto text-slate-400" />
-                  <p className="font-medium text-slate-700 dark:text-slate-300">No Upcoming Deadlines</p>
-                  <p className="text-[11px] text-slate-400">
-                    {isAuthenticated 
-                      ? "You currently have no pending deadlines for your tracked applications."
-                      : "No immediate commission deadlines found."}
-                  </p>
-                </div>
-              )}
-            </div>
+            <Link to="/tracker" className="text-xs sm:text-sm font-bold text-saffron-600 dark:text-saffron-400 hover:underline flex items-center gap-1">
+              Manage All ({jobs.length}) <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
-
-          {/* Official Commission Notifications & Alerts */}
-          <div className="glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-            <div className="flex justify-between items-center mb-3 sm:mb-4">
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Bell className="w-5 h-5 text-saffron-500 shrink-0" /> Important Updates
-              </h2>
-              <Link to="/notifications" className="text-xs font-semibold text-saffron-600 dark:text-saffron-400 hover:underline">
-                View All
-              </Link>
+          
+          {jobs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {jobs.map(job => (
+                <JobCard key={job.id} application={job} />
+              ))}
             </div>
-            
-            <div className="space-y-3">
-              {notifications.length > 0 ? (
-                notifications.map((notif) => (
-                  <div key={notif.id} className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs space-y-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-slate-900 dark:text-white line-clamp-1">{notif.title}</span>
-                      {notif.is_urgent === 1 && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
-                          Urgent
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 line-clamp-2 text-[11px] leading-relaxed">
-                      {notif.message}
-                    </p>
-                    <span className="text-[10px] text-slate-400 block pt-0.5">
-                      {formatDate(notif.created_at || notif.date || Date.now())}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-slate-400 text-center py-6">No new commission notifications.</p>
-              )}
+          ) : (
+            <div className="text-center py-16 px-4 rounded-[32px] bg-white dark:bg-[#121c2d] border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-sm">
+              <FileText className="w-12 h-12 mx-auto text-slate-400" />
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">No Applications Tracked Yet</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                Pick any exam from the directory or add a custom job post to track dates and checklists.
+              </p>
+              <button 
+                onClick={() => setActiveTab('Exam Directory')} 
+                className="rounded-full bg-navy-950 dark:bg-white text-white dark:text-navy-950 text-xs font-bold py-2.5 px-6 inline-flex items-center gap-2 shadow-sm"
+              >
+                <Search className="w-4 h-4" /> Browse Exams
+              </button>
             </div>
-          </div>
-
+          )}
         </div>
-      </div>
+      )}
 
-      {/* Simple Footer / Attribution */}
-      <footer className="pt-6 pb-2 border-t border-slate-200/80 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1">
-        <p>Verified government exam schedules & commission updates across India & Karnataka.</p>
-        <p className="text-[11px]">Help & Feedback: <a href="mailto:techtherapy1818@gmail.com" className="text-saffron-600 dark:text-saffron-400 hover:underline">techtherapy1818@gmail.com</a></p>
-      </footer>
     </div>
   );
 };
