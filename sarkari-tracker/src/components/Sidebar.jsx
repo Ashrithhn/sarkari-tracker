@@ -7,8 +7,7 @@ import {
   Bell, 
   BookOpen, 
   Plus,
-  User,
-  Sparkles
+  User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -31,14 +30,14 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <aside 
-      className={`fixed lg:static inset-y-0 left-0 z-50 w-16 sm:w-18 bg-[#0a121e] dark:bg-[#060b13] rounded-[28px] sm:rounded-[36px] flex flex-col items-center py-5 shadow-lg border border-slate-800/80 transform transition-all duration-300 ease-in-out lg:translate-x-0 shrink-0 my-2 lg:my-0 ml-2 lg:ml-0
+      className={`fixed lg:static inset-y-0 left-0 z-50 w-16 sm:w-18 bg-[#0a0a0a] dark:bg-[#000000] rounded-[28px] sm:rounded-[36px] flex flex-col items-center py-5 shadow-lg border border-neutral-800 transform transition-all duration-300 ease-in-out lg:translate-x-0 shrink-0 my-2 lg:my-0 ml-2 lg:ml-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
     >
-      {/* Top App Icon / Plus Button */}
+      {/* Top Plus Button -> Opens Add Application Modal directly */}
       <div className="mb-7 flex-shrink-0">
         <NavLink 
-          to="/tracker" 
-          title="Track New Exam"
+          to="/tracker?add=1" 
+          title="Track New Application"
           className="w-11 h-11 rounded-full bg-saffron-500 hover:bg-saffron-600 text-white flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all"
         >
           <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -59,7 +58,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 `w-11 h-11 flex items-center justify-center rounded-2xl transition-all duration-200 mx-auto ${
                   isActive
                     ? 'bg-white/20 text-white shadow-sm font-bold'
-                    : 'text-slate-400 hover:text-white hover:bg-white/10'
+                    : 'text-neutral-400 hover:text-white hover:bg-white/10'
                 }`
               }
             >
@@ -82,7 +81,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         ) : (
           <NavLink
             to="/login"
-            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 hover:text-white transition-all cursor-pointer ring-1 ring-white/10"
+            className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-neutral-300 hover:text-white transition-all cursor-pointer ring-1 ring-white/10"
             title="Sign In / Register"
           >
             <User className="w-5 h-5" />

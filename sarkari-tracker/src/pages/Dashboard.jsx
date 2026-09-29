@@ -196,7 +196,7 @@ const Dashboard = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
         <div className="w-8 h-8 border-3 border-saffron-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Loading portal data...</p>
+        <p className="text-xs text-slate-500 dark:text-neutral-400 font-medium">Loading portal data...</p>
       </div>
     );
   }
@@ -210,7 +210,7 @@ const Dashboard = () => {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
             Managing Applications & Schedules
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1 text-xs sm:text-sm font-medium">
+          <p className="text-slate-500 dark:text-neutral-400 mt-1 text-xs sm:text-sm font-medium">
             {isAuthenticated 
               ? `Welcome back, ${user?.name || 'Candidate'}! Real-time recruitment milestones.`
               : 'SarkariTracker 🇮🇳 — Verified commission exam tracking across India & Karnataka.'}
@@ -219,15 +219,15 @@ const Dashboard = () => {
         
         {isAuthenticated ? (
           <Link 
-            to="/tracker" 
-            className="rounded-full bg-navy-950 hover:bg-navy-900 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-navy-950 py-2.5 px-6 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm transition-all shrink-0 hover:scale-102 active:scale-98"
+            to="/tracker?add=1" 
+            className="rounded-full bg-neutral-950 hover:bg-neutral-900 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black py-2.5 px-6 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm transition-all shrink-0 hover:scale-102 active:scale-98"
           >
             <Plus size={16} className="stroke-[2.5]" /> Add Application
           </Link>
         ) : (
           <Link 
             to="/login" 
-            className="rounded-full bg-navy-950 hover:bg-navy-900 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-navy-950 py-2.5 px-6 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm transition-all shrink-0 hover:scale-102 active:scale-98"
+            className="rounded-full bg-neutral-950 hover:bg-neutral-900 dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black py-2.5 px-6 text-xs sm:text-sm font-bold flex items-center gap-2 shadow-sm transition-all shrink-0 hover:scale-102 active:scale-98"
           >
             <LogIn size={16} /> Sign In
           </Link>
@@ -235,15 +235,15 @@ const Dashboard = () => {
       </div>
 
       {/* Pill Tab Navigation */}
-      <div className="pill-tab-track flex items-center gap-1.5 bg-slate-100/90 dark:bg-[#121c2d] p-1.5 rounded-full w-max border border-slate-200/80 dark:border-slate-800/90 overflow-x-auto max-w-full shadow-2xs">
+      <div className="pill-tab-track flex items-center gap-1.5 bg-slate-100/90 dark:bg-[#141414] p-1.5 rounded-full w-max border border-slate-200/80 dark:border-neutral-800 overflow-x-auto max-w-full shadow-2xs">
         {['Overview', 'Exam Directory'].concat(isAuthenticated ? ['My Applications'] : []).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`pill-tab px-5 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
               activeTab === tab 
-                ? 'pill-tab-active bg-navy-950 dark:bg-white text-white dark:text-slate-950 shadow-sm' 
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                ? 'pill-tab-active bg-neutral-950 dark:bg-white text-white dark:text-black shadow-sm' 
+                : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {tab}
@@ -292,13 +292,13 @@ const Dashboard = () => {
             <div className="lg:col-span-2 space-y-6">
               
               {/* Karnataka State Suggestions */}
-              <div className="p-5 sm:p-6 rounded-[28px] sm:rounded-[34px] bg-white dark:bg-[#121c2d] border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
+              <div className="p-5 sm:p-6 rounded-[28px] sm:rounded-[34px] bg-white dark:bg-[#121212] border border-slate-200/80 dark:border-neutral-800 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
                     Karnataka State Recruitment
                   </span>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">65+ State Exams</span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">65+ State Exams</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {POPULAR_KARNATAKA_SUGGESTIONS.map((item, idx) => (
@@ -308,7 +308,7 @@ const Dashboard = () => {
                         setActiveTab('Exam Directory');
                         setSearchTerm(item.query);
                       }}
-                      className="px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-red-400 dark:hover:border-red-400 text-slate-700 dark:text-slate-200 transition-all hover:scale-102"
+                      className="px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200/80 dark:border-neutral-800 hover:border-red-400 dark:hover:border-red-400 text-slate-700 dark:text-neutral-200 transition-all hover:scale-102"
                     >
                       {item.label}
                     </button>
@@ -317,13 +317,13 @@ const Dashboard = () => {
               </div>
 
               {/* All-India Central Suggestions */}
-              <div className="p-5 sm:p-6 rounded-[28px] sm:rounded-[34px] bg-white dark:bg-[#121c2d] border border-slate-200/80 dark:border-slate-800 shadow-2xs space-y-4">
+              <div className="p-5 sm:p-6 rounded-[28px] sm:rounded-[34px] bg-white dark:bg-[#121212] border border-slate-200/80 dark:border-neutral-800 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
                     All-India Recruitment
                   </span>
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">95+ Central Exams</span>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-neutral-400">95+ Central Exams</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {POPULAR_CENTRAL_SUGGESTIONS.map((item, idx) => (
@@ -333,7 +333,7 @@ const Dashboard = () => {
                         setActiveTab('Exam Directory');
                         setSearchTerm(item.query);
                       }}
-                      className="px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 hover:border-blue-400 dark:hover:border-blue-400 text-slate-700 dark:text-slate-200 transition-all hover:scale-102"
+                      className="px-3.5 py-2 rounded-full text-xs font-semibold bg-slate-50 dark:bg-[#1a1a1a] border border-slate-200/80 dark:border-neutral-800 hover:border-blue-400 dark:hover:border-blue-400 text-slate-700 dark:text-neutral-200 transition-all hover:scale-102"
                     >
                       {item.label}
                     </button>
@@ -342,8 +342,8 @@ const Dashboard = () => {
               </div>
 
               {/* Browse CTA Banner */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-[26px] bg-slate-100/70 dark:bg-[#121c2d]/60 border border-slate-200/80 dark:border-slate-800 text-xs">
-                <p className="text-slate-600 dark:text-slate-300 text-center sm:text-left font-medium">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-[26px] bg-slate-100/70 dark:bg-[#161616] border border-slate-200/80 dark:border-neutral-800 text-xs">
+                <p className="text-slate-600 dark:text-neutral-300 text-center sm:text-left font-medium">
                   💡 <strong>Search or select any examination</strong> to inspect syllabus, official commission portals, or track application deadlines.
                 </p>
                 <button
@@ -351,7 +351,7 @@ const Dashboard = () => {
                     setActiveTab('Exam Directory');
                     setSearchTerm('');
                   }}
-                  className="rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-bold py-2.5 px-5 whitespace-nowrap shrink-0 transition-all shadow-2xs"
+                  className="rounded-full bg-white dark:bg-[#202020] border border-slate-200 dark:border-neutral-700 text-slate-800 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-[#262626] text-xs font-bold py-2.5 px-5 whitespace-nowrap shrink-0 transition-all shadow-2xs"
                 >
                   Browse All 160+ Exams
                 </button>
@@ -363,14 +363,14 @@ const Dashboard = () => {
             <div className="space-y-6">
               
               {/* Upcoming Deadlines Card */}
-              <div className="bg-white dark:bg-[#121c2d] rounded-[28px] sm:rounded-[34px] border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+              <div className="bg-white dark:bg-[#121212] rounded-[28px] sm:rounded-[34px] border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-2xs">
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                   <Clock className="w-5 h-5 text-rose-500" /> Upcoming Deadlines
                 </h2>
                 <div className="space-y-3">
                   {upcomingDeadlines.length > 0 ? (
                     upcomingDeadlines.map(item => (
-                      <div key={item.id} className="flex flex-col justify-between gap-2 p-3.5 rounded-2xl bg-rose-50/60 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/40">
+                      <div key={item.id} className="flex flex-col justify-between gap-2 p-3.5 rounded-2xl bg-rose-50/60 dark:bg-[#1a1114] border border-rose-100 dark:border-rose-950/60">
                         <div className="flex justify-between items-start gap-2">
                           <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">{item.title}</h4>
                           {item.daysRemaining !== undefined && (
@@ -385,7 +385,7 @@ const Dashboard = () => {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{formatDate(item.targetDate)}</p>
+                        <p className="text-xs text-slate-500 dark:text-neutral-400 font-medium">{formatDate(item.targetDate)}</p>
                       </div>
                     ))
                   ) : (
@@ -395,7 +395,7 @@ const Dashboard = () => {
               </div>
 
               {/* Important Updates Card */}
-              <div className="bg-white dark:bg-[#121c2d] rounded-[28px] sm:rounded-[34px] border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+              <div className="bg-white dark:bg-[#121212] rounded-[28px] sm:rounded-[34px] border border-slate-200/80 dark:border-neutral-800 p-5 sm:p-6 shadow-2xs">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                     <Bell className="w-5 h-5 text-saffron-500" /> Important Updates
@@ -407,14 +407,14 @@ const Dashboard = () => {
                 <div className="space-y-3">
                   {notifications.length > 0 ? (
                     notifications.map((notif) => (
-                      <div key={notif.id} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 text-xs space-y-1">
+                      <div key={notif.id} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#181818] border border-slate-100 dark:border-neutral-800 text-xs space-y-1">
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-bold text-slate-900 dark:text-white line-clamp-1">{notif.title}</span>
                         </div>
-                        <p className="text-slate-500 dark:text-slate-400 line-clamp-2 text-[11px] leading-relaxed">
+                        <p className="text-slate-500 dark:text-neutral-400 line-clamp-2 text-[11px] leading-relaxed">
                           {notif.message}
                         </p>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 block pt-0.5">
+                        <span className="text-[10px] text-slate-400 dark:text-neutral-500 block pt-0.5">
                           {formatDate(notif.created_at || notif.date || Date.now())}
                         </span>
                       </div>
@@ -433,12 +433,12 @@ const Dashboard = () => {
       {/* --- EXAM DIRECTORY TAB --- */}
       {activeTab === 'Exam Directory' && (
         <div className="space-y-6">
-          {/* Hero Band with Deep Navy & Large Rounded Corners */}
-          <div className="bg-[#0a121e] dark:bg-[#060b13] border border-slate-800/80 rounded-[32px] sm:rounded-[42px] py-10 px-6 text-center relative mt-2 shadow-md">
+          {/* Hero Band with Deep Black & Large Rounded Corners */}
+          <div className="bg-[#0a0a0a] dark:bg-[#080808] border border-neutral-800 rounded-[32px] sm:rounded-[42px] py-10 px-6 text-center relative mt-2 shadow-md">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-2 tracking-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
               Search Government Examinations
             </h2>
-            <p className="text-slate-300 dark:text-slate-400 text-xs sm:text-sm font-medium">160+ official Indian & Karnataka commission notifications</p>
+            <p className="text-neutral-300 dark:text-neutral-400 text-xs sm:text-sm font-medium">160+ official Indian & Karnataka commission notifications</p>
           </div>
           
           {/* Overlapping Pill Search Bar */}
@@ -450,13 +450,13 @@ const Dashboard = () => {
                 placeholder="Search exam or commission (KEA, KPSC, Police, UPSC)..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-12 pr-10 py-3.5 text-xs sm:text-sm rounded-full bg-white dark:bg-[#121c2d] shadow-xl border border-slate-200 dark:border-slate-700/80 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400"
+                className="w-full pl-12 pr-10 py-3.5 text-xs sm:text-sm rounded-full bg-white dark:bg-[#161616] shadow-xl border border-slate-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400"
               />
               {searchTerm && (
                 <button 
                   type="button" 
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 bg-slate-100 dark:bg-slate-800 rounded-full"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 bg-slate-100 dark:bg-[#222222] rounded-full"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -470,8 +470,8 @@ const Dashboard = () => {
               onClick={() => setSelectedCategory('All')}
               className={`px-4 py-2 rounded-full font-bold shrink-0 transition-all whitespace-nowrap ${
                 selectedCategory === 'All'
-                  ? 'bg-navy-950 dark:bg-white text-white dark:text-navy-950 shadow-sm'
-                  : 'bg-slate-100 dark:bg-[#121c2d] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                  ? 'bg-neutral-950 dark:bg-white text-white dark:text-black shadow-sm'
+                  : 'bg-slate-100 dark:bg-[#141414] text-slate-600 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-[#202020]'
               }`}
             >
               All Exams ({exams.length})
@@ -484,13 +484,13 @@ const Dashboard = () => {
                   onClick={() => { setSelectedCategory(cat.id); setVisibleCount(12); }}
                   className={`px-4 py-2 rounded-full font-bold shrink-0 transition-all whitespace-nowrap flex items-center gap-1.5 ${
                     selectedCategory === cat.id
-                      ? 'bg-navy-950 dark:bg-white text-white dark:text-navy-950 shadow-sm'
-                      : 'bg-slate-100 dark:bg-[#121c2d] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800'
+                      ? 'bg-neutral-950 dark:bg-white text-white dark:text-black shadow-sm'
+                      : 'bg-slate-100 dark:bg-[#141414] text-slate-600 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-[#202020]'
                   }`}
                 >
                   <span>{cat.name}</span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    selectedCategory === cat.id ? 'bg-white/25 text-white dark:bg-navy-950/20 dark:text-navy-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    selectedCategory === cat.id ? 'bg-white/25 text-white dark:bg-black/20 dark:text-black' : 'bg-slate-200 dark:bg-[#262626] text-slate-600 dark:text-neutral-400'
                   }`}>
                     {count}
                   </span>
@@ -499,7 +499,7 @@ const Dashboard = () => {
             })}
           </div>
 
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1 pt-1 font-medium">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-neutral-400 px-1 pt-1 font-medium">
             <span>
               Found <strong>{filteredExams.length}</strong> matching examinations
               {searchTerm.trim() ? ` for "${searchTerm.trim()}"` : ''}
@@ -515,7 +515,7 @@ const Dashboard = () => {
                 return (
                   <div 
                     key={exam.id || exam.short_name}
-                    className="bg-white dark:bg-[#121c2d] rounded-[26px] sm:rounded-[32px] border border-slate-200/80 dark:border-slate-800 p-5 flex flex-col justify-between shadow-2xs hover:border-saffron-400 dark:hover:border-saffron-500 transition-all"
+                    className="bg-white dark:bg-[#121212] rounded-[26px] sm:rounded-[32px] border border-slate-200/80 dark:border-neutral-800 p-5 flex flex-col justify-between shadow-2xs hover:border-saffron-400 dark:hover:border-saffron-500 transition-all"
                   >
                     <div>
                       <div className="mb-3 flex items-center justify-between">
@@ -534,12 +534,12 @@ const Dashboard = () => {
                       <h3 className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1 mb-1">
                         {exam.short_name} - {exam.name}
                       </h3>
-                      <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mb-4 font-medium">
+                      <p className="text-[11px] sm:text-xs text-slate-500 dark:text-neutral-400 line-clamp-1 mb-4 font-medium">
                         {exam.conducting_body} {exam.state ? `• ${exam.state}` : ''}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-neutral-800">
                       <Link
                         to={`/tracker?add=1&exam=${encodeURIComponent(exam.short_name)}`}
                         className="flex-1 text-center py-2 px-3 rounded-full bg-saffron-500 hover:bg-saffron-600 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1"
@@ -548,7 +548,7 @@ const Dashboard = () => {
                       </Link>
                       <Link
                         to={`/exams/${exam.id}`}
-                        className="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors"
+                        className="px-4 py-2 rounded-full border border-slate-200 dark:border-neutral-700 hover:bg-slate-100 dark:hover:bg-[#1c1c1c] text-slate-700 dark:text-neutral-200 text-xs font-bold transition-colors"
                       >
                         Syllabus
                       </Link>
@@ -558,14 +558,14 @@ const Dashboard = () => {
               })}
             </div>
           ) : (
-            <div className="text-center py-12 px-4 rounded-[28px] border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 space-y-3">
+            <div className="text-center py-12 px-4 rounded-[28px] border border-dashed border-slate-300 dark:border-neutral-800 bg-slate-50 dark:bg-[#121212] space-y-3">
               <Search className="w-8 h-8 text-slate-400 mx-auto" />
               <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
                 {searchTerm ? `No exams found for "${searchTerm}"` : 'No exams found in this category'}
               </h4>
               <button 
                 onClick={() => { setSearchTerm(''); setSelectedCategory('All'); }}
-                className="mt-2 text-xs font-bold px-5 py-2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-300 transition-colors"
+                className="mt-2 text-xs font-bold px-5 py-2 rounded-full bg-slate-200 dark:bg-neutral-800 text-slate-800 dark:text-neutral-200 hover:bg-slate-300 transition-colors"
               >
                 Clear Search
               </button>
@@ -576,7 +576,7 @@ const Dashboard = () => {
             <div className="flex justify-center pt-4">
               <button 
                 onClick={() => setVisibleCount(prev => prev + 12)}
-                className="px-6 py-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all shadow-xs"
+                className="px-6 py-2.5 rounded-full bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 text-slate-800 dark:text-neutral-200 text-xs font-bold transition-all shadow-xs"
               >
                 Load More (+12 Exams)
               </button>
@@ -604,18 +604,18 @@ const Dashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 px-4 rounded-[32px] bg-white dark:bg-[#121c2d] border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-sm">
+            <div className="text-center py-16 px-4 rounded-[32px] bg-white dark:bg-[#121212] border border-slate-200/80 dark:border-neutral-800 space-y-4 shadow-sm">
               <FileText className="w-12 h-12 mx-auto text-slate-400" />
               <h3 className="text-base font-bold text-slate-900 dark:text-white">No Applications Tracked Yet</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+              <p className="text-xs text-slate-500 dark:text-neutral-400 max-w-sm mx-auto">
                 Pick any exam from the directory or add a custom job post to track dates and checklists.
               </p>
-              <button 
-                onClick={() => setActiveTab('Exam Directory')} 
-                className="rounded-full bg-navy-950 dark:bg-white text-white dark:text-navy-950 text-xs font-bold py-2.5 px-6 inline-flex items-center gap-2 shadow-sm"
+              <Link 
+                to="/tracker?add=1" 
+                className="rounded-full bg-neutral-950 dark:bg-white text-white dark:text-black text-xs font-bold py-2.5 px-6 inline-flex items-center gap-2 shadow-sm"
               >
-                <Search className="w-4 h-4" /> Browse Exams
-              </button>
+                <Plus className="w-4 h-4" /> Add Application
+              </Link>
             </div>
           )}
         </div>

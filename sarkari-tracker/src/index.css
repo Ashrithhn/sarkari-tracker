@@ -6,14 +6,14 @@
 
 @layer base {
   * {
-    @apply border-gray-200 dark:border-slate-800;
+    @apply border-gray-200 dark:border-neutral-800;
   }
 
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
     width: 100%;
-    @apply transition-colors duration-200 font-sans;
+    @apply transition-colors duration-200 font-sans dark:bg-black;
   }
 
   ::-webkit-scrollbar {
@@ -26,22 +26,22 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+    @apply bg-slate-300 dark:bg-neutral-800 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400 dark:bg-slate-600;
+    @apply bg-slate-400 dark:bg-neutral-700;
   }
 }
 
 @layer components {
-  /* Crisp, elegant container cards */
+  /* Crisp, pure dark black container cards */
   .glass-card {
-    @apply bg-white dark:bg-[#131d2e] rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm transition-all;
+    @apply bg-white dark:bg-[#121212] rounded-3xl border border-slate-200/80 dark:border-neutral-800 shadow-sm transition-all;
   }
 
   .glass-card-hover {
-    @apply glass-card hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300;
+    @apply glass-card hover:shadow-md hover:border-slate-300 dark:hover:border-neutral-700 transition-all duration-300;
   }
 
   .gradient-saffron {
@@ -49,11 +49,7 @@
   }
 
   .gradient-navy {
-    @apply bg-gradient-to-r from-navy-800 to-navy-950;
-  }
-
-  .gradient-hero {
-    @apply bg-gradient-to-br from-navy-900 via-[#0d1624] to-navy-950;
+    @apply bg-gradient-to-r from-neutral-800 to-black;
   }
 
   .badge {
@@ -61,43 +57,43 @@
   }
 
   .badge-ssc {
-    @apply badge bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 dark:border dark:border-blue-800/40;
+    @apply badge bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300 dark:border dark:border-blue-900/40;
   }
 
   .badge-banking {
-    @apply badge bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border dark:border-emerald-800/40;
+    @apply badge bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border dark:border-emerald-900/40;
   }
 
   .badge-railway {
-    @apply badge bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 dark:border dark:border-rose-800/40;
+    @apply badge bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:border dark:border-rose-900/40;
   }
 
   .badge-upsc {
-    @apply badge bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 dark:border dark:border-purple-800/40;
+    @apply badge bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300 dark:border dark:border-purple-900/40;
   }
 
   .badge-psu {
-    @apply badge bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 dark:border dark:border-amber-800/40;
+    @apply badge bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 dark:border dark:border-amber-900/40;
   }
 
   .badge-state {
-    @apply badge bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 dark:border dark:border-teal-800/40;
+    @apply badge bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300 dark:border dark:border-teal-900/40;
   }
 
   .badge-defence {
-    @apply badge bg-indigo-100 text-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border dark:border-indigo-800/40;
+    @apply badge bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border dark:border-indigo-900/40;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-slate-100 dark:bg-[#162235] border border-slate-200/60 dark:border-slate-700/60 rounded-2xl focus:ring-2 focus:ring-saffron-500 dark:focus:ring-saffron-400 outline-none transition-all duration-200 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 text-sm;
+    @apply w-full px-4 py-3 bg-slate-100 dark:bg-[#181818] border border-slate-200/60 dark:border-neutral-800 rounded-2xl focus:ring-2 focus:ring-saffron-500 dark:focus:ring-saffron-400 outline-none transition-all duration-200 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 text-sm;
   }
 
   .btn-primary {
-    @apply px-6 py-2.5 bg-navy-950 dark:bg-saffron-500 hover:bg-navy-900 dark:hover:bg-saffron-600 text-white font-semibold rounded-full transition-all duration-200 active:scale-[0.98] shadow-sm;
+    @apply px-6 py-2.5 bg-neutral-950 dark:bg-white hover:bg-neutral-900 dark:hover:bg-neutral-100 text-white dark:text-neutral-950 font-bold rounded-full transition-all duration-200 active:scale-[0.98] shadow-sm;
   }
 
   .btn-secondary {
-    @apply px-6 py-2.5 bg-white dark:bg-[#162235] border border-slate-200 dark:border-slate-700/80 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold rounded-full transition-all duration-200 active:scale-[0.98];
+    @apply px-6 py-2.5 bg-white dark:bg-[#181818] border border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-200 hover:bg-slate-50 dark:hover:bg-[#222222] font-semibold rounded-full transition-all duration-200 active:scale-[0.98];
   }
 
   .btn-danger {
@@ -105,48 +101,48 @@
   }
 
   .status-applied {
-    @apply badge bg-blue-100 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 dark:border dark:border-blue-800/50;
+    @apply badge bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 dark:border dark:border-blue-900/40;
   }
 
   .status-admit {
-    @apply badge bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 dark:border dark:border-amber-800/50;
+    @apply badge bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 dark:border dark:border-amber-900/40;
   }
 
   .status-exam-done {
-    @apply badge bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 dark:border dark:border-emerald-800/50;
+    @apply badge bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border dark:border-emerald-900/40;
   }
 
   .status-result {
-    @apply badge bg-purple-100 text-purple-700 dark:bg-purple-950/70 dark:text-purple-300 dark:border dark:border-purple-800/50;
+    @apply badge bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 dark:border dark:border-purple-900/40;
   }
 
   .status-selected {
-    @apply badge bg-teal-100 text-teal-700 dark:bg-teal-950/70 dark:text-teal-300 dark:border dark:border-teal-800/50;
+    @apply badge bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300 dark:border dark:border-teal-900/40;
   }
 
   .status-rejected {
-    @apply badge bg-rose-100 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 dark:border dark:border-rose-800/50;
+    @apply badge bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 dark:border dark:border-rose-900/40;
   }
 
   /* Segmented Pill Tabs */
   .pill-tab-active {
-    @apply rounded-full bg-navy-950 dark:bg-white text-white dark:text-navy-950 px-5 py-2 text-sm font-bold shadow-sm transition-all;
+    @apply rounded-full bg-neutral-950 dark:bg-white text-white dark:text-neutral-950 px-5 py-2 text-sm font-bold shadow-sm transition-all;
   }
 
   .pill-tab {
-    @apply rounded-full text-slate-500 dark:text-slate-400 px-5 py-2 text-sm font-semibold hover:text-slate-900 dark:hover:text-white transition-colors;
+    @apply rounded-full text-slate-500 dark:text-neutral-400 px-5 py-2 text-sm font-semibold hover:text-slate-900 dark:hover:text-white transition-colors;
   }
 
   .pill-tab-track {
-    @apply inline-flex bg-slate-100/90 dark:bg-[#131d2e] rounded-full p-1.5 gap-1 border border-slate-200/80 dark:border-slate-800 shadow-sm;
+    @apply inline-flex bg-slate-100/90 dark:bg-[#141414] rounded-full p-1.5 gap-1 border border-slate-200/80 dark:border-neutral-800 shadow-sm;
   }
 
   .progress-pill {
-    @apply h-3 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden w-full;
+    @apply h-3 rounded-full bg-slate-200 dark:bg-neutral-800 overflow-hidden w-full;
   }
 
   .progress-pill-fill {
-    @apply bg-navy-950 dark:bg-white h-full rounded-full transition-all duration-300;
+    @apply bg-neutral-950 dark:bg-white h-full rounded-full transition-all duration-300;
   }
 }
 

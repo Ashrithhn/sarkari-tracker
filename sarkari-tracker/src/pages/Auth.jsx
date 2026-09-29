@@ -103,43 +103,43 @@ const Auth = ({ initialMode = 'signin' }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#9bb0a4] dark:bg-[#070b12] p-2.5 sm:p-4 lg:p-6 flex items-center justify-center font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="min-h-screen bg-[#9bb0a4] dark:bg-black p-2.5 sm:p-4 lg:p-6 flex items-center justify-center font-sans text-slate-800 dark:text-neutral-100 transition-colors duration-300">
       
       {/* Outer Shell Rounded Container Matching Dashboard */}
-      <div className="w-full max-w-4xl bg-white dark:bg-[#0d1522] rounded-[34px] sm:rounded-[48px] lg:rounded-[52px] overflow-hidden shadow-2xl border border-slate-300/60 dark:border-slate-800/90 p-4 sm:p-8 flex flex-col justify-between relative min-h-[640px]">
+      <div className="w-full max-w-4xl bg-white dark:bg-[#0a0a0a] rounded-[34px] sm:rounded-[48px] lg:rounded-[52px] overflow-hidden shadow-2xl border border-slate-300/60 dark:border-neutral-800 p-4 sm:p-8 flex flex-col justify-between relative min-h-[640px]">
         
         {/* Top Navbar Strip */}
-        <div className="flex items-center justify-between w-full pb-4 sm:pb-6 border-b border-slate-100 dark:border-slate-800/80">
+        <div className="flex items-center justify-between w-full pb-4 sm:pb-6 border-b border-slate-100 dark:border-neutral-800">
           <Link to="/" className="flex items-center gap-2 group">
             <span className="text-lg sm:text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-saffron-500 via-slate-800 to-emerald-600 dark:via-white truncate" style={{ fontFamily: 'Sora, sans-serif' }}>
               🇮🇳 Sarkari<span className="text-saffron-500">Tracker</span>
             </span>
-            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
               <ShieldCheck className="w-3 h-3 text-emerald-600" /> Verified Portal
             </span>
           </Link>
 
           <Link 
             to="/" 
-            className="rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 transition-all shadow-2xs"
+            className="rounded-full bg-slate-100 dark:bg-neutral-800 hover:bg-slate-200 dark:hover:bg-neutral-700 px-4 py-2 text-xs font-bold text-slate-700 dark:text-neutral-200 flex items-center gap-1.5 transition-all shadow-2xs"
           >
             <ArrowLeft size={14} /> Back to Dashboard
           </Link>
         </div>
 
         {/* Centered Login / Register Card */}
-        <div className="w-full max-w-[440px] mx-auto my-6 sm:my-8 bg-slate-50/70 dark:bg-[#121c2d] rounded-[30px] sm:rounded-[36px] border border-slate-200/80 dark:border-slate-800 p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="w-full max-w-[440px] mx-auto my-6 sm:my-8 bg-slate-50/70 dark:bg-[#121212] rounded-[30px] sm:rounded-[36px] border border-slate-200/80 dark:border-neutral-800 p-6 sm:p-8 shadow-xs space-y-6">
           
           {/* Segmented Pill Toggle */}
           <div className="flex justify-center">
-            <div className="inline-flex bg-slate-200/80 dark:bg-[#090f1a] p-1.5 rounded-full border border-slate-300/50 dark:border-slate-800 shadow-2xs">
+            <div className="inline-flex bg-slate-200/80 dark:bg-[#000000] p-1.5 rounded-full border border-slate-300/50 dark:border-neutral-800 shadow-2xs">
               <button
                 type="button"
                 onClick={() => { setMode('signin'); setError(''); }}
                 className={`rounded-full px-6 py-2 text-xs sm:text-sm font-bold transition-all ${
                   mode === 'signin' 
-                    ? 'bg-navy-950 dark:bg-white text-white dark:text-navy-950 shadow-sm' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-neutral-950 dark:bg-white text-white dark:text-black shadow-sm' 
+                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Sign In
@@ -149,8 +149,8 @@ const Auth = ({ initialMode = 'signin' }) => {
                 onClick={() => { setMode('signup'); setError(''); }}
                 className={`rounded-full px-6 py-2 text-xs sm:text-sm font-bold transition-all ${
                   mode === 'signup' 
-                    ? 'bg-navy-950 dark:bg-white text-white dark:text-navy-950 shadow-sm' 
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-neutral-950 dark:bg-white text-white dark:text-black shadow-sm' 
+                    : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Sign Up
@@ -163,7 +163,7 @@ const Auth = ({ initialMode = 'signin' }) => {
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
               {mode === 'signin' ? 'Candidate Sign In' : 'Create Candidate Account'}
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-xs text-slate-500 dark:text-neutral-400 font-medium">
               {mode === 'signin' 
                 ? 'Access your tracked applications, admit cards & exam alerts'
                 : 'Track 160+ official Indian & Karnataka government recruitment tests'}
@@ -181,7 +181,7 @@ const Auth = ({ initialMode = 'signin' }) => {
             {mode === 'signup' && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 mb-1">
                     First Name *
                   </label>
                   <input
@@ -190,12 +190,12 @@ const Auth = ({ initialMode = 'signin' }) => {
                     required
                     value={formData.firstName}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#162235] border border-slate-200 dark:border-slate-700/80 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
+                    className="w-full px-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#181818] border border-slate-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
                     placeholder="Ashrith"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 mb-1">
                     Last Name
                   </label>
                   <input
@@ -203,7 +203,7 @@ const Auth = ({ initialMode = 'signin' }) => {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#162235] border border-slate-200 dark:border-slate-700/80 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
+                    className="w-full px-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#181818] border border-slate-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
                     placeholder="H N"
                   />
                 </div>
@@ -211,7 +211,7 @@ const Auth = ({ initialMode = 'signin' }) => {
             )}
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 mb-1">
                 Email Address *
               </label>
               <div className="relative">
@@ -222,7 +222,7 @@ const Auth = ({ initialMode = 'signin' }) => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#162235] border border-slate-200 dark:border-slate-700/80 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
+                  className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#181818] border border-slate-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
                   placeholder="name@example.com"
                   autoComplete="email"
                 />
@@ -231,7 +231,7 @@ const Auth = ({ initialMode = 'signin' }) => {
 
             {mode === 'signup' && (
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 mb-1">
                   Mobile Number <span className="normal-case text-slate-400">(Optional)</span>
                 </label>
                 <div className="relative">
@@ -241,7 +241,7 @@ const Auth = ({ initialMode = 'signin' }) => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#162235] border border-slate-200 dark:border-slate-700/80 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
+                    className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#181818] border border-slate-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
                     placeholder="9876543210"
                   />
                 </div>
@@ -249,7 +249,7 @@ const Auth = ({ initialMode = 'signin' }) => {
             )}
 
             <div>
-              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 mb-1">
                 Password * {mode === 'signup' && <span className="normal-case text-slate-400">(min 6 chars)</span>}
               </label>
               <div className="relative">
@@ -260,7 +260,7 @@ const Auth = ({ initialMode = 'signin' }) => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#162235] border border-slate-200 dark:border-slate-700/80 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
+                  className="w-full pl-10 pr-10 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#181818] border border-slate-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
                   placeholder="••••••••"
                   autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                 />
@@ -277,7 +277,7 @@ const Auth = ({ initialMode = 'signin' }) => {
 
             {mode === 'signup' && (
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-neutral-400 mb-1">
                   Confirm Password *
                 </label>
                 <div className="relative">
@@ -288,7 +288,7 @@ const Auth = ({ initialMode = 'signin' }) => {
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#162235] border border-slate-200 dark:border-slate-700/80 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
+                    className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-2xl bg-white dark:bg-[#181818] border border-slate-200 dark:border-neutral-700 focus:outline-none focus:ring-2 focus:ring-saffron-500 text-slate-900 dark:text-white placeholder-slate-400 shadow-2xs"
                     placeholder="••••••••"
                     autoComplete="new-password"
                   />
@@ -299,7 +299,7 @@ const Auth = ({ initialMode = 'signin' }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-full bg-navy-950 dark:bg-white hover:bg-navy-900 dark:hover:bg-slate-100 text-white dark:text-navy-950 font-bold text-xs sm:text-sm shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 mt-2"
+              className="w-full py-3 rounded-full bg-neutral-950 dark:bg-white hover:bg-neutral-900 dark:hover:bg-neutral-200 text-white dark:text-black font-bold text-xs sm:text-sm shadow-md transition-all active:scale-98 flex items-center justify-center gap-2 mt-2"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
@@ -310,7 +310,7 @@ const Auth = ({ initialMode = 'signin' }) => {
           </form>
 
           {/* Footer switch note */}
-          <div className="text-center pt-2 border-t border-slate-200/60 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-medium">
+          <div className="text-center pt-2 border-t border-slate-200/60 dark:border-neutral-800 text-xs text-slate-500 dark:text-neutral-400 font-medium">
             {mode === 'signin' ? (
               <p>
                 Don't have an account?{' '}
@@ -338,7 +338,7 @@ const Auth = ({ initialMode = 'signin' }) => {
         </div>
 
         {/* Bottom Trust Stamp */}
-        <div className="text-center text-[11px] text-slate-400 dark:text-slate-500 pt-4 border-t border-slate-100 dark:border-slate-800/80 font-medium">
+        <div className="text-center text-[11px] text-slate-400 dark:text-neutral-500 pt-4 border-t border-slate-100 dark:border-neutral-800/80 font-medium">
           Official Government Exam Tracker • UPSC, SSC, Banking, Railways & Karnataka State
         </div>
 

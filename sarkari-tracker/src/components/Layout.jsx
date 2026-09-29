@@ -18,24 +18,24 @@ const Layout = ({ darkMode, toggleDarkMode }) => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-[#9bb0a4] dark:bg-[#070b12] p-2 sm:p-4 lg:p-6 flex font-sans text-slate-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="min-h-screen bg-[#9bb0a4] dark:bg-black p-2 sm:p-4 lg:p-6 flex font-sans text-slate-800 dark:text-neutral-100 transition-colors duration-300">
       
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
+          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Outer Shell Rounded Container */}
-      <div className="flex-1 bg-white dark:bg-[#0d1522] rounded-[34px] sm:rounded-[44px] lg:rounded-[52px] overflow-hidden flex shadow-2xl border border-slate-300/60 dark:border-slate-800/90 relative p-2 sm:p-3.5 gap-2 sm:gap-3.5">
+      <div className="flex-1 bg-white dark:bg-[#0a0a0a] rounded-[34px] sm:rounded-[48px] lg:rounded-[52px] overflow-hidden flex shadow-2xl border border-slate-300/60 dark:border-neutral-800 relative p-2 sm:p-3.5 gap-2 sm:gap-3.5">
         
         {/* Floating Capsule Sidebar */}
         <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
         
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden relative rounded-[28px] sm:rounded-[38px] bg-slate-50/40 dark:bg-[#090f1a] border border-slate-100 dark:border-slate-800/60">
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative rounded-[28px] sm:rounded-[38px] bg-slate-50/40 dark:bg-black border border-slate-100 dark:border-neutral-800/80">
           
           {/* Navbar inline at top */}
           <Navbar 

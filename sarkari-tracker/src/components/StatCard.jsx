@@ -33,7 +33,7 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, subtitle, maxVa
   const trendColors = {
     up: 'text-emerald-500 dark:text-emerald-400',
     down: 'text-rose-500 dark:text-rose-400',
-    neutral: 'text-slate-400 dark:text-slate-500'
+    neutral: 'text-slate-400 dark:text-neutral-500'
   };
 
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
@@ -46,8 +46,8 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, subtitle, maxVa
   const filledPillsCount = Math.round(proportion * numPills);
 
   const cardBgClasses = accent 
-    ? 'bg-[#edf68d] dark:bg-[#1a2916] border border-[#dee87d] dark:border-[#2d461f] text-slate-900 dark:text-[#e4f995] shadow-xs' 
-    : 'bg-white dark:bg-[#121c2d] border border-slate-200/80 dark:border-slate-800 shadow-xs text-slate-900 dark:text-white';
+    ? 'bg-[#edf68d] dark:bg-[#181a10] border border-[#dee87d] dark:border-[#2f3318] text-slate-900 dark:text-[#f3ffb8] shadow-xs' 
+    : 'bg-white dark:bg-[#121212] border border-slate-200/80 dark:border-neutral-800 shadow-xs text-slate-900 dark:text-white';
 
   return (
     <div className={`${cardBgClasses} rounded-[26px] sm:rounded-[32px] p-5 sm:p-6 flex flex-col justify-between h-full transition-all duration-300`}>
@@ -56,9 +56,9 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, subtitle, maxVa
         <div className="flex items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             {Icon && (
-              <Icon className={`w-4 h-4 ${accent ? 'text-slate-700 dark:text-[#d3eb74]' : 'text-slate-400 dark:text-slate-500'}`} />
+              <Icon className={`w-4 h-4 ${accent ? 'text-slate-700 dark:text-[#d3eb74]' : 'text-slate-400 dark:text-neutral-500'}`} />
             )}
-            <p className={`text-xs font-bold uppercase tracking-wider truncate ${accent ? 'text-slate-700 dark:text-[#d3eb74]' : 'text-slate-500 dark:text-slate-400'}`}>
+            <p className={`text-xs font-bold uppercase tracking-wider truncate ${accent ? 'text-slate-700 dark:text-[#d3eb74]' : 'text-slate-500 dark:text-neutral-400'}`}>
               {title}
             </p>
           </div>
@@ -84,7 +84,7 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, subtitle, maxVa
               </span>
             )}
             {subtitle && (
-              <span className={`truncate text-xs ${accent ? 'text-slate-700 dark:text-[#cfe776]' : 'text-slate-500 dark:text-slate-400'}`}>
+              <span className={`truncate text-xs ${accent ? 'text-slate-700 dark:text-[#cfe776]' : 'text-slate-500 dark:text-neutral-400'}`}>
                 {subtitle}
               </span>
             )}
@@ -98,11 +98,11 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, subtitle, maxVa
           const isFilled = i < (accent ? 5 : filledPillsCount);
           let pillColor = '';
           if (accent) {
-            pillColor = isFilled ? 'bg-slate-950 dark:bg-[#e4f995]' : 'bg-black/10 dark:bg-white/10';
+            pillColor = isFilled ? 'bg-slate-950 dark:bg-[#f3ffb8]' : 'bg-black/10 dark:bg-white/10';
           } else {
             pillColor = isFilled 
-              ? 'bg-navy-950 dark:bg-white shadow-xs' 
-              : 'bg-slate-200/90 dark:bg-slate-800/80 border border-slate-300/40 dark:border-slate-700/50';
+              ? 'bg-neutral-950 dark:bg-white shadow-xs' 
+              : 'bg-slate-200/90 dark:bg-[#202020] border border-slate-300/40 dark:border-neutral-700/60';
           }
 
           return (

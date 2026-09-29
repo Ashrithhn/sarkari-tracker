@@ -477,44 +477,26 @@ const JobTracker = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 pt-20 text-slate-800 dark:text-slate-200">
+    <div className="w-full text-slate-800 dark:text-slate-100 py-2">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-navy-950 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
               My Government Job Applications
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-neutral-400 mt-1 font-medium">
               Personal application lifecycle tracker with official commission sync & document checklists.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
-            <button
-              onClick={handleRunDailyChecks}
-              disabled={isRunningDailyChecks || jobs.length === 0}
-              className="btn-secondary text-xs sm:text-sm flex items-center gap-1.5 py-2.5 px-3.5 bg-gradient-to-r from-amber-50 to-saffron-50 dark:from-amber-950/30 dark:to-saffron-950/30 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-800 hover:border-amber-400"
-              title="Audit official commission notices and Google Search for updates across all tracked exams"
-            >
-              <RefreshCw className={`w-4 h-4 text-saffron-600 dark:text-saffron-400 ${isRunningDailyChecks ? 'animate-spin' : ''}`} />
-              <span>{isRunningDailyChecks ? 'Auditing...' : "Run Today's AI Check"}</span>
-            </button>
-
-            <button
-              onClick={exportJobsCsv}
-              className="btn-secondary text-xs sm:text-sm flex items-center gap-1.5 py-2.5 px-3.5"
-              title="Download your tracked applications as a CSV spreadsheet"
-            >
-              <Download className="w-4 h-4" /> Export CSV
-            </button>
-
+          <div className="flex items-center gap-2.5 self-start sm:self-auto">
             <button
               onClick={openAddModal}
-              className="btn-primary text-xs sm:text-sm flex items-center gap-1.5 py-2.5 px-4"
+              className="rounded-full bg-navy-950 dark:bg-white hover:bg-navy-900 dark:hover:bg-neutral-100 text-white dark:text-black font-bold text-xs sm:text-sm flex items-center gap-1.5 py-2.5 px-6 shadow-sm transition-all active:scale-98"
             >
-              <Plus className="w-4 h-4" /> Track New Application
+              <Plus className="w-4 h-4 stroke-[2.5]" /> Track New Application
             </button>
           </div>
         </div>
