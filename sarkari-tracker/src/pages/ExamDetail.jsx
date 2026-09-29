@@ -568,47 +568,47 @@ const ExamDetail = () => {
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a] text-slate-900 dark:text-white pb-16">
       
       {/* HEADER HERO CONTAINER */}
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 pt-3 sm:pt-5">
-        <div className="bg-[#0c0c0c] border border-neutral-800 rounded-[28px] sm:rounded-[36px] p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
-          <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between relative z-10">
-            <div className="space-y-3.5 max-w-3xl">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="bg-saffron-500/20 text-saffron-400 border border-saffron-500/30 text-xs font-bold px-3 py-1 rounded-full shadow-xs">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 pt-2.5 sm:pt-4">
+        <div className="bg-[#0c0c0c] border border-neutral-800 rounded-[20px] sm:rounded-[32px] p-4 sm:p-6 lg:p-7 text-white shadow-md relative overflow-hidden">
+          <div className="flex flex-col md:flex-row gap-4 sm:gap-6 lg:gap-8 items-start md:items-center justify-between relative z-10">
+            <div className="space-y-2.5 sm:space-y-3.5 max-w-3xl w-full">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="bg-saffron-500/20 text-saffron-400 border border-saffron-500/30 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-xs">
                   {exam.category} {exam.state ? `• ${exam.state}` : ''}
                 </span>
-                <span className="bg-white/10 text-neutral-300 text-xs font-semibold px-3 py-1 rounded-full border border-white/10 uppercase">
+                <span className="bg-white/10 text-neutral-300 text-[11px] sm:text-xs font-semibold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-white/10 uppercase">
                   {exam.level}
                 </span>
                 {exam.data_status === 'verified' ? (
-                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full flex items-center gap-1.5 shadow-xs">
                     <ShieldCheck className="w-3.5 h-3.5" /> Official Verified Schedule
                   </span>
                 ) : aiOverview?.is_closed ? (
-                  <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                  <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full flex items-center gap-1.5 shadow-xs">
                     <Clock className="w-3.5 h-3.5 text-rose-400" /> Application Closed ({formatDate(aiOverview.active_last_date || aiOverview.apply_last_date)})
                   </span>
                 ) : aiOverview?.is_extended ? (
-                  <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                  <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full flex items-center gap-1.5 shadow-xs">
                     <Clock className="w-3.5 h-3.5 text-amber-300" /> Deadline Extended: {formatDate(aiOverview.extended_last_date || aiOverview.active_last_date)}
                   </span>
                 ) : (aiOverview?.active_last_date || aiOverview?.apply_last_date) ? (
-                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full flex items-center gap-1.5 shadow-xs">
                     <Sparkles className="w-3.5 h-3.5" /> Applications Open till {formatDate(aiOverview.active_last_date || aiOverview.apply_last_date)}
                   </span>
                 ) : (
-                  <span className="bg-white/10 text-neutral-400 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/10">
+                  <span className="bg-white/10 text-neutral-400 text-[11px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full flex items-center gap-1.5 border border-white/10">
                     <Clock className="w-3.5 h-3.5" /> Notice Awaited
                   </span>
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
                 {exam.name}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-4 text-neutral-400 text-xs sm:text-sm">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-neutral-400 text-xs sm:text-sm">
                 <span className="flex items-center gap-1.5 font-medium">
-                  <Briefcase className="w-4 h-4 text-saffron-400" /> {exam.conducting_body}
+                  <Briefcase className="w-3.5 h-3.5 text-saffron-400" /> {exam.conducting_body}
                 </span>
                 <a 
                   href={officialPortal} 
@@ -621,56 +621,56 @@ const ExamDetail = () => {
               </div>
 
               {/* REAL-TIME AI DATES & SCHEDULE HIGHLIGHT (Subtle green accent card as requested) */}
-              <div className="mt-4 p-4 sm:p-5 rounded-[24px] border border-emerald-500/30 bg-emerald-950/20 dark:bg-emerald-950/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm text-neutral-200">
+              <div className="mt-3 p-3 sm:p-4 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 dark:bg-emerald-950/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 shadow-sm text-neutral-200">
                 {exam.data_status === 'verified' && exam.dates?.exam_date ? (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> CONFIRMED EXAM DATE
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> CONFIRMED EXAM DATE
                       </span>
-                      <span className="text-xs text-emerald-400/80 font-medium">
+                      <span className="text-[11px] sm:text-xs text-emerald-400/80 font-medium">
                         Official Notification / Commission Schedule
                       </span>
                     </div>
-                    <div className="text-lg sm:text-xl font-black text-white">
+                    <div className="text-base sm:text-lg md:text-xl font-black text-white">
                       {formatDate(exam.dates.exam_date)}
                       {exam.dates.mains_exam_date && (
-                        <span className="text-sm font-normal text-neutral-400 block sm:inline sm:ml-2">
+                        <span className="text-xs sm:text-sm font-normal text-neutral-400 block sm:inline sm:ml-2">
                           (RPC: {formatDate(exam.dates.exam_date)} • KK: {formatDate(exam.dates.mains_exam_date)})
                         </span>
                       )}
                     </div>
                     {exam.dates.notes && (
-                      <p className="text-xs text-emerald-300/80">
+                      <p className="text-[11px] sm:text-xs text-emerald-300/80">
                         📝 {exam.dates.notes}
                       </p>
                     )}
                   </div>
                 ) : application?.user_exam_date ? (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400" /> TENTATIVE TARGET DATE
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> TENTATIVE TARGET DATE
                       </span>
-                      <span className="text-xs text-emerald-400/80 font-medium">
+                      <span className="text-[11px] sm:text-xs text-emerald-400/80 font-medium">
                         Candidate Personal Tracker
                       </span>
                     </div>
-                    <div className="text-lg sm:text-xl font-black text-white">
+                    <div className="text-base sm:text-lg md:text-xl font-black text-white">
                       {formatDate(application.user_exam_date)}
                     </div>
-                    <p className="text-xs text-emerald-300/80">
+                    <p className="text-[11px] sm:text-xs text-emerald-300/80">
                       Official notification is awaited. Personal study countdown enabled.
                     </p>
                   </div>
                 ) : aiOverview && (aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date || aiOverview.prelims_exam_date) ? (
-                  <div className="space-y-3 w-full">
+                  <div className="space-y-2.5 w-full">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-emerald-300" /> REAL-TIME AI OVERVIEW
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
+                          <Sparkles className="w-3 h-3 text-emerald-300" /> REAL-TIME AI OVERVIEW
                         </span>
-                        <span className="text-xs font-semibold text-emerald-400/90">
+                        <span className="text-[11px] sm:text-xs font-semibold text-emerald-400/90">
                           {aiOverview.is_closed ? 'Application Closed' : aiOverview.is_extended ? 'Deadline Extended' : 'Active Recruitment'}
                         </span>
                       </div>
@@ -680,18 +680,18 @@ const ExamDetail = () => {
                           last_date: aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date,
                           exam_date: aiOverview.prelims_exam_date || aiOverview.mains_exam_date
                         })}
-                        className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-neutral-950 transition-all shadow-xs shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+                        className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-neutral-950 transition-all shadow-xs shrink-0 cursor-pointer inline-flex items-center gap-1"
                       >
-                        <Zap className="w-3.5 h-3.5 fill-neutral-950" /> Use as Target
+                        <Zap className="w-3 h-3 fill-neutral-950" /> Use as Target
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-0.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-0.5">
                       {(aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date) && (
-                        <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 backdrop-blur-xs flex items-center gap-2.5">
-                          <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-emerald-500/20 backdrop-blur-xs flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                           <div>
-                            <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
+                            <span className="text-[9px] sm:text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold leading-tight">
                               {aiOverview.is_closed ? 'Application Closed' : aiOverview.is_extended ? 'Extended Deadline' : 'Last Date to Apply'}
                             </span>
                             <strong className="text-xs sm:text-sm font-bold text-white">
@@ -702,10 +702,10 @@ const ExamDetail = () => {
                       )}
 
                       {aiOverview.prelims_exam_date && (
-                        <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 backdrop-blur-xs flex items-center gap-2.5">
-                          <Calendar className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-emerald-500/20 backdrop-blur-xs flex items-center gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                           <div>
-                            <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
+                            <span className="text-[9px] sm:text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold leading-tight">
                               Preliminary Exam Date
                             </span>
                             <strong className="text-xs sm:text-sm font-bold text-white">
@@ -716,10 +716,10 @@ const ExamDetail = () => {
                       )}
 
                       {aiOverview.vacancies && (
-                        <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 backdrop-blur-xs flex items-center gap-2.5">
-                          <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div className="p-2 sm:p-2.5 rounded-xl bg-black/40 border border-emerald-500/20 backdrop-blur-xs flex items-center gap-2">
+                          <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                           <div>
-                            <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
+                            <span className="text-[9px] sm:text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold leading-tight">
                               Total Vacancies
                             </span>
                             <strong className="text-xs sm:text-sm font-bold text-white">
@@ -733,10 +733,10 @@ const ExamDetail = () => {
                 ) : (
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-white/10 text-neutral-300">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider bg-white/10 text-neutral-300">
                         ⚪ NOTICE AWAITED
                       </span>
-                      <span className="text-xs text-neutral-400">
+                      <span className="text-[11px] sm:text-xs text-neutral-400">
                         Expected dates will update once official notification is published
                       </span>
                     </div>
@@ -744,23 +744,24 @@ const ExamDetail = () => {
                 )}
 
                 {exam.dates?.exam_date && (
-                  <div className="shrink-0 w-full sm:w-auto">
-                    <DeadlineTimer targetDate={exam.dates.exam_date} />
+                  <div className="shrink-0 w-full sm:w-auto mt-1 sm:mt-0">
+                    <DeadlineTimer targetDate={exam.dates.exam_date} size="small" />
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 min-w-[220px] w-full md:w-auto">
+            {/* ACTION BUTTONS (Responsive compact layout for mobile/small/medium viewports) */}
+            <div className="flex flex-col sm:flex-col md:flex-col gap-2 w-full md:w-auto md:min-w-[210px] shrink-0">
               {application ? (
-                <div className="bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-[24px] text-center space-y-1.5">
-                  <div className="flex items-center justify-center gap-1.5 text-emerald-400 text-sm font-bold">
-                    <CheckCircle className="w-4 h-4" /> Application Tracked
+                <div className="bg-emerald-950/30 border border-emerald-500/30 p-2.5 sm:p-3.5 rounded-2xl text-center space-y-1">
+                  <div className="flex items-center justify-center gap-1.5 text-emerald-400 text-xs sm:text-sm font-bold">
+                    <CheckCircle className="w-3.5 h-3.5" /> Application Tracked
                   </div>
-                  <div className="text-xs text-neutral-300">
+                  <div className="text-[11px] sm:text-xs text-neutral-300">
                     Status: <span className="font-semibold text-white uppercase">{application.status}</span>
                   </div>
-                  <div className="flex items-center justify-center gap-2 pt-1 text-[11px]">
+                  <div className="flex items-center justify-center gap-2 pt-0.5 text-[11px]">
                     <Link to="/tracker" className="text-saffron-400 hover:underline font-semibold">
                       Manage →
                     </Link>
@@ -778,49 +779,53 @@ const ExamDetail = () => {
                 <button 
                   onClick={handleApply} 
                   disabled={actionLoading}
-                  className="rounded-full bg-white hover:bg-neutral-100 disabled:opacity-75 text-neutral-950 font-bold py-3 px-6 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-102"
+                  className="rounded-full bg-white hover:bg-neutral-100 disabled:opacity-75 text-neutral-950 font-bold py-2.5 px-5 shadow-sm transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer hover:scale-101 w-full"
                 >
                   {actionLoading ? (
                     <>
-                      <Sparkles className="w-5 h-5 animate-spin text-neutral-600" />
+                      <Sparkles className="w-4 h-4 animate-spin text-neutral-600" />
                       <span>Fetching via AI...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="w-5 h-5" /> 
+                      <CheckCircle className="w-4 h-4" /> 
                       <span>Track Application</span>
                     </>
                   )}
                 </button>
               )}
 
-              <button 
-                onClick={handleRemind} 
-                className="rounded-full bg-[#181818] hover:bg-[#202020] text-white font-semibold py-2.5 px-5 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm border border-neutral-800 cursor-pointer"
-              >
-                <Clock className="w-4 h-4 text-saffron-400" /> Set Deadline Alert
-              </button>
+              <div className="grid grid-cols-2 md:flex md:flex-col gap-2 w-full">
+                <button 
+                  onClick={handleRemind} 
+                  className="rounded-full bg-[#181818] hover:bg-[#202020] text-white font-semibold py-2 px-3 transition-all flex items-center justify-center gap-1.5 text-xs sm:text-sm border border-neutral-800 cursor-pointer"
+                >
+                  <Clock className="w-3.5 h-3.5 text-saffron-400 shrink-0" />
+                  <span className="truncate">Set Alert</span>
+                </button>
 
-              <button 
-                onClick={() => setIsContributeModalOpen(true)}
-                className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-5 shadow-sm transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
-                title="Candidates can upload notifications, cutoffs, syllabus directly"
-              >
-                <Upload className="w-4 h-4 text-white" /> Upload / Share Info
-              </button>
+                <button 
+                  onClick={() => setIsContributeModalOpen(true)}
+                  className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-3 shadow-xs transition-all flex items-center justify-center gap-1.5 text-xs sm:text-sm cursor-pointer"
+                  title="Candidates can upload notifications, cutoffs, syllabus directly"
+                >
+                  <Upload className="w-3.5 h-3.5 text-white shrink-0" />
+                  <span className="truncate">Upload Info</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* NAVIGATION TABS (Pill Segmented Track) & CONTENT CONTAINER */}
-      <div className="max-w-6xl mx-auto px-3 sm:px-6 mt-6">
-        <div className="pill-tab-track flex items-center gap-1.5 bg-slate-100/90 dark:bg-[#141414] p-1.5 rounded-full w-max border border-slate-200/80 dark:border-neutral-800 overflow-x-auto max-w-full shadow-2xs mb-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 mt-4 sm:mt-6">
+        <div className="pill-tab-track flex items-center gap-1 bg-slate-100/90 dark:bg-[#141414] p-1 sm:p-1.5 rounded-full w-max border border-slate-200/80 dark:border-neutral-800 overflow-x-auto max-w-full shadow-2xs mb-5 sm:mb-8">
           {tabs.map(tab => (
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-2 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
+              className={`px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === tab.id 
                   ? 'pill-tab-active bg-neutral-950 dark:bg-white text-white dark:text-black shadow-sm' 
                   : 'pill-tab text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
