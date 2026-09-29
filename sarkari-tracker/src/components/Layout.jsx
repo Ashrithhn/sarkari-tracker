@@ -17,6 +17,8 @@ const Layout = ({ darkMode, toggleDarkMode }) => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [location.pathname]);
 
+  const isHomeDashboard = location.pathname === '/';
+
   return (
     <div className="min-h-screen bg-[#9bb0a4] dark:bg-black p-2 sm:p-4 lg:p-6 flex font-sans text-slate-800 dark:text-neutral-100 transition-colors duration-300">
       
@@ -46,10 +48,10 @@ const Layout = ({ darkMode, toggleDarkMode }) => {
           
           {/* Main scrollable content */}
           <main ref={mainRef} className="flex-1 overflow-y-auto w-full flex flex-col justify-between custom-scrollbar px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
-            <div className="w-full max-w-7xl mx-auto flex-1">
+            <div className="w-full max-w-7xl mx-auto flex-1 pb-6">
               <Outlet />
             </div>
-            <Footer />
+            {isHomeDashboard && <Footer />}
           </main>
         </div>
       </div>
