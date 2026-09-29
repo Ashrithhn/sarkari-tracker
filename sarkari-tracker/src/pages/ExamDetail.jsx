@@ -565,296 +565,265 @@ const ExamDetail = () => {
   const notificationPdfUrl = exam.notification_pdf?.file_url || exam.notification_url;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 pt-16 pb-16 text-slate-800 dark:text-slate-200">
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] text-slate-900 dark:text-white pb-16">
       
-      {/* HEADER HERO */}
-      <div className="bg-gradient-to-r from-navy-950 via-navy-900 to-navy-800 text-white py-12 px-4 sm:px-6 border-b border-navy-700/50">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
-          <div className="space-y-3.5 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="bg-saffron-500 text-white text-xs font-bold px-3 py-1 rounded-md shadow-sm">
-                {exam.category} {exam.state ? `• ${exam.state}` : ''}
-              </span>
-              <span className="bg-blue-500/20 text-blue-200 text-xs font-semibold px-2.5 py-1 rounded-md border border-blue-400/30 uppercase">
-                {exam.level}
-              </span>
-              {exam.data_status === 'verified' ? (
-                <span className="bg-emerald-600/90 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <ShieldCheck className="w-3.5 h-3.5" /> Official Verified Schedule
+      {/* HEADER HERO CONTAINER */}
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 pt-3 sm:pt-5">
+        <div className="bg-[#0c0c0c] border border-neutral-800 rounded-[28px] sm:rounded-[36px] p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+          <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between relative z-10">
+            <div className="space-y-3.5 max-w-3xl">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="bg-saffron-500/20 text-saffron-400 border border-saffron-500/30 text-xs font-bold px-3 py-1 rounded-full shadow-xs">
+                  {exam.category} {exam.state ? `• ${exam.state}` : ''}
                 </span>
-              ) : aiOverview?.is_closed ? (
-                <span className="bg-rose-600 text-white text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <Clock className="w-3.5 h-3.5 text-white" /> Application Closed ({formatDate(aiOverview.active_last_date || aiOverview.apply_last_date)})
+                <span className="bg-white/10 text-neutral-300 text-xs font-semibold px-3 py-1 rounded-full border border-white/10 uppercase">
+                  {exam.level}
                 </span>
-              ) : aiOverview?.is_extended ? (
-                <span className="bg-amber-400 text-slate-950 text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <Clock className="w-3.5 h-3.5 text-slate-950" /> Deadline Extended: {formatDate(aiOverview.extended_last_date || aiOverview.active_last_date)}
-                </span>
-              ) : (aiOverview?.active_last_date || aiOverview?.apply_last_date) ? (
-                <span className="bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5" /> Applications Open till {formatDate(aiOverview.active_last_date || aiOverview.apply_last_date)}
-                </span>
-              ) : (
-                <span className="bg-amber-600/90 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                  <Clock className="w-3.5 h-3.5" /> Notice Awaited / Will be updated soon
-                </span>
-              )}
-            </div>
+                {exam.data_status === 'verified' ? (
+                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Official Verified Schedule
+                  </span>
+                ) : aiOverview?.is_closed ? (
+                  <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                    <Clock className="w-3.5 h-3.5 text-rose-400" /> Application Closed ({formatDate(aiOverview.active_last_date || aiOverview.apply_last_date)})
+                  </span>
+                ) : aiOverview?.is_extended ? (
+                  <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                    <Clock className="w-3.5 h-3.5 text-amber-300" /> Deadline Extended: {formatDate(aiOverview.extended_last_date || aiOverview.active_last_date)}
+                  </span>
+                ) : (aiOverview?.active_last_date || aiOverview?.apply_last_date) ? (
+                  <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5" /> Applications Open till {formatDate(aiOverview.active_last_date || aiOverview.apply_last_date)}
+                  </span>
+                ) : (
+                  <span className="bg-white/10 text-neutral-400 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 border border-white/10">
+                    <Clock className="w-3.5 h-3.5" /> Notice Awaited
+                  </span>
+                )}
+              </div>
 
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white">
-              {exam.name}
-            </h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-white" style={{ fontFamily: 'Sora, sans-serif' }}>
+                {exam.name}
+              </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-navy-200 text-sm">
-              <span className="flex items-center gap-1.5 font-medium">
-                <Briefcase className="w-4 h-4 text-saffron-400" /> {exam.conducting_body}
-              </span>
-              <a 
-                href={officialPortal} 
-                target="_blank" 
-                rel="noreferrer"
-                className="flex items-center gap-1 text-saffron-400 hover:text-saffron-300 underline font-medium"
-              >
-                <LinkIcon className="w-3.5 h-3.5" /> Official Portal
-              </a>
-            </div>
+              <div className="flex flex-wrap items-center gap-4 text-neutral-400 text-xs sm:text-sm">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Briefcase className="w-4 h-4 text-saffron-400" /> {exam.conducting_body}
+                </span>
+                <a 
+                  href={officialPortal} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-saffron-400 hover:text-saffron-300 underline font-medium"
+                >
+                  <LinkIcon className="w-3.5 h-3.5" /> Official Portal
+                </a>
+              </div>
 
-            {/* CONFIRMED vs EXPECTED EXAM DATE HIGHLIGHT BANNER */}
-            <div className="mt-3 p-4 rounded-2xl border border-white/10 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg bg-black/25">
-              {exam.data_status === 'verified' && exam.dates?.exam_date ? (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500 text-white flex items-center gap-1 shadow-sm">
-                      🟢 CONFIRMED EXAM DATE
-                    </span>
-                    <span className="text-xs text-emerald-300 font-semibold">
-                      Official Notification / Commission Schedule
-                    </span>
-                  </div>
-                  <div className="text-lg sm:text-xl font-black text-white">
-                    {formatDate(exam.dates.exam_date)}
-                    {exam.dates.mains_exam_date && (
-                      <span className="text-sm font-normal text-slate-300 block sm:inline sm:ml-2">
-                        (RPC: {formatDate(exam.dates.exam_date)} • Kalyana Karnataka / KK: {formatDate(exam.dates.mains_exam_date)})
-                      </span>
-                    )}
-                  </div>
-                  {exam.dates.notes && (
-                    <p className="text-xs text-slate-300">
-                      📝 {exam.dates.notes}
-                    </p>
-                  )}
-                </div>
-              ) : application?.user_exam_date ? (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500 text-slate-950 flex items-center gap-1 shadow-sm">
-                      🟡 TENTATIVE / EXPECTED DATE
-                    </span>
-                    <span className="text-xs text-amber-300 font-semibold">
-                      Candidate Target / Personal Tracker
-                    </span>
-                  </div>
-                  <div className="text-lg sm:text-xl font-black text-amber-200">
-                    {formatDate(application.user_exam_date)}
-                  </div>
-                  <p className="text-xs text-slate-300">
-                    Official notification is awaited. Personal study countdown enabled.
-                  </p>
-                </div>
-              ) : aiOverview && (aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date || aiOverview.prelims_exam_date) ? (
-                <div className="space-y-2.5 w-full">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
+              {/* REAL-TIME AI DATES & SCHEDULE HIGHLIGHT (Subtle green accent card as requested) */}
+              <div className="mt-4 p-4 sm:p-5 rounded-[24px] border border-emerald-500/30 bg-emerald-950/20 dark:bg-emerald-950/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm text-neutral-200">
+                {exam.data_status === 'verified' && exam.dates?.exam_date ? (
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-400 text-slate-950 flex items-center gap-1 shadow-sm">
-                        <Sparkles className="w-3.5 h-3.5 fill-slate-950 text-slate-950" /> GOOGLE AI EXTRACTED DATES
+                      <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> CONFIRMED EXAM DATE
                       </span>
-                      <span className="text-xs text-amber-300 font-semibold">
-                        {aiOverview.is_closed ? '🔴 Application Closed' : aiOverview.is_extended ? '🔥 Application Deadline Extended' : 'Latest Web Grounding'}
+                      <span className="text-xs text-emerald-400/80 font-medium">
+                        Official Notification / Commission Schedule
                       </span>
                     </div>
-
-                    <button
-                      onClick={() => handleAdoptAiDates({
-                        last_date: aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date,
-                        exam_date: aiOverview.prelims_exam_date || aiOverview.mains_exam_date
-                      })}
-                      className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-slate-950 transition-colors shadow-xs shrink-0 cursor-pointer inline-flex items-center gap-1"
-                    >
-                      <Zap className="w-3.5 h-3.5 fill-slate-950" /> ⚡ Use as My Target
-                    </button>
+                    <div className="text-lg sm:text-xl font-black text-white">
+                      {formatDate(exam.dates.exam_date)}
+                      {exam.dates.mains_exam_date && (
+                        <span className="text-sm font-normal text-neutral-400 block sm:inline sm:ml-2">
+                          (RPC: {formatDate(exam.dates.exam_date)} • KK: {formatDate(exam.dates.mains_exam_date)})
+                        </span>
+                      )}
+                    </div>
+                    {exam.dates.notes && (
+                      <p className="text-xs text-emerald-300/80">
+                        📝 {exam.dates.notes}
+                      </p>
+                    )}
                   </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-0.5">
-                    {(aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date) && (
-                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
-                        <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                        <div>
-                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
-                            {aiOverview.is_closed ? 'Application Closed on' : aiOverview.is_extended ? 'Extended Deadline' : 'Last Date to Apply'}
-                          </span>
-                          <strong className="text-xs sm:text-sm font-extrabold text-white">
-                            {formatDate(aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date)}
-                          </strong>
-                        </div>
+                ) : application?.user_exam_date ? (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400" /> TENTATIVE TARGET DATE
+                      </span>
+                      <span className="text-xs text-emerald-400/80 font-medium">
+                        Candidate Personal Tracker
+                      </span>
+                    </div>
+                    <div className="text-lg sm:text-xl font-black text-white">
+                      {formatDate(application.user_exam_date)}
+                    </div>
+                    <p className="text-xs text-emerald-300/80">
+                      Official notification is awaited. Personal study countdown enabled.
+                    </p>
+                  </div>
+                ) : aiOverview && (aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date || aiOverview.prelims_exam_date) ? (
+                  <div className="space-y-3 w-full">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-300" /> REAL-TIME AI OVERVIEW
+                        </span>
+                        <span className="text-xs font-semibold text-emerald-400/90">
+                          {aiOverview.is_closed ? 'Application Closed' : aiOverview.is_extended ? 'Deadline Extended' : 'Active Recruitment'}
+                        </span>
                       </div>
-                    )}
 
-                    {aiOverview.prelims_exam_date && 
-                     aiOverview.prelims_exam_date !== (aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date) &&
-                     formatDate(aiOverview.prelims_exam_date) !== formatDate(aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date) && (
-                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
-                        <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
-                        <div>
-                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
-                            Preliminary Exam Date
-                          </span>
-                          <strong className="text-xs sm:text-sm font-extrabold text-white">
-                            {formatDate(aiOverview.prelims_exam_date)}
-                          </strong>
-                        </div>
-                      </div>
-                    )}
+                      <button
+                        onClick={() => handleAdoptAiDates({
+                          last_date: aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date,
+                          exam_date: aiOverview.prelims_exam_date || aiOverview.mains_exam_date
+                        })}
+                        className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-neutral-950 transition-all shadow-xs shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <Zap className="w-3.5 h-3.5 fill-neutral-950" /> Use as Target
+                      </button>
+                    </div>
 
-                    {aiOverview.mains_exam_date && (
-                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
-                        <Calendar className="w-4 h-4 text-purple-400 shrink-0" />
-                        <div>
-                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
-                            Mains Exam Date
-                          </span>
-                          <strong className="text-xs sm:text-sm font-extrabold text-white">
-                            {formatDate(aiOverview.mains_exam_date)}
-                          </strong>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-0.5">
+                      {(aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date) && (
+                        <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 backdrop-blur-xs flex items-center gap-2.5">
+                          <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div>
+                            <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
+                              {aiOverview.is_closed ? 'Application Closed' : aiOverview.is_extended ? 'Extended Deadline' : 'Last Date to Apply'}
+                            </span>
+                            <strong className="text-xs sm:text-sm font-bold text-white">
+                              {formatDate(aiOverview.extended_last_date || aiOverview.active_last_date || aiOverview.apply_last_date)}
+                            </strong>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {aiOverview.vacancies && (
-                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
-                        <Users className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <div>
-                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
-                            Total Vacancies
-                          </span>
-                          <strong className="text-xs sm:text-sm font-extrabold text-white">
-                            {aiOverview.vacancies}
-                          </strong>
+                      {aiOverview.prelims_exam_date && (
+                        <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 backdrop-blur-xs flex items-center gap-2.5">
+                          <Calendar className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div>
+                            <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
+                              Preliminary Exam Date
+                            </span>
+                            <strong className="text-xs sm:text-sm font-bold text-white">
+                              {formatDate(aiOverview.prelims_exam_date)}
+                            </strong>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {aiOverview.fee_deadline && (
-                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
-                        <Calendar className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <div>
-                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
-                            Fee Payment Deadline
-                          </span>
-                          <strong className="text-xs sm:text-sm font-extrabold text-white">
-                            {formatDate(aiOverview.fee_deadline)}
-                          </strong>
+                      {aiOverview.vacancies && (
+                        <div className="p-3 rounded-2xl bg-black/40 border border-emerald-500/20 backdrop-blur-xs flex items-center gap-2.5">
+                          <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <div>
+                            <span className="text-[10px] text-neutral-400 uppercase tracking-wider block font-semibold">
+                              Total Vacancies
+                            </span>
+                            <strong className="text-xs sm:text-sm font-bold text-white">
+                              {aiOverview.vacancies}
+                            </strong>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-white/10 text-neutral-300">
+                        ⚪ NOTICE AWAITED
+                      </span>
+                      <span className="text-xs text-neutral-400">
+                        Expected dates will update once official notification is published
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {exam.dates?.exam_date && (
+                  <div className="shrink-0 w-full sm:w-auto">
+                    <DeadlineTimer targetDate={exam.dates.exam_date} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 min-w-[220px] w-full md:w-auto">
+              {application ? (
+                <div className="bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-[24px] text-center space-y-1.5">
+                  <div className="flex items-center justify-center gap-1.5 text-emerald-400 text-sm font-bold">
+                    <CheckCircle className="w-4 h-4" /> Application Tracked
+                  </div>
+                  <div className="text-xs text-neutral-300">
+                    Status: <span className="font-semibold text-white uppercase">{application.status}</span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 pt-1 text-[11px]">
+                    <Link to="/tracker" className="text-saffron-400 hover:underline font-semibold">
+                      Manage →
+                    </Link>
+                    <span className="text-neutral-600">•</span>
+                    <button 
+                      onClick={handleRemoveTracking}
+                      disabled={actionLoading}
+                      className="text-red-400 hover:text-red-300 hover:underline font-medium cursor-pointer"
+                    >
+                      Stop Tracking
+                    </button>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-700 text-slate-300">
-                      ⚪ NOTICE AWAITED
-                    </span>
-                    <span className="text-xs text-slate-300">
-                      Expected dates found on Google / Media below
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-300">
-                    Official exam schedule has not been published yet. Check the Web Intelligence Tracker below for tentative media reports.
-                  </p>
-                </div>
+                <button 
+                  onClick={handleApply} 
+                  disabled={actionLoading}
+                  className="rounded-full bg-white hover:bg-neutral-100 disabled:opacity-75 text-neutral-950 font-bold py-3 px-6 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer hover:scale-102"
+                >
+                  {actionLoading ? (
+                    <>
+                      <Sparkles className="w-5 h-5 animate-spin text-neutral-600" />
+                      <span>Fetching via AI...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-5 h-5" /> 
+                      <span>Track Application</span>
+                    </>
+                  )}
+                </button>
               )}
 
-              {exam.dates?.exam_date && (
-                <div className="shrink-0 w-full sm:w-auto">
-                  <DeadlineTimer targetDate={exam.dates.exam_date} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3 min-w-[220px] w-full md:w-auto">
-            {application ? (
-              <div className="bg-emerald-950/80 border border-emerald-500/50 p-4 rounded-2xl text-center space-y-1.5">
-                <div className="flex items-center justify-center gap-1.5 text-emerald-400 text-sm font-bold">
-                  <CheckCircle className="w-4 h-4" /> Application Tracked
-                </div>
-                <div className="text-xs text-slate-300">
-                  Status: <span className="font-semibold text-white uppercase">{application.status}</span>
-                </div>
-                <div className="flex items-center justify-center gap-2 pt-1 text-[11px]">
-                  <Link to="/tracker" className="text-saffron-400 hover:underline">
-                    Manage →
-                  </Link>
-                  <span className="text-slate-500">•</span>
-                  <button 
-                    onClick={handleRemoveTracking}
-                    disabled={actionLoading}
-                    className="text-red-400 hover:text-red-300 hover:underline font-medium"
-                  >
-                    Stop Tracking
-                  </button>
-                </div>
-              </div>
-            ) : (
               <button 
-                onClick={handleApply} 
-                disabled={actionLoading}
-                className="bg-saffron-500 hover:bg-saffron-600 disabled:opacity-75 text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:shadow-saffron-500/30 transition-all flex items-center justify-center gap-2"
+                onClick={handleRemind} 
+                className="rounded-full bg-[#181818] hover:bg-[#202020] text-white font-semibold py-2.5 px-5 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm border border-neutral-800 cursor-pointer"
               >
-                {actionLoading ? (
-                  <>
-                    <Sparkles className="w-5 h-5 animate-spin text-amber-200" />
-                    <span>Fetching via Gemini AI...</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5" /> 
-                    <span>Track Application</span>
-                  </>
-                )}
+                <Clock className="w-4 h-4 text-saffron-400" /> Set Deadline Alert
               </button>
-            )}
 
-            <button 
-              onClick={handleRemind} 
-              className="bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 px-5 rounded-2xl backdrop-blur-sm transition-all flex items-center justify-center gap-2 text-sm border border-white/10"
-            >
-              <Clock className="w-4 h-4 text-saffron-400" /> Set Deadline Alert
-            </button>
-
-            <button 
-              onClick={() => setIsContributeModalOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-5 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 text-sm"
-              title="Candidates can upload notifications, cutoffs, syllabus directly"
-            >
-              <Upload className="w-4 h-4 text-emerald-200" /> Upload / Share Info
-            </button>
+              <button 
+                onClick={() => setIsContributeModalOpen(true)}
+                className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-5 shadow-sm transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
+                title="Candidates can upload notifications, cutoffs, syllabus directly"
+              >
+                <Upload className="w-4 h-4 text-white" /> Upload / Share Info
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* NAVIGATION TABS */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-6">
-        <div className="glass-card rounded-2xl flex p-1.5 mb-8 overflow-x-auto shadow-md border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md">
+      {/* NAVIGATION TABS (Pill Segmented Track) & CONTENT CONTAINER */}
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 mt-6">
+        <div className="pill-tab-track flex items-center gap-1.5 bg-slate-100/90 dark:bg-[#141414] p-1.5 rounded-full w-max border border-slate-200/80 dark:border-neutral-800 overflow-x-auto max-w-full shadow-2xs mb-8">
           {tabs.map(tab => (
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-5 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all ${
+              className={`px-5 py-2 rounded-full font-bold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer ${
                 activeTab === tab.id 
-                  ? 'bg-navy-900 text-white shadow-sm dark:bg-saffron-500 dark:text-white font-bold' 
-                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/60'
+                  ? 'pill-tab-active bg-neutral-950 dark:bg-white text-white dark:text-black shadow-sm' 
+                  : 'pill-tab text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               {tab.label}
