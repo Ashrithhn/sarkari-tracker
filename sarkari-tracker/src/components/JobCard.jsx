@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { 
   Building2, Calendar, CheckCircle, Clock, ExternalLink, 
   Trash2, Edit, CheckSquare, Square, ChevronRight, FileCheck, 
-  AlertCircle, ShieldCheck, UserCheck, Sparkles, Globe, FolderArchive 
+  AlertCircle, ShieldCheck, UserCheck, Sparkles, Globe, FolderArchive,
+  ArrowRight 
 } from 'lucide-react';
 import { APPLICATION_STATUSES, formatDate } from '../utils/constants';
 import CategoryBadge from './CategoryBadge';
@@ -192,97 +193,31 @@ const JobCard = ({
           </div>
         )}
 
-        {/* Gemini AI Overview summary snippet if available */}
-        {app.ai_overview?.overview_summary && (
-          <div className="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#161616] border border-slate-200/70 dark:border-neutral-800 text-[11px] text-slate-700 dark:text-neutral-300 mb-3 flex items-start gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400 shrink-0 mt-0.5" />
-            <span className="line-clamp-2"><strong className="font-semibold text-slate-900 dark:text-white">Live AI Update:</strong> {app.ai_overview.overview_summary}</span>
-          </div>
-        )}
-
-        {/* Candidate Google / News Notes if provided */}
-        {app.notes && (
-          <div className="p-2.5 rounded-xl bg-slate-50/90 dark:bg-[#161616] border border-slate-200/60 dark:border-neutral-800 text-[11px] text-slate-700 dark:text-neutral-300 mb-3 flex items-start gap-1.5">
-            <span className="text-xs">📝</span>
-            <span className="line-clamp-2"><strong className="font-semibold text-slate-900 dark:text-white">Candidate Note:</strong> {app.notes}</span>
-          </div>
-        )}
-
-        {/* Candidate Personal Exam Resources (Notification, Syllabus, Admit Card, Application Slip, Fee Receipt) */}
-        <button
-          type="button"
-          onClick={() => onOpenResources && onOpenResources(app)}
-          className="w-full p-2.5 rounded-2xl bg-slate-50/90 dark:bg-[#181818] hover:bg-slate-100 dark:hover:bg-[#202020] transition-all border border-slate-200/70 dark:border-neutral-800 text-xs flex items-center justify-between mb-2.5 text-slate-800 dark:text-neutral-200 shadow-2xs group"
-        >
-          <span className="flex items-center gap-2 font-semibold">
-            <FolderArchive className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform" />
-            <span className="text-slate-800 dark:text-neutral-200">My Exam Resources</span>
-          </span>
-          <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-white dark:bg-[#222222] text-slate-700 dark:text-neutral-300 border border-slate-200/80 dark:border-neutral-700">
-            {[app.notification_file, app.syllabus_file, app.admit_card_file, app.application_form_file, app.fee_receipt_file].filter(Boolean).length > 0 
-              ? `${[app.notification_file, app.syllabus_file, app.admit_card_file, app.application_form_file, app.fee_receipt_file].filter(Boolean).length}/5 Docs Saved →` 
-              : '+ Upload Docs →'}
-          </span>
-        </button>
-
-        {/* Document Checklist Quick Bar */}
-        {totalChecklistCount > 0 && (
+        {/* Single Notable Action / Link (Keep details inside as requested) */}
+        {app.exam_id ? (
+          <Link
+            to={`/exams/${app.exam_id}`}
+            className="w-full py-2.5 px-4 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-[#181818] dark:hover:bg-[#202020] border border-slate-200/80 dark:border-neutral-800 text-xs font-bold text-slate-800 dark:text-neutral-200 transition-all flex items-center justify-between mb-3 shadow-2xs group"
+          >
+            <span className="flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-saffron-500 shrink-0" />
+              <span className="truncate">View Syllabus, Resources & Updates</span>
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </Link>
+        ) : (
           <button
             type="button"
-            onClick={() => onOpenChecklist && onOpenChecklist(app)}
-            className="w-full p-2.5 rounded-2xl bg-slate-50/90 dark:bg-[#181818] hover:bg-slate-100 dark:hover:bg-[#202020] transition-all border border-slate-200/70 dark:border-neutral-800 text-xs flex items-center justify-between mb-2.5 text-slate-800 dark:text-neutral-200 shadow-2xs"
+            onClick={() => onOpenResources && onOpenResources(app)}
+            className="w-full py-2.5 px-4 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-[#181818] dark:hover:bg-[#202020] border border-slate-200/80 dark:border-neutral-800 text-xs font-bold text-slate-800 dark:text-neutral-200 transition-all flex items-center justify-between mb-3 shadow-2xs group"
           >
-            <span className="flex items-center gap-2 font-semibold">
-              <FileCheck className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />
-              <span className="text-slate-800 dark:text-neutral-200">Document Checklist</span>
+            <span className="flex items-center gap-2">
+              <FolderArchive className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span>My Uploaded Documents</span>
             </span>
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-white dark:bg-[#222222] text-slate-700 dark:text-neutral-300 border border-slate-200/80 dark:border-neutral-700">
-              {completedChecklistCount}/{totalChecklistCount} Done
-            </span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition-transform shrink-0" />
           </button>
         )}
-
-        {/* Daily 21-Question Intelligence Monitor */}
-        <button
-          type="button"
-          onClick={() => onOpenIntelligence && onOpenIntelligence(app)}
-          className="w-full p-2.5 rounded-2xl bg-slate-50/90 dark:bg-[#181818] hover:bg-slate-100 dark:hover:bg-[#202020] transition-all border border-slate-200/70 dark:border-neutral-800 text-xs flex items-center justify-between mb-2.5 text-slate-800 dark:text-neutral-200 shadow-2xs group"
-        >
-          <span className="flex items-center gap-2 font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-saffron-500 dark:text-saffron-400 group-hover:rotate-12 transition-transform" />
-            <span className="text-slate-800 dark:text-neutral-200">AI Gazette & Date Monitor</span>
-          </span>
-          <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-saffron-50 dark:bg-[#222222] text-saffron-700 dark:text-saffron-300 border border-saffron-200/60 dark:border-neutral-700">
-            Daily Questions →
-          </span>
-        </button>
-
-        {/* Real-time AI Overview & Keyword Intelligence */}
-        {(app.ai_overview || app.web_analysis) ? (
-          <button
-            type="button"
-            onClick={() => onOpenAnalysis && onOpenAnalysis(app)}
-            className="w-full p-2.5 rounded-2xl bg-slate-50/90 dark:bg-[#181818] hover:bg-slate-100 dark:hover:bg-[#202020] transition-all border border-slate-200/70 dark:border-neutral-800 text-xs flex items-center justify-between mb-2.5 text-slate-800 dark:text-neutral-200 shadow-2xs group"
-          >
-            <span className="flex items-center gap-2 font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400 group-hover:rotate-12 transition-transform" />
-              <span className="text-slate-800 dark:text-neutral-200">Real-Time AI Overview</span>
-            </span>
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-violet-50 dark:bg-[#222222] text-violet-700 dark:text-violet-300 border border-violet-200/60 dark:border-neutral-700">
-              Live Dates & Details →
-            </span>
-          </button>
-        ) : isCustomJob ? (
-          <button
-            type="button"
-            onClick={() => onAnalyzeJob && onAnalyzeJob(app.id)}
-            disabled={isAnalyzing}
-            className="w-full p-2.5 rounded-2xl bg-slate-50/80 dark:bg-[#181818] hover:bg-slate-100 dark:hover:bg-[#202020] transition-colors border border-dashed border-slate-300 dark:border-neutral-700 text-xs flex items-center justify-center gap-2 mb-2.5 text-slate-600 dark:text-neutral-300 font-semibold"
-          >
-            <Globe className={`w-3.5 h-3.5 text-saffron-500 ${isAnalyzing ? 'animate-spin' : ''}`} />
-            <span>{isAnalyzing ? 'Scanning Web...' : 'Auto-Search Web for Keywords'}</span>
-          </button>
-        ) : null}
       </div>
 
       {/* Bottom Actions & Status Flow */}
