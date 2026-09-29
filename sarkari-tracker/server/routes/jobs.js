@@ -299,7 +299,7 @@ router.post('/', async (req, res) => {
     let aiOverview = null;
 
     try {
-      const examName = targetExam ? targetExam.name : (custom_exam_name || post_name);
+      const examName = targetExam ? (targetExam.short_name || targetExam.name) : (custom_exam_name || post_name);
       const conducting = targetExam ? targetExam.conducting_body : (req.body.custom_conducting_body || '');
 
       console.log(`[POST /api/jobs] Real-time Gemini scan triggered for "${examName}" on application track...`);

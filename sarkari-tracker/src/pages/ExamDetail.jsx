@@ -92,8 +92,13 @@ const ExamDetail = () => {
     try {
       const data = await getExam(id);
       setExam(data || null);
-      if (data?.ai_overview) {
+      const hasAiDates = data?.ai_overview && (data.ai_overview.prelims_exam_date || data.ai_overview.active_last_date || data.ai_overview.apply_last_date);
+      if (hasAiDates) {
         setAiOverview(data.ai_overview);
+      } else {
+        scanExamAi(id).then(res => {
+          if (res?.ai_overview) setAiOverview(res.ai_overview);
+        }).catch(() => {});
       }
 
       // Load web intelligence discoveries
@@ -702,10 +707,38 @@ const ExamDetail = () => {
                         <Calendar className="w-4 h-4 text-blue-400 shrink-0" />
                         <div>
                           <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
-                            Expected Exam Date
+                            Preliminary Exam Date
                           </span>
                           <strong className="text-xs sm:text-sm font-extrabold text-white">
                             {formatDate(aiOverview.prelims_exam_date)}
+                          </strong>
+                        </div>
+                      </div>
+                    )}
+
+                    {aiOverview.mains_exam_date && (
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
+                        <Calendar className="w-4 h-4 text-purple-400 shrink-0" />
+                        <div>
+                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
+                            Mains Exam Date
+                          </span>
+                          <strong className="text-xs sm:text-sm font-extrabold text-white">
+                            {formatDate(aiOverview.mains_exam_date)}
+                          </strong>
+                        </div>
+                      </div>
+                    )}
+
+                    {aiOverview.vacancies && (
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-xs flex items-center gap-2.5">
+                        <Users className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <div>
+                          <span className="text-[10px] text-slate-300 uppercase tracking-wider block font-semibold">
+                            Total Vacancies
+                          </span>
+                          <strong className="text-xs sm:text-sm font-extrabold text-white">
+                            {aiOverview.vacancies}
                           </strong>
                         </div>
                       </div>
@@ -838,6 +871,16 @@ const ExamDetail = () => {
             {/* OVERVIEW TAB */}
             {activeTab === 'overview' && (
               <>
+                {/* Google AI Overview Card - Front & Center matching Google AI Overview UI */}
+                <GoogleAiOverviewCard
+                  aiOverview={aiOverview}
+                  examTitle={exam.short_name || exam.name}
+                  onAdoptDates={handleAdoptAiDates}
+                  onRefreshAi={handleRefreshAi}
+                  isRefreshing={isScanningWeb}
+                  showAdoptButton={true}
+                />
+
                 {/* Official Notification Quick Callout */}
                 <div className="glass-card p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="space-y-1">
@@ -974,16 +1017,6 @@ const ExamDetail = () => {
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                     📡 <strong>Multi-Source Media Crawler:</strong> Scans real-time education reports, national news, and state commission circulars. Data is labeled <em>"Tentative"</em> until confirmed by administrative verification against official commission PDFs.
                   </p>
-
-                  {/* Google AI Overview Card with Highlighted Dates */}
-                  <GoogleAiOverviewCard
-                    aiOverview={aiOverview}
-                    examTitle={exam.short_name || exam.name}
-                    onAdoptDates={handleAdoptAiDates}
-                    onRefreshAi={handleRefreshAi}
-                    isRefreshing={isScanningWeb}
-                    showAdoptButton={true}
-                  />
 
                   {/* Discoveries List */}
                   {webDiscoveries.length === 0 ? (

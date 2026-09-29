@@ -766,6 +766,22 @@ export async function analyzeCustomExamKeywords({ custom_exam_name, post_name, c
   };
 }
 
+export function cleanSearchQuery(examName) {
+  if (!examName) return '';
+  let s = String(examName).trim();
+  const parenMatch = s.match(/\(([^)]+)\)/);
+  if (parenMatch) {
+    const inside = parenMatch[1].trim();
+    if (/^[A-Za-z0-9\s/-]{2,14}$/.test(inside) && !inside.toLowerCase().includes('cadre') && !inside.toLowerCase().includes('post') && !inside.toLowerCase().includes('crp')) {
+      s = inside;
+    } else {
+      s = s.replace(/\s*\([^)]*\)/g, '').trim();
+    }
+  }
+  s = s.replace(/^(Staff Selection Commission|Institute of Banking Personnel Selection|Union Public Service Commission|Railway Recruitment Board)\s*[-–:]\s*/i, '').trim();
+  return s;
+}
+
 /**
  * Generate Google AI Overview style structured dates and summary using Gemini
  */
@@ -774,14 +790,19 @@ export async function generateExamAiOverview({ examId = null, examName, conducti
 
   const currentYear = new Date().getFullYear();
   const nextYear = currentYear + 1;
+  const cleanName = cleanSearchQuery(examName) || examName;
 
   // 1. Targeted live searches across official exam schedules, portals and news
   const queries = [
-    `"${examName}" exam date ${currentYear} ${nextYear} prelims mains schedule`,
-    `"${examName}" notification ${currentYear} exam date last date apply online`,
-    `"${examName}" exam schedule tentative preliminary examination`,
-    `"${examName}" registration last date extended late fee`
+    `"${cleanName}" exam date ${currentYear} prelims mains schedule`,
+    `${cleanName} exam date ${currentYear} ${nextYear} prelims mains`,
+    `${cleanName} notification ${currentYear} exam date last date apply online`,
+    `${cleanName} registration last date extended fee`,
+    `${cleanName} exam schedule tentative preliminary examination`
   ];
+  if (examName !== cleanName) {
+    queries.push(`${examName} exam date ${currentYear}`);
+  }
 
   const searchPromises = [];
   for (const q of queries) {
@@ -795,10 +816,10 @@ export async function generateExamAiOverview({ examId = null, examName, conducti
     ...(Array.isArray(existingDiscoveries) ? existingDiscoveries : [])
   ];
 
-  const rankedArticles = filterAndRankArticles(allArticles, examName);
+  const rankedArticles = filterAndRankArticles(allArticles, cleanName);
 
   // Fast parallel extraction of structured schedule tables from top authority educational portals
-  const examSlug = examName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const examSlug = cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const candidateUrls = [
     `https://www.bankersadda.com/${examSlug}-exam-date-${currentYear}/`,
     `https://www.bankersadda.com/${examSlug}-exam-date/`,

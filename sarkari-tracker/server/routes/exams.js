@@ -179,14 +179,16 @@ router.get('/:id/web-discoveries', async (req, res) => {
       }
     }
 
-    // Get cached AI overview or generate if missing
+    // Get cached AI overview or generate if missing or empty
     let examRow = db.prepare('SELECT * FROM exams WHERE id = ?').get(examId);
     let aiOverview = null;
     if (examRow?.ai_overview) {
       try { aiOverview = JSON.parse(examRow.ai_overview); } catch (e) {}
     }
 
-    if (!aiOverview && examRow) {
+    const isAiEmpty = !aiOverview || (!aiOverview.prelims_exam_date && !aiOverview.apply_last_date && !aiOverview.active_last_date && !aiOverview.extended_last_date);
+
+    if (isAiEmpty && examRow) {
       try {
         aiOverview = await generateExamAiOverview({
           examId,
